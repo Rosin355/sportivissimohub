@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ComeFunzionaRouteImport } from './routes/come-funziona'
 import { Route as CentriEstiviRouteImport } from './routes/centri-estivi'
+import { Route as AreaStaffRouteImport } from './routes/area-staff'
 import { Route as AreaGenitoriRouteImport } from './routes/area-genitori'
+import { Route as AreaAdminRouteImport } from './routes/area-admin'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ComeFunzionaRoute = ComeFunzionaRouteImport.update({
@@ -24,9 +26,19 @@ const CentriEstiviRoute = CentriEstiviRouteImport.update({
   path: '/centri-estivi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaStaffRoute = AreaStaffRouteImport.update({
+  id: '/area-staff',
+  path: '/area-staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AreaGenitoriRoute = AreaGenitoriRouteImport.update({
   id: '/area-genitori',
   path: '/area-genitori',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaAdminRoute = AreaAdminRouteImport.update({
+  id: '/area-admin',
+  path: '/area-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,34 +49,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
+  '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRoute
   '/come-funziona': typeof ComeFunzionaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
+  '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRoute
   '/come-funziona': typeof ComeFunzionaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
+  '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRoute
   '/come-funziona': typeof ComeFunzionaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/area-genitori' | '/centri-estivi' | '/come-funziona'
+  fullPaths:
+    | '/'
+    | '/area-admin'
+    | '/area-genitori'
+    | '/area-staff'
+    | '/centri-estivi'
+    | '/come-funziona'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/area-genitori' | '/centri-estivi' | '/come-funziona'
-  id: '__root__' | '/' | '/area-genitori' | '/centri-estivi' | '/come-funziona'
+  to:
+    | '/'
+    | '/area-admin'
+    | '/area-genitori'
+    | '/area-staff'
+    | '/centri-estivi'
+    | '/come-funziona'
+  id:
+    | '__root__'
+    | '/'
+    | '/area-admin'
+    | '/area-genitori'
+    | '/area-staff'
+    | '/centri-estivi'
+    | '/come-funziona'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AreaAdminRoute: typeof AreaAdminRoute
   AreaGenitoriRoute: typeof AreaGenitoriRoute
+  AreaStaffRoute: typeof AreaStaffRoute
   CentriEstiviRoute: typeof CentriEstiviRoute
   ComeFunzionaRoute: typeof ComeFunzionaRoute
 }
@@ -85,11 +124,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CentriEstiviRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-staff': {
+      id: '/area-staff'
+      path: '/area-staff'
+      fullPath: '/area-staff'
+      preLoaderRoute: typeof AreaStaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/area-genitori': {
       id: '/area-genitori'
       path: '/area-genitori'
       fullPath: '/area-genitori'
       preLoaderRoute: typeof AreaGenitoriRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-admin': {
+      id: '/area-admin'
+      path: '/area-admin'
+      fullPath: '/area-admin'
+      preLoaderRoute: typeof AreaAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,7 +157,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AreaAdminRoute: AreaAdminRoute,
   AreaGenitoriRoute: AreaGenitoriRoute,
+  AreaStaffRoute: AreaStaffRoute,
   CentriEstiviRoute: CentriEstiviRoute,
   ComeFunzionaRoute: ComeFunzionaRoute,
 }

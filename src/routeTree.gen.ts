@@ -9,8 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ComeFunzionaRouteImport } from './routes/come-funziona'
+import { Route as CentriEstiviRouteImport } from './routes/centri-estivi'
+import { Route as AreaStaffRouteImport } from './routes/area-staff'
+import { Route as AreaGenitoriRouteImport } from './routes/area-genitori'
+import { Route as AreaAdminRouteImport } from './routes/area-admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ComeFunzionaRoute = ComeFunzionaRouteImport.update({
+  id: '/come-funziona',
+  path: '/come-funziona',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentriEstiviRoute = CentriEstiviRouteImport.update({
+  id: '/centri-estivi',
+  path: '/centri-estivi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaStaffRoute = AreaStaffRouteImport.update({
+  id: '/area-staff',
+  path: '/area-staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaGenitoriRoute = AreaGenitoriRouteImport.update({
+  id: '/area-genitori',
+  path: '/area-genitori',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaAdminRoute = AreaAdminRouteImport.update({
+  id: '/area-admin',
+  path: '/area-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +49,102 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/area-admin': typeof AreaAdminRoute
+  '/area-genitori': typeof AreaGenitoriRoute
+  '/area-staff': typeof AreaStaffRoute
+  '/centri-estivi': typeof CentriEstiviRoute
+  '/come-funziona': typeof ComeFunzionaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/area-admin': typeof AreaAdminRoute
+  '/area-genitori': typeof AreaGenitoriRoute
+  '/area-staff': typeof AreaStaffRoute
+  '/centri-estivi': typeof CentriEstiviRoute
+  '/come-funziona': typeof ComeFunzionaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/area-admin': typeof AreaAdminRoute
+  '/area-genitori': typeof AreaGenitoriRoute
+  '/area-staff': typeof AreaStaffRoute
+  '/centri-estivi': typeof CentriEstiviRoute
+  '/come-funziona': typeof ComeFunzionaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/area-admin'
+    | '/area-genitori'
+    | '/area-staff'
+    | '/centri-estivi'
+    | '/come-funziona'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/area-admin'
+    | '/area-genitori'
+    | '/area-staff'
+    | '/centri-estivi'
+    | '/come-funziona'
+  id:
+    | '__root__'
+    | '/'
+    | '/area-admin'
+    | '/area-genitori'
+    | '/area-staff'
+    | '/centri-estivi'
+    | '/come-funziona'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AreaAdminRoute: typeof AreaAdminRoute
+  AreaGenitoriRoute: typeof AreaGenitoriRoute
+  AreaStaffRoute: typeof AreaStaffRoute
+  CentriEstiviRoute: typeof CentriEstiviRoute
+  ComeFunzionaRoute: typeof ComeFunzionaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/come-funziona': {
+      id: '/come-funziona'
+      path: '/come-funziona'
+      fullPath: '/come-funziona'
+      preLoaderRoute: typeof ComeFunzionaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centri-estivi': {
+      id: '/centri-estivi'
+      path: '/centri-estivi'
+      fullPath: '/centri-estivi'
+      preLoaderRoute: typeof CentriEstiviRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-staff': {
+      id: '/area-staff'
+      path: '/area-staff'
+      fullPath: '/area-staff'
+      preLoaderRoute: typeof AreaStaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-genitori': {
+      id: '/area-genitori'
+      path: '/area-genitori'
+      fullPath: '/area-genitori'
+      preLoaderRoute: typeof AreaGenitoriRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-admin': {
+      id: '/area-admin'
+      path: '/area-admin'
+      fullPath: '/area-admin'
+      preLoaderRoute: typeof AreaAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +157,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AreaAdminRoute: AreaAdminRoute,
+  AreaGenitoriRoute: AreaGenitoriRoute,
+  AreaStaffRoute: AreaStaffRoute,
+  CentriEstiviRoute: CentriEstiviRoute,
+  ComeFunzionaRoute: ComeFunzionaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

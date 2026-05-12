@@ -2,14 +2,16 @@
 @source "../src";
 @import "tw-animate-css";
 
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=Patrick+Hand&family=Caveat:wght@500;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-sans: 'Nunito', system-ui, sans-serif;
   --font-display: 'Fredoka', system-ui, sans-serif;
-  --font-pixel: 'Press Start 2P', monospace;
+  --font-pixel: 'Patrick Hand', cursive;
+  --font-hand: 'Patrick Hand', cursive;
+  --font-script: 'Caveat', cursive;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -56,56 +58,58 @@
 :root {
   --radius: 1rem;
 
-  --background: oklch(0.97 0.02 230);
-  --foreground: oklch(0.22 0.06 260);
+  /* Cream paper background, warm ink foreground */
+  --background: oklch(0.985 0.02 95);
+  --foreground: oklch(0.28 0.06 60);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.06 260);
+  --card-foreground: oklch(0.28 0.06 60);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.06 260);
+  --popover-foreground: oklch(0.28 0.06 60);
 
-  --primary: oklch(0.55 0.22 265);
+  --primary: oklch(0.65 0.18 40);
   --primary-foreground: oklch(0.99 0 0);
 
-  --secondary: oklch(0.94 0.04 230);
-  --secondary-foreground: oklch(0.3 0.1 260);
+  --secondary: oklch(0.95 0.03 85);
+  --secondary-foreground: oklch(0.32 0.08 60);
 
-  --muted: oklch(0.95 0.02 240);
-  --muted-foreground: oklch(0.48 0.04 260);
+  --muted: oklch(0.96 0.02 85);
+  --muted-foreground: oklch(0.5 0.04 60);
 
-  --accent: oklch(0.78 0.18 75);
-  --accent-foreground: oklch(0.22 0.06 260);
+  --accent: oklch(0.82 0.14 85);
+  --accent-foreground: oklch(0.28 0.06 60);
 
   --destructive: oklch(0.62 0.23 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.9 0.03 240);
-  --input: oklch(0.92 0.03 240);
-  --ring: oklch(0.55 0.22 265);
+  --border: oklch(0.9 0.03 80);
+  --input: oklch(0.92 0.03 80);
+  --ring: oklch(0.7 0.16 50);
 
-  /* Brand palette */
-  --sky: oklch(0.78 0.13 230);            /* azzurro cielo */
-  --sky-foreground: oklch(0.2 0.08 260);
-  --sun: oklch(0.86 0.17 90);             /* giallo */
-  --sun-foreground: oklch(0.25 0.08 80);
-  --flame: oklch(0.74 0.19 50);           /* arancio */
+  /* Brand palette — soft handmade cartoon */
+  --sky: oklch(0.86 0.08 230);            /* azzurro cielo morbido */
+  --sky-foreground: oklch(0.32 0.08 250);
+  --sun: oklch(0.9 0.13 90);              /* giallo crema */
+  --sun-foreground: oklch(0.35 0.1 70);
+  --flame: oklch(0.72 0.16 45);           /* arancio terra */
   --flame-foreground: oklch(0.99 0 0);
-  --grass: oklch(0.72 0.18 145);          /* verde prato */
-  --grass-foreground: oklch(0.2 0.08 150);
-  --magic: oklch(0.6 0.24 320);           /* magenta/viola */
-  --magic-foreground: oklch(0.99 0 0);
-  --coral: oklch(0.7 0.21 25);            /* corallo alert */
+  --grass: oklch(0.78 0.13 150);          /* verde menta */
+  --grass-foreground: oklch(0.28 0.1 150);
+  --magic: oklch(0.72 0.13 320);          /* lilla pastello */
+  --magic-foreground: oklch(0.28 0.1 320);
+  --coral: oklch(0.74 0.16 25);           /* corallo */
   --coral-foreground: oklch(0.99 0 0);
 
-  --gradient-sky: linear-gradient(180deg, oklch(0.86 0.1 230) 0%, oklch(0.94 0.05 220) 100%);
-  --gradient-sun: linear-gradient(135deg, var(--sun), var(--flame));
-  --gradient-grass: linear-gradient(135deg, var(--grass), oklch(0.82 0.17 130));
-  --gradient-magic: linear-gradient(135deg, var(--magic), oklch(0.7 0.2 285));
-  --gradient-royal: linear-gradient(135deg, oklch(0.5 0.22 265), oklch(0.62 0.2 245));
+  --gradient-sky: linear-gradient(180deg, oklch(0.92 0.06 220) 0%, oklch(0.97 0.03 95) 100%);
+  --gradient-sun: linear-gradient(135deg, var(--sun), oklch(0.85 0.14 70));
+  --gradient-grass: linear-gradient(135deg, var(--grass), oklch(0.86 0.12 140));
+  --gradient-magic: linear-gradient(135deg, var(--magic), oklch(0.82 0.1 290));
+  --gradient-royal: linear-gradient(135deg, oklch(0.7 0.14 45), oklch(0.78 0.12 60));
 
-  --shadow-pop: 0 8px 0 -2px oklch(0.22 0.06 260 / 0.15), 0 12px 24px -8px oklch(0.22 0.06 260 / 0.25);
-  --shadow-card: 0 4px 0 oklch(0.22 0.06 260 / 0.08), 0 10px 30px -10px oklch(0.22 0.06 260 / 0.2);
-  --shadow-sticker: 0 3px 0 oklch(0.22 0.06 260 / 0.25), 0 6px 14px -4px oklch(0.22 0.06 260 / 0.3);
+  /* Soft "crayon" shadows: warm, low-contrast, hand-drawn feel */
+  --shadow-pop: 6px 6px 0 oklch(0.45 0.1 50 / 0.18), 0 14px 30px -14px oklch(0.35 0.08 50 / 0.25);
+  --shadow-card: 0 2px 0 oklch(0.45 0.1 50 / 0.08), 0 12px 28px -16px oklch(0.35 0.08 50 / 0.2);
+  --shadow-sticker: 4px 4px 0 oklch(0.45 0.1 50 / 0.2);
 }
 
 @layer base {
@@ -122,7 +126,9 @@
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
-  .font-pixel { font-family: var(--font-pixel); }
+  .font-pixel { font-family: var(--font-hand); letter-spacing: 0.02em; }
+  .font-hand { font-family: var(--font-hand); }
+  .font-script { font-family: var(--font-script); }
 
   .bg-gradient-sky { background: var(--gradient-sky); }
   .bg-gradient-sun { background: var(--gradient-sun); }
@@ -135,14 +141,28 @@
   .shadow-sticker { box-shadow: var(--shadow-sticker); }
 
   .text-stroke {
-    -webkit-text-stroke: 2px oklch(0.22 0.06 260);
+    -webkit-text-stroke: 1.5px oklch(0.28 0.06 60);
     paint-order: stroke fill;
   }
 
   .sticker {
-    border: 3px solid oklch(0.22 0.06 260);
+    border: 2px solid oklch(0.45 0.08 60 / 0.4);
     box-shadow: var(--shadow-sticker);
-    border-radius: var(--radius-2xl);
+    border-radius: 28px 14px 26px 18px;
+  }
+
+  /* Organic, hand-drawn rounded corners */
+  .rounded-blob   { border-radius: 60% 40% 70% 30% / 40% 50% 60% 40%; }
+  .rounded-doodle { border-radius: 28px 12px 24px 16px; }
+  .rounded-doodle-lg { border-radius: 40px 18px 36px 22px; }
+
+  /* Dashed "sketched" border */
+  .border-sketch { border: 2px dashed oklch(0.5 0.06 60 / 0.5); }
+
+  /* Subtle paper grain */
+  .paper-grain {
+    background-image: radial-gradient(oklch(0.45 0.08 60 / 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
   }
 
   @keyframes float-slow {

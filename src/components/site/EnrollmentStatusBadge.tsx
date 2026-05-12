@@ -13,8 +13,8 @@ const map: Record<EnrollmentStatus, { label: string; cls: string }> = {
 export function EnrollmentStatusBadge({ status }: { status: EnrollmentStatus }) {
   const s = map[status];
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border-2 border-foreground/90 ${s.cls}`}>
-      ● {s.label}
+    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border border-foreground/15 shadow-card ${s.cls}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" /> {s.label}
     </span>
   );
 }

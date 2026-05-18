@@ -76,10 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi." },
       { name: "author", content: "Sportivissimo A.S.D." },
       { property: "og:title", content: "Sportivissimo A.S.D." },
-      { property: "og:description", content: "Centri estivi, doposcuola e avventure educative per bambini e ragazzi." },
+      { property: "og:description", content: "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Sportivissimo A.S.D." },
+      { name: "twitter:description", content: "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a805976a-f620-48bb-9cbd-038b8c159a0e/id-preview-183fbfd1--667fe259-bf3b-40de-b8aa-81f94050e296.lovable.app-1779122353423.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a805976a-f620-48bb-9cbd-038b8c159a0e/id-preview-183fbfd1--667fe259-bf3b-40de-b8aa-81f94050e296.lovable.app-1779122353423.png" },
     ],
     links: [
       {

@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 type Variant = "sun" | "grass" | "magic" | "royal";
 
 const variantMap: Record<Variant, string> = {
-  sun: "bg-gradient-sun text-sun-foreground",
+  sun:   "bg-gradient-sun text-sun-foreground",
   grass: "bg-gradient-grass text-grass-foreground",
   magic: "bg-gradient-magic text-magic-foreground",
   royal: "bg-gradient-royal text-primary-foreground",
@@ -29,23 +29,26 @@ export function AdventureCard({
   return (
     <Link
       to={to}
-      className="group relative block rounded-3xl border-[3px] border-foreground/90 bg-white shadow-pop hover:-translate-y-1 transition-transform overflow-hidden"
+      className="group relative block rounded-2xl bg-white shadow-pop border border-border hover:-translate-y-2 hover:shadow-glow transition-all duration-300 overflow-hidden"
     >
+      {/* Gradient header */}
       <div className={`p-5 ${variantMap[variant]}`}>
         <div className="flex items-start justify-between">
-          <div className="w-14 h-14 rounded-2xl bg-white/95 text-foreground grid place-items-center border-[3px] border-foreground/90 shadow-sticker group-hover:rotate-[-6deg] transition-transform">
-            <Icon className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center group-hover:scale-110 transition-transform">
+            <Icon className="w-6 h-6 text-white" />
           </div>
-          <span className="bg-white text-foreground text-xs font-pixel px-2 py-1 rounded-full border-2 border-foreground/90">
+          <span className="bg-white/25 backdrop-blur-sm text-white font-pixel px-2.5 py-1 rounded-lg">
             {badge}
           </span>
         </div>
-        <h3 className="mt-4 font-display text-2xl font-bold leading-tight">{title}</h3>
+        <h3 className="mt-4 font-display text-2xl font-bold leading-tight text-white">{title}</h3>
       </div>
+
+      {/* Body */}
       <div className="p-5 flex items-center justify-between gap-3">
-        <p className="text-sm text-foreground/80">{description}</p>
-        <div className="shrink-0 w-10 h-10 rounded-full bg-foreground text-background grid place-items-center group-hover:translate-x-1 transition-transform">
-          <ArrowRight className="w-5 h-5" />
+        <p className="text-sm text-muted-foreground">{description}</p>
+        <div className="shrink-0 w-9 h-9 rounded-full bg-secondary border border-border grid place-items-center group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all">
+          <ArrowRight className="w-4 h-4" />
         </div>
       </div>
     </Link>

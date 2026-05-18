@@ -9,54 +9,71 @@ export type Location = {
   tags: { label: string; color: "sun" | "grass" | "magic" | "flame" | "royal" }[];
 };
 
-const tagColor: Record<string, string> = {
-  sun: "bg-sun text-sun-foreground",
-  grass: "bg-grass text-grass-foreground",
-  magic: "bg-magic text-magic-foreground",
-  flame: "bg-flame text-flame-foreground",
-  royal: "bg-primary text-primary-foreground",
+const tagStyle: Record<string, string> = {
+  sun:   "bg-sun/15 text-sun-foreground border-sun/30",
+  grass: "bg-grass/15 text-grass border-grass/30",
+  magic: "bg-magic/15 text-magic border-magic/30",
+  flame: "bg-flame/15 text-flame border-flame/30",
+  royal: "bg-primary/15 text-primary border-primary/30",
 };
 
 export function LocationCard({ loc }: { loc: Location }) {
   const pct = Math.round(((loc.total - loc.spots) / loc.total) * 100);
+  const isHot = pct >= 80;
   return (
-    <div className="rounded-3xl border-[3px] border-foreground/90 bg-white shadow-pop overflow-hidden flex flex-col">
-      <div className="bg-gradient-sky p-4 flex items-center gap-3 border-b-[3px] border-foreground/90">
-        <div className="w-12 h-12 rounded-2xl bg-white grid place-items-center border-2 border-foreground/90">
-          <MapPin className="w-6 h-6 text-flame" />
+    <div className="rounded-2xl bg-white shadow-pop border border-border overflow-hidden flex flex-col hover:-translate-y-1 transition-transform">
+      {/* Gradient header */}
+      <div className="bg-gradient-royal p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-white/20 grid place-items-center shrink-0">
+          <MapPin className="w-5 h-5 text-white" />
         </div>
-        <div>
-          <div className="font-display text-xl font-bold leading-tight">{loc.name}</div>
-          <div className="text-xs text-foreground/70 font-bold">{loc.age}</div>
+        <div className="flex-1 min-w-0">
+          <div className="font-display text-lg font-bold leading-tight text-white truncate">{loc.name}</div>
+          <div className="text-xs text-white/70 font-semibold">{loc.age}</div>
         </div>
+        {isHot && (
+          <span className="shrink-0 bg-coral text-coral-foreground font-pixel px-2 py-0.5 rounded-lg">
+            Quasi pieno
+          </span>
+        )}
       </div>
+
+      {/* Body */}
       <div className="p-4 flex-1 flex flex-col gap-3">
         <div className="flex flex-wrap gap-1.5">
           {loc.tags.map((t) => (
             <span
               key={t.label}
-              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border-2 border-foreground/90 ${tagColor[t.color]}`}
+              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-lg border ${tagStyle[t.color]}`}
             >
               {t.label}
             </span>
           ))}
         </div>
 
-        <div className="flex items-center gap-3 text-sm font-bold">
-          <span className="inline-flex items-center gap-1"><Calendar className="w-4 h-4 text-magic" />{loc.weeks} settimane</span>
-          <span className="inline-flex items-center gap-1"><Users className="w-4 h-4 text-grass" />{loc.spots} posti</span>
+        <div className="flex items-center gap-4 text-sm font-semibold">
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="w-4 h-4 text-magic" />{loc.weeks} settimane
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Users className="w-4 h-4 text-grass" />{loc.spots} posti
+          </span>
         </div>
 
         <div>
-          <div className="flex justify-between text-xs font-bold mb-1">
-            <span>Riempimento</span><span>{pct}%</span>
+          <div className="flex justify-between text-xs font-semibold mb-1.5">
+            <span className="text-muted-foreground">Disponibilità</span>
+            <span className={isHot ? "text-coral font-bold" : "text-muted-foreground"}>{pct}% prenotato</span>
           </div>
-          <div className="h-3 bg-secondary rounded-full overflow-hidden border-2 border-foreground/90">
-            <div className="h-full bg-gradient-sun" style={{ width: `${pct}%` }} />
+          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${isHot ? "bg-gradient-flame" : "bg-gradient-royal"}`}
+              style={{ width: `${pct}%` }}
+            />
           </div>
         </div>
 
-        <button className="mt-2 w-full bg-gradient-magic text-magic-foreground rounded-2xl border-[3px] border-foreground/90 py-2.5 font-display font-bold shadow-sticker hover:-translate-y-0.5 transition-transform">
+        <button className="mt-1 w-full bg-gradient-magic text-magic-foreground rounded-xl py-2.5 font-display font-bold shadow-sticker hover:scale-[1.02] transition-transform">
           Iscriviti
         </button>
       </div>

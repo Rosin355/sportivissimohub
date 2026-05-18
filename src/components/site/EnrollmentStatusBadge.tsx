@@ -2,19 +2,19 @@ export type EnrollmentStatus =
   | "bozza" | "inviata" | "revisione" | "confermata" | "attesa-pagamento" | "lista-attesa";
 
 const map: Record<EnrollmentStatus, { label: string; cls: string }> = {
-  "bozza":             { label: "Bozza",            cls: "bg-secondary text-foreground" },
-  "inviata":           { label: "Inviata",          cls: "bg-sky text-sky-foreground" },
-  "revisione":         { label: "In revisione",     cls: "bg-sun text-sun-foreground" },
-  "confermata":        { label: "Confermata",       cls: "bg-grass text-grass-foreground" },
-  "attesa-pagamento":  { label: "Attesa pagamento", cls: "bg-flame text-flame-foreground" },
-  "lista-attesa":      { label: "Lista d'attesa",   cls: "bg-magic text-magic-foreground" },
+  "bozza":            { label: "Bozza",            cls: "bg-secondary text-muted-foreground border-border" },
+  "inviata":          { label: "Inviata",          cls: "bg-sky/15 text-sky border-sky/30" },
+  "revisione":        { label: "In revisione",     cls: "bg-sun/20 text-sun-foreground border-sun/40" },
+  "confermata":       { label: "Confermata",       cls: "bg-grass/15 text-grass border-grass/30" },
+  "attesa-pagamento": { label: "Attesa pagamento", cls: "bg-flame/15 text-flame border-flame/30" },
+  "lista-attesa":     { label: "Lista d'attesa",   cls: "bg-magic/15 text-magic border-magic/30" },
 };
 
 export function EnrollmentStatusBadge({ status }: { status: EnrollmentStatus }) {
   const s = map[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border border-foreground/15 shadow-card ${s.cls}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" /> {s.label}
+    <span className={`inline-flex items-center gap-1.5 font-pixel px-2.5 py-1 rounded-lg border ${s.cls}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current" /> {s.label}
     </span>
   );
 }

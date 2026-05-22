@@ -1,6 +1,8 @@
-import { MapPin, Users, Calendar } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { MapPin, Users, Calendar, ArrowRight } from "lucide-react";
 
 export type Location = {
+  slug: string;
   name: string;
   age: string;
   weeks: number;
@@ -21,7 +23,11 @@ export function LocationCard({ loc }: { loc: Location }) {
   const pct = Math.round(((loc.total - loc.spots) / loc.total) * 100);
   const isHot = pct >= 80;
   return (
-    <div className="rounded-2xl bg-white shadow-pop border border-border overflow-hidden flex flex-col hover:-translate-y-1 transition-transform">
+    <Link
+      to="/centri-estivi/$slug"
+      params={{ slug: loc.slug }}
+      className="group rounded-2xl bg-white shadow-pop border border-border overflow-hidden flex flex-col hover:-translate-y-1 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
       {/* Gradient header */}
       <div className="bg-gradient-royal p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-white/20 grid place-items-center shrink-0">
@@ -73,10 +79,10 @@ export function LocationCard({ loc }: { loc: Location }) {
           </div>
         </div>
 
-        <button className="mt-1 w-full bg-gradient-magic text-magic-foreground rounded-xl py-2.5 font-display font-bold shadow-sticker hover:scale-[1.02] transition-transform">
-          Iscriviti
-        </button>
+        <span className="mt-1 w-full bg-gradient-magic text-magic-foreground rounded-xl py-2.5 font-display font-bold shadow-sticker group-hover:scale-[1.02] transition-transform inline-flex items-center justify-center gap-2">
+          Scopri & iscriviti <ArrowRight className="w-4 h-4" />
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }

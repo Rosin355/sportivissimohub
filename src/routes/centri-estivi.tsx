@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { LocationCard, type Location } from "@/components/site/LocationCard";
+import { LocationCard } from "@/components/site/LocationCard";
+import { LOCATIONS, locationCardSummary } from "@/data/locations";
 
 export const Route = createFileRoute("/centri-estivi")({
   head: () => ({
@@ -13,17 +14,7 @@ export const Route = createFileRoute("/centri-estivi")({
   component: CentriEstiviPage,
 });
 
-const locations: Location[] = [
-  { name: "Galzignano Terme",         age: "6-13 anni", weeks: 8, spots: 14, total: 60, tags: [{ label: "Sport", color: "flame" }, { label: "Piscina", color: "royal" }, { label: "Natura", color: "grass" }] },
-  { name: "Castegnero Champions Camp", age: "8-14 anni", weeks: 6, spots: 22, total: 50, tags: [{ label: "Calcio", color: "grass" }, { label: "Squadra", color: "magic" }] },
-  { name: "S. Pietro Viminario",      age: "5-11 anni", weeks: 7, spots: 9,  total: 45, tags: [{ label: "Creatività", color: "magic" }, { label: "Giochi", color: "sun" }] },
-  { name: "Vo' Euganeo",              age: "6-12 anni", weeks: 5, spots: 18, total: 40, tags: [{ label: "Natura", color: "grass" }, { label: "Avventura", color: "flame" }] },
-  { name: "Asigliano Veneto",         age: "5-11 anni", weeks: 4, spots: 12, total: 35, tags: [{ label: "Sport", color: "flame" }, { label: "Creatività", color: "magic" }] },
-  { name: "Sossano",                  age: "6-13 anni", weeks: 6, spots: 7,  total: 40, tags: [{ label: "Piscina", color: "royal" }, { label: "Giochi di squadra", color: "sun" }] },
-  { name: "Orgiano",                  age: "5-12 anni", weeks: 5, spots: 16, total: 38, tags: [{ label: "Sport", color: "flame" }, { label: "Natura", color: "grass" }] },
-  { name: "Noventa Vicentina",        age: "6-13 anni", weeks: 7, spots: 20, total: 55, tags: [{ label: "Multisport", color: "magic" }, { label: "Piscina", color: "royal" }] },
-  { name: "Bastia / Frassanelle",     age: "7-14 anni", weeks: 5, spots: 11, total: 45, tags: [{ label: "Avventura", color: "flame" }, { label: "Natura", color: "grass" }] },
-];
+const locations = LOCATIONS.map(locationCardSummary);
 
 function CentriEstiviPage() {
   return (
@@ -52,7 +43,7 @@ function CentriEstiviPage() {
 
         <section className="container mx-auto px-4 py-12">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {locations.map((l) => <LocationCard key={l.name} loc={l} />)}
+            {locations.map((l) => <LocationCard key={l.slug} loc={l} />)}
           </div>
         </section>
       </main>

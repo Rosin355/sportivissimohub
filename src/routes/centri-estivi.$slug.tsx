@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { LevelStep } from "@/components/site/LevelStep";
-import { getLocationBySlug } from "@/data/locations";
+import { getLocationBySlug, type Location } from "@/data/locations";
 import {
   MapPin, Calendar, Clock, Wallet, ShieldCheck, FileText, Phone, Mail, Users,
   CheckCircle2, ArrowRight, MessageCircle, Sun, Trophy, UtensilsCrossed, Palette, Users2, Heart,
@@ -72,7 +72,7 @@ const iconForDayBlock = {
 } as const;
 
 function LocationDetailPage() {
-  const loc = Route.useLoaderData();
+  const loc = Route.useLoaderData() as Location;
   const available = Math.max(loc.totalSpots - loc.bookedSpots, 0);
   const pct = Math.round((loc.bookedSpots / loc.totalSpots) * 100);
 

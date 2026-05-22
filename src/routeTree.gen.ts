@@ -16,6 +16,7 @@ import { Route as AreaGenitoriRouteImport } from './routes/area-genitori'
 import { Route as AreaAdminRouteImport } from './routes/area-admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi.$slug'
+import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi.$slug.iscrizione'
 
 const ComeFunzionaRoute = ComeFunzionaRouteImport.update({
   id: '/come-funziona',
@@ -52,6 +53,12 @@ const CentriEstiviSlugRoute = CentriEstiviSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => CentriEstiviRoute,
 } as any)
+const CentriEstiviSlugIscrizioneRoute =
+  CentriEstiviSlugIscrizioneRouteImport.update({
+    id: '/iscrizione',
+    path: '/iscrizione',
+    getParentRoute: () => CentriEstiviSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,7 +67,8 @@ export interface FileRoutesByFullPath {
   '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRouteWithChildren
   '/come-funziona': typeof ComeFunzionaRoute
-  '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
+  '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
+  '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +77,8 @@ export interface FileRoutesByTo {
   '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRouteWithChildren
   '/come-funziona': typeof ComeFunzionaRoute
-  '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
+  '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
+  '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +88,8 @@ export interface FileRoutesById {
   '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRouteWithChildren
   '/come-funziona': typeof ComeFunzionaRoute
-  '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
+  '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
+  '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/centri-estivi'
     | '/come-funziona'
     | '/centri-estivi/$slug'
+    | '/centri-estivi/$slug/iscrizione'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '/centri-estivi'
     | '/come-funziona'
     | '/centri-estivi/$slug'
+    | '/centri-estivi/$slug/iscrizione'
   id:
     | '__root__'
     | '/'
@@ -109,6 +121,7 @@ export interface FileRouteTypes {
     | '/centri-estivi'
     | '/come-funziona'
     | '/centri-estivi/$slug'
+    | '/centri-estivi/$slug/iscrizione'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,15 +184,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CentriEstiviSlugRouteImport
       parentRoute: typeof CentriEstiviRoute
     }
+    '/centri-estivi/$slug/iscrizione': {
+      id: '/centri-estivi/$slug/iscrizione'
+      path: '/iscrizione'
+      fullPath: '/centri-estivi/$slug/iscrizione'
+      preLoaderRoute: typeof CentriEstiviSlugIscrizioneRouteImport
+      parentRoute: typeof CentriEstiviSlugRoute
+    }
   }
 }
 
+interface CentriEstiviSlugRouteChildren {
+  CentriEstiviSlugIscrizioneRoute: typeof CentriEstiviSlugIscrizioneRoute
+}
+
+const CentriEstiviSlugRouteChildren: CentriEstiviSlugRouteChildren = {
+  CentriEstiviSlugIscrizioneRoute: CentriEstiviSlugIscrizioneRoute,
+}
+
+const CentriEstiviSlugRouteWithChildren =
+  CentriEstiviSlugRoute._addFileChildren(CentriEstiviSlugRouteChildren)
+
 interface CentriEstiviRouteChildren {
-  CentriEstiviSlugRoute: typeof CentriEstiviSlugRoute
+  CentriEstiviSlugRoute: typeof CentriEstiviSlugRouteWithChildren
 }
 
 const CentriEstiviRouteChildren: CentriEstiviRouteChildren = {
-  CentriEstiviSlugRoute: CentriEstiviSlugRoute,
+  CentriEstiviSlugRoute: CentriEstiviSlugRouteWithChildren,
 }
 
 const CentriEstiviRouteWithChildren = CentriEstiviRoute._addFileChildren(
@@ -197,3 +228,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { EnrollmentStatusBadge } from "@/components/site/EnrollmentStatusBadge";
 import { GamifiedProgressBar } from "@/components/site/GamifiedProgressBar";
 import { Bell, FileCheck2, CreditCard, Plus, User, Heart, Trophy } from "lucide-react";
+import { getEnrollments, type Enrollment } from "@/data/enrollments";
 
 export const Route = createFileRoute("/area-genitori")({
   head: () => ({ meta: [{ title: "Area Genitori — Sportivissimo" }] }),
@@ -11,6 +13,12 @@ export const Route = createFileRoute("/area-genitori")({
 });
 
 function AreaGenitori() {
+  const [list, setList] = useState<Enrollment[]>([]);
+  useEffect(() => { setList(getEnrollments()); }, []);
+
+  const docOk = list.reduce((acc, e) => acc + e.documents.length, 0);
+  const docTotal = list.length * 3;
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteNav />
@@ -29,26 +37,48 @@ function AreaGenitori() {
             <h1 className="font-display text-3xl font-bold text-white">Bentornata, Giulia!</h1>
             <p className="text-sm text-white/65 mt-0.5">Hai sbloccato il livello "Famiglia Esperta" 🏆</p>
           </div>
-          <button className="relative bg-gradient-flame text-flame-foreground border-0 rounded-xl px-5 py-3 font-display font-bold shadow-sticker inline-flex items-center gap-2 hover:scale-105 transition-transform">
+          <Link to="/centri-estivi" className="relative bg-gradient-flame text-flame-foreground border-0 rounded-xl px-5 py-3 font-display font-bold shadow-sticker inline-flex items-center gap-2 hover:scale-105 transition-transform">
             <Plus className="w-4 h-4" /> Nuova iscrizione
-          </button>
+          </Link>
         </div>
 
         {/* Stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          <StatCard gradient="bg-gradient-grass" icon={<Heart className="w-5 h-5" />}        label="Figli registrati"    value="2" />
-          <StatCard gradient="bg-gradient-sun"   icon={<Trophy className="w-5 h-5" />}       label="Iscrizioni attive"   value="3" />
-          <StatCard gradient="bg-gradient-magic" icon={<FileCheck2 className="w-5 h-5" />}   label="Documenti OK"        value="6/7" />
-          <StatCard gradient="bg-gradient-royal" icon={<CreditCard className="w-5 h-5" />}   label="Pagamenti in regola" value="100%" />
+          <StatCard gradient="bg-gradient-grass" icon={<Heart className="w-5 h-5" />}      label="Figli registrati"  value={String(new Set(list.map((e) => e.child.firstName + e.child.lastName)).size || 0)} />
+          <StatCard gradient="bg-gradient-sun"   icon={<Trophy className="w-5 h-5" />}     label="Iscrizioni attive" value={String(list.filter((e) => e.status !== "annullata").length)} />
+          <StatCard gradient="bg-gradient-magic" icon={<FileCheck2 className="w-5 h-5" />} label="Documenti caricati" value={`${docOk}/${docTotal || 0}`} />
+          <StatCard gradient="bg-gradient-royal" icon={<CreditCard className="w-5 h-5" />} label="Confermate"        value={String(list.filter((e) => e.status === "confermata").length)} />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6 mt-8">
           {/* Iscrizioni */}
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="font-display text-2xl font-bold">Iscrizioni in corso</h2>
-            <EnrollmentRow child="Marco, 9 anni" location="Galzignano Terme · sett. 24-28 giu" status="confermata"        progress={100} />
-            <EnrollmentRow child="Marco, 9 anni" location="Galzignano Terme · sett. 1-5 lug"  status="attesa-pagamento"  progress={75} />
-            <EnrollmentRow child="Sofia, 6 anni" location="Vo' Euganeo · sett. 8-12 lug"      status="revisione"         progress={60} />
+            <h2 className="font-display text-2xl font-bold">Le tue iscrizioni</h2>
+            {list.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border bg-white p-6 text-center">
+                <p className="text-muted-foreground mb-3">Non hai ancora iscrizioni. Scegli una sede e parti con la prima missione!</p>
+                <Link to="/centri-estivi" className="inline-flex items-center gap-2 bg-gradient-flame text-flame-foreground rounded-xl px-5 py-2.5 font-display font-bold shadow-sticker">
+                  <Plus className="w-4 h-4" /> Iscrivi un bambino
+                </Link>
+              </div>
+            )}
+            {list.map((e) => {
+              const progress =
+                e.status === "confermata" ? 100 :
+                e.status === "attesa-pagamento" ? 80 :
+                e.status === "revisione" ? 60 :
+                e.status === "documenti-mancanti" ? 45 :
+                e.status === "nuova" ? 30 : 50;
+              return (
+                <EnrollmentRow
+                  key={e.id}
+                  child={`${e.child.firstName}, ${e.child.age} anni`}
+                  location={`${e.session.locationName} · ${e.session.weekLabels.join(", ") || "—"}`}
+                  status={e.status}
+                  progress={progress}
+                />
+              );
+            })}
           </div>
 
           {/* Comunicazioni */}

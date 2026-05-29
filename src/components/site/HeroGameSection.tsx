@@ -42,8 +42,8 @@ export function HeroGameSection() {
       </section>
 
       {/* Stats Banner */}
-      <div className="relative z-20 max-w-5xl mx-auto px-6 -mt-24">
-        <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 flex flex-col md:flex-row justify-around items-center gap-8">
+      <div className="relative z-20 max-w-6xl mx-auto px-6 mt-12 md:mt-16 mb-12">
+        <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 flex flex-col md:flex-row justify-around items-center gap-8">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" strokeWidth={1.5} />

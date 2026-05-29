@@ -17,7 +17,7 @@ function AreaGenitori() {
       <main className="flex-1 container mx-auto px-4 py-10">
 
         {/* Header genitore */}
-        <div className="rounded-2xl bg-gradient-hero text-white p-6 shadow-pop flex items-center gap-4 flex-wrap relative overflow-hidden">
+        <div className="rounded-2xl bg-gradient-cta-banner text-white p-6 shadow-pop flex items-center gap-4 flex-wrap relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-magic/25 blur-[60px]" />
           </div>

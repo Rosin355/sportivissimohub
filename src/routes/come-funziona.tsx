@@ -20,22 +20,18 @@ function ComeFunzionaPage() {
       <SiteNav />
       <main className="flex-1">
         {/* Page hero */}
-        <section className="bg-gradient-hero py-16 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-magic/20 blur-[90px]" />
-          </div>
-          <div className="container mx-auto px-4 text-center relative">
-            <span className="inline-flex items-center bg-white/15 border border-white/20 rounded-xl px-3 py-1 font-pixel text-white mb-4">
+        <section className="bg-gradient-sky border-b border-border py-16">
+          <div className="container mx-auto px-4 text-center">
+            <span className="inline-flex items-center bg-primary/10 text-primary border border-primary/20 rounded-xl px-3 py-1 font-pixel mb-4">
               Come funziona
             </span>
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-white mt-2">
+            <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mt-2">
               Iscrizione in <span className="text-flame">5 livelli</span>
             </h1>
-            <p className="mt-3 max-w-xl mx-auto text-white/65">
+            <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
               Un percorso semplice e guidato. Ogni passo sblocca il successivo.
             </p>
           </div>
-          <div className="h-6 bg-gradient-to-b from-transparent to-background mt-8" />
         </section>
 
         <section className="container mx-auto px-4 py-12">

@@ -101,7 +101,8 @@
   --coral-foreground: oklch(0.99 0 0);
 
   /* Modern gradient system */
-  --gradient-hero: linear-gradient(135deg, oklch(0.20 0.09 268) 0%, oklch(0.17 0.07 282) 55%, oklch(0.22 0.13 308) 100%);
+  --gradient-hero: linear-gradient(160deg, oklch(0.93 0.03 228) 0%, oklch(0.97 0.015 240) 55%, oklch(1 0 0) 100%);
+  --gradient-cta-banner: linear-gradient(135deg, oklch(0.28 0.10 265) 0%, oklch(0.22 0.12 278) 100%);
   --gradient-sky: linear-gradient(160deg, oklch(0.94 0.025 258) 0%, oklch(0.99 0.004 255) 100%);
   --gradient-sun: linear-gradient(135deg, var(--sun), oklch(0.80 0.22 55));
   --gradient-grass: linear-gradient(135deg, var(--grass), oklch(0.76 0.18 143));
@@ -134,7 +135,8 @@
   .font-hand { font-family: var(--font-hand); }
   .font-script { font-family: var(--font-script); }
 
-  .bg-gradient-hero  { background: var(--gradient-hero); }
+  .bg-gradient-hero       { background: var(--gradient-hero); }
+  .bg-gradient-cta-banner { background: var(--gradient-cta-banner); }
   .bg-gradient-sky   { background: var(--gradient-sky); }
   .bg-gradient-sun   { background: var(--gradient-sun); }
   .bg-gradient-grass { background: var(--gradient-grass); }

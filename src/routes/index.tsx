@@ -256,7 +256,7 @@ function SectionTitle({
 }) {
   return (
     <div className="text-center max-w-3xl mx-auto">
-      <span className="inline-flex items-center bg-primary/10 text-primary border border-primary/20 rounded-xl px-3 py-1 font-pixel">
+      <span className="inline-flex items-center bg-primary/10 text-primary border border-primary/20 rounded-xl px-5 py-2 font-pixel">
         {pill}
       </span>
       <h2 className="font-display text-3xl md:text-5xl font-bold mt-4 leading-tight">{title}</h2>

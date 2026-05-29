@@ -39,7 +39,7 @@ export function HeroGameSection() {
   return (
     <section className="relative overflow-hidden bg-white">
       <div className="container mx-auto px-4 pt-10 pb-4 relative">
-        <div className="grid lg:grid-cols-2 gap-8 items-center min-h-[520px]">
+        <div className="grid lg:grid-cols-[1fr_1.15fr] gap-8 items-center min-h-[560px]">
 
           {/* Left: copy */}
           <div className="animate-pop py-8 relative z-10">
@@ -88,22 +88,28 @@ export function HeroGameSection() {
             </div>
           </div>
 
-          {/* Right: hero illustration — masked with soft curve */}
+          {/* Right: hero illustration — masked with S-curve bottom */}
           <div
-            className="relative lg:absolute lg:inset-y-0 lg:right-0 lg:w-[58%] xl:w-[55%] h-full"
+            className="relative lg:absolute lg:top-0 lg:right-0 lg:w-[62%] xl:w-[60%] lg:h-[calc(100%-40px)]"
             style={{
-              WebkitMaskImage:
-                "radial-gradient(ellipse 140% 110% at 100% 0%, black 70%, transparent 72%)",
-              maskImage:
-                "radial-gradient(ellipse 140% 110% at 100% 0%, black 70%, transparent 72%)",
+              clipPath: "url(#heroMask)",
+              WebkitClipPath: "url(#heroMask)",
             }}
           >
+            <svg width="0" height="0" className="absolute" aria-hidden="true">
+              <defs>
+                <clipPath id="heroMask" clipPathUnits="objectBoundingBox">
+                  {/* Top-left soft curve in + S-curve bottom that rises on the right */}
+                  <path d="M 0.05 0.12 C 0.12 0.04, 0.22 0, 0.32 0 L 1 0 L 1 1 L 0.78 1 C 0.62 1, 0.48 0.92, 0.32 0.94 C 0.18 0.96, 0.08 0.9, 0 0.82 Z" />
+                </clipPath>
+              </defs>
+            </svg>
             <img
               src={heroImg}
               alt="Bambini che giocano a sport all'aperto"
               width={1536}
               height={1024}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-left"
             />
           </div>
         </div>

@@ -8,7 +8,7 @@ import serviceProgettiScuole from "@/assets/service-progetti-scuole.png";
 import serviceCorsiAttivita from "@/assets/service-corsi-attivita.png";
 import {
   ArrowRight, MapPin, Sun, BookOpen, School, Medal,
-  Users,
+  Users, Activity,
   FileText, Check, PartyPopper,
   Smile, Laugh, Handshake, Footprints, Star, Trophy,
   MessageCircle, FolderLock, ShieldCheck, ClipboardList, Award,

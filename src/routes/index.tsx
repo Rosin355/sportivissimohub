@@ -2,9 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { HeroGameSection } from "@/components/site/HeroGameSection";
+import serviceCentriEstivi from "@/assets/service-centri-estivi.png";
+import serviceDoposcuola from "@/assets/service-doposcuola.png";
+import serviceProgettiScuole from "@/assets/service-progetti-scuole.png";
+import serviceCorsiAttivita from "@/assets/service-corsi-attivita.png";
 import {
   ArrowRight, MapPin, Sun, BookOpen, School, Medal,
-  Volleyball, Pencil, Users, Activity,
+  Users,
   FileText, Check, PartyPopper,
   Smile, Laugh, Handshake, Footprints, Star, Trophy,
   MessageCircle, FolderLock, ShieldCheck, ClipboardList, Award,
@@ -22,10 +26,10 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const services = [
-    { icon: Sun,      title: "Centri Estivi",        desc: "Giornate di sport, giochi, laboratori e uscite alla scoperta di nuove passioni.",     accent: "text-blue-500",   tile: "bg-blue-50/50",   illo: Volleyball, illoColor: "text-blue-200",   to: "/centri-estivi" },
-    { icon: BookOpen, title: "Doposcuola",           desc: "Supporto allo studio e attività sportive per crescere insieme, ogni pomeriggio.",     accent: "text-green-500",  tile: "bg-green-50/50",  illo: Pencil,     illoColor: "text-green-200",  to: "/centri-estivi" },
-    { icon: School,   title: "Progetti per le Scuole", desc: "Percorsi educativi e sportivi su misura per scuole di ogni ordine e grado.",         accent: "text-yellow-500", tile: "bg-yellow-50/50", illo: Users,      illoColor: "text-yellow-200", to: "/centri-estivi" },
-    { icon: Medal,    title: "Corsi e Attività",     desc: "Corsi sportivi e attività educative durante tutto l'anno per ogni età.",               accent: "text-orange-500", tile: "bg-orange-50/50", illo: Activity,   illoColor: "text-orange-200", to: "/centri-estivi" },
+    { icon: Sun,      title: "Centri Estivi",          desc: "Giornate di sport, giochi, laboratori e uscite alla scoperta di nuove passioni.", accent: "text-blue-500",   tile: "bg-blue-50/50",   img: serviceCentriEstivi,   to: "/centri-estivi" },
+    { icon: BookOpen, title: "Doposcuola",             desc: "Supporto allo studio e attività sportive per crescere insieme, ogni pomeriggio.", accent: "text-green-500",  tile: "bg-green-50/50",  img: serviceDoposcuola,     to: "/centri-estivi" },
+    { icon: School,   title: "Progetti per le Scuole", desc: "Percorsi educativi e sportivi su misura per scuole di ogni ordine e grado.",     accent: "text-yellow-500", tile: "bg-yellow-50/50", img: serviceProgettiScuole, to: "/centri-estivi" },
+    { icon: Medal,    title: "Corsi e Attività",       desc: "Corsi sportivi e attività educative durante tutto l'anno per ogni età.",         accent: "text-orange-500", tile: "bg-orange-50/50", img: serviceCorsiAttivita,  to: "/centri-estivi" },
   ] as const;
 
   const steps = [
@@ -78,8 +82,13 @@ function HomePage() {
                     <ArrowRight className="w-6 h-6" strokeWidth={1.5} />
                   </div>
                 </div>
-                <div className={`h-48 ${s.tile} mt-6 relative flex items-end justify-center pb-4`}>
-                  <s.illo className={`w-32 h-32 ${s.illoColor} absolute bottom-0`} strokeWidth={1.5} />
+                <div className={`h-48 ${s.tile} mt-6 relative overflow-hidden`}>
+                  <img
+                    src={s.img}
+                    alt={s.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
               </Link>
             ))}

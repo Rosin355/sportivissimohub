@@ -1,105 +1,85 @@
 import { Link } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sportivissimo.jpg";
-import { Rocket, Star, Heart, BookOpen, Sun, ArrowRight } from "lucide-react";
+import { MapPin, ArrowRight, Users, Star } from "lucide-react";
 
 export function HeroGameSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-hero">
-      {/* Ambient glow blobs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-magic/25 blur-[120px]" />
-        <div className="absolute top-[55%] -left-20 w-72 h-72 rounded-full bg-primary/25 blur-[100px]" />
-        <div className="absolute -bottom-20 right-1/3 w-96 h-96 rounded-full bg-flame/15 blur-[100px]" />
+    <section className="relative overflow-hidden bg-gradient-sky">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full bg-primary/10 blur-[100px]" />
+        <div className="absolute bottom-0 -left-20 w-72 h-72 rounded-full bg-flame/10 blur-[100px]" />
       </div>
 
-      <div className="container mx-auto px-4 pt-14 pb-24 relative">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-
+      <div className="container mx-auto px-4 pt-12 pb-20 lg:pt-20 lg:pb-28 relative">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           {/* Left: copy */}
           <div className="animate-pop">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-6">
-              <Sun className="w-3.5 h-3.5 text-sun" />
-              <span className="text-sm font-semibold text-white/90">Stagione 2026 aperta!</span>
-            </div>
-
-            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-white">
-              Dove <span className="text-flame">gioco</span>,{" "}
-              <span className="text-grass">sport</span>
-              <br />e{" "}
-              <span className="text-magic-foreground">crescita</span>
-              <br />diventano{" "}
-              <span className="text-sun">avventura</span>
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] text-foreground">
+              Dove gioco, sport e<br />
+              crescita diventano<br />
+              <span className="relative inline-block text-flame">
+                avventura
+                <svg className="absolute left-0 -bottom-2 w-full" viewBox="0 0 220 12" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M2 8 Q 55 2, 110 7 T 218 6" stroke="oklch(0.88 0.17 88)" strokeWidth="6" strokeLinecap="round" fill="none" />
+                </svg>
+              </span>
             </h1>
 
-            <p className="mt-7 text-lg text-white/65 max-w-xl leading-relaxed">
-              Centri estivi, doposcuola e attività educative per bambini e ragazzi.
-              Semplice per le famiglie, super organizzato per lo staff.
+            <p className="mt-7 text-lg text-muted-foreground max-w-xl leading-relaxed">
+              Centri estivi, doposcuola e attività educative per bambini e ragazzi
+              in un ambiente sicuro, professionale e pieno di entusiasmo.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/area-genitori"
-                className="inline-flex items-center gap-2 bg-gradient-flame text-flame-foreground rounded-xl px-6 py-3.5 font-display text-lg font-bold shadow-pop hover:scale-105 transition-transform"
+                to="/centri-estivi"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-6 py-3.5 font-display font-bold shadow-pop hover:scale-105 transition-transform"
               >
-                <Rocket className="w-5 h-5" /> Iscrivi tuo figlio
+                Iscrivi tuo figlio <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/centri-estivi"
-                className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/25 text-white rounded-xl px-6 py-3.5 font-display text-lg font-bold hover:bg-white/20 transition-colors"
+                className="inline-flex items-center gap-2 bg-white border border-border text-foreground rounded-full px-6 py-3.5 font-display font-bold shadow-card hover:-translate-y-0.5 transition-transform"
               >
-                <Star className="w-5 h-5 text-sun" /> Scopri i centri
+                <MapPin className="w-4 h-4 text-grass" /> Scopri i centri
               </Link>
-              <Link
-                to="/area-genitori"
-                className="inline-flex items-center gap-2 bg-gradient-grass text-grass-foreground rounded-xl px-6 py-3.5 font-display text-lg font-bold shadow-sticker hover:scale-105 transition-transform"
-              >
-                Area genitori <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Mini stats */}
-            <div className="mt-10 flex flex-wrap gap-3">
-              {[
-                { icon: <Star className="w-4 h-4" />, label: "+ 1.200 famiglie" },
-                { icon: <Heart className="w-4 h-4" />, label: "10 sedi nel Veneto" },
-                { icon: <BookOpen className="w-4 h-4" />, label: "12 anni di avventure" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3.5 py-2 text-sm font-semibold text-white"
-                >
-                  <span className="text-sun">{s.icon}</span> {s.label}
-                </div>
-              ))}
             </div>
           </div>
 
-          {/* Right: hero image */}
+          {/* Right: hero image inside organic shape */}
           <div className="relative">
-            <div className="absolute -top-5 -left-5 w-14 h-14 rounded-xl bg-gradient-sun grid place-items-center shadow-pop animate-wiggle z-10">
-              <Sun className="w-6 h-6 text-sun-foreground" />
-            </div>
-            <div
-              className="absolute -bottom-5 -right-5 w-16 h-16 rounded-xl bg-gradient-grass text-grass-foreground grid place-items-center shadow-pop animate-float z-10"
-              style={{ ["--r" as never]: "8deg" } as never}
-            >
-              <Heart className="w-7 h-7" />
-            </div>
-            <div className="rounded-2xl overflow-hidden shadow-pop ring-1 ring-white/10">
+            <div className="absolute inset-0 bg-gradient-grass rounded-[42%_58%_55%_45%/55%_45%_55%_45%] blur-2xl opacity-30 -z-10" />
+            <div className="relative overflow-hidden rounded-[42%_58%_55%_45%/55%_45%_55%_45%] shadow-pop">
               <img
                 src={heroImg}
-                alt="Bambini felici giocano in un mondo educativo gamificato"
-                width={1536}
-                height={1024}
-                className="w-full h-auto"
+                alt="Bambini felici giocano insieme sport e attività"
+                width={1280}
+                height={960}
+                className="w-full h-auto object-cover"
               />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Smooth transition to page background */}
-      <div className="h-6 bg-gradient-to-b from-transparent to-background" />
+        {/* Floating stats card */}
+        <div className="mt-12 lg:mt-16 bg-white rounded-3xl shadow-pop border border-border p-5 sm:p-7 grid sm:grid-cols-3 gap-5 sm:gap-3">
+          {[
+            { icon: Users, color: "bg-primary text-primary-foreground", num: "1.200+", label: "famiglie che ci scelgono" },
+            { icon: MapPin, color: "bg-grass text-grass-foreground", num: "10", label: "sedi nel Veneto" },
+            { icon: Star, color: "bg-sun text-sun-foreground", num: "12", label: "anni di esperienza" },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-4 justify-center sm:justify-start">
+              <div className={`grid place-items-center w-12 h-12 rounded-full shrink-0 ${s.color}`}>
+                <s.icon className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-display text-2xl font-bold text-foreground leading-none">{s.num}</div>
+                <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

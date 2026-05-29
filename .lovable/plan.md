@@ -1,39 +1,31 @@
 ## Obiettivo
-Ridisegnare la sezione hero (prima sezione della homepage) in modo che corrisponda esattamente al mockup allegato, mantenendo testi, link e logica invariati.
-
-## Differenze tra l'attuale e il mockup
-
-**Attuale**
-- Immagine hero racchiusa in una card con bordi arrotondati e ombra, dentro una griglia 2 colonne.
-- Pill "Stagione 2026 aperta!" sopra il titolo.
-- Pulsante primario arancione/scuro con stile `shadow-pop`, secondario con bordo grigio.
-- Card statistiche bianca, centrata, larga max-2xl, badge colorati piccoli con icone quadrate.
-
-**Mockup (target)**
-- Nessuna pill sopra il titolo: si parte direttamente con l'H1.
-- Immagine hero **a tutta altezza sul lato destro**, senza card/ombra/bordi: si fonde col background (sky → erba verde), come illustrazione full-bleed.
-- Pulsante primario blu navy pieno arrotondato (pill), pulsante secondario bianco con bordo blu navy, entrambi pill (rounded-full).
-- Card statistiche **a tutta larghezza del container**, bianca con bordi arrotondati grandi, divisori verticali sottili tra le 3 stat, icone cerchio più grandi, numeri grandi in display bold + label sotto in muted.
-- Stats: "1.200+ famiglie che ci scelgono" / "10 sedi nel Veneto" / "12 anni di esperienza" — numero su riga grande, descrizione su riga sotto.
+Allineare la hero al mockup 2: nuova illustrazione con effetto mask a curva morbida in basso, e dare più respiro alla pill "I nostri servizi".
 
 ## Modifiche
 
-### `src/components/site/HeroGameSection.tsx`
-1. Rimuovere la pill "Stagione 2026 aperta!".
-2. Immagine destra: rimuovere wrapper `rounded-2xl overflow-hidden shadow-pop`; renderla full-bleed che esce verso destra (overflow visibile, oggetto contain in basso). Mantenere `heroImg`.
-3. Pulsanti CTA: 
-   - Primario: `rounded-full bg-primary text-primary-foreground` (blu navy), padding ampio, freccia a destra.
-   - Secondario: `rounded-full bg-white border-2 border-primary text-primary`, con icona `MapPin` rossa/arancione.
-4. Card statistiche: 
-   - Larghezza piena del container (no `max-w-2xl`).
-   - Layout: 3 colonne con `divide-x` per i separatori verticali.
-   - Ogni stat: icona cerchio colorata (più grande, ~w-12 h-12) a sinistra + colonna testo con numero grande (font-display, text-3xl/4xl bold) e label piccola muted sotto.
-   - Posizionata sotto, con leggero overlap sull'immagine (z-10, margine negativo).
+### 1. Nuova immagine hero
+- Copiare `user-uploads://hero_home_image-2.png` in `src/assets/hero-home.png`.
+- In `HeroGameSection.tsx` sostituire l'import `heroImg` con il nuovo asset.
 
-### Nessun altro file modificato
-- `SiteNav.tsx`, link, route, dati: invariati.
-- Testi: invariati ("Dove gioco, sport e crescita diventano avventura", paragrafo, CTA labels, stats).
-- Token colore: usare quelli esistenti in `styles.css` (primary, flame, grass, sun). Nessun colore custom inline.
+### 2. Effetto mask curvo sull'immagine (come mockup)
+Nel mockup l'immagine occupa il lato destro con un bordo curvo morbido in basso/sinistra che la "ritaglia" sopra lo sfondo bianco della pagina, sotto la card stats.
+
+Implementazione in `HeroGameSection.tsx`:
+- Wrapper immagine: rendere il contenitore destro più ampio (full bleed verso destra) con `clip-path` CSS per creare la curva morbida in basso a sinistra:
+  ```
+  style={{ clipPath: "ellipse(120% 95% at 75% 5%)" }}
+  ```
+  oppure usare un SVG mask con curva concava in basso. Tuning della curva fino a corrispondere al mockup.
+- L'immagine `object-cover` per riempire tutto il box mascherato senza spazi bianchi.
+- Sfondo sezione: cambiare `bg-gradient-hero` in bianco/quasi bianco per matchare il mockup 2 (no celeste pieno sotto). Il celeste rimane solo dentro l'immagine.
+
+### 3. Spaziatura pill "I nostri servizi"
+In `src/routes/index.tsx`, componente `SectionTitle`:
+- Aggiungere padding orizzontale maggiore alla pill: da `px-3 py-1` a `px-4 py-1.5` (o `px-5`) per dare più respiro al testo.
+
+### 4. Nessuna altra modifica
+- Testi, link, CTA, stats, logica: invariati.
+- Altre sezioni: invariate.
 
 ## Risultato atteso
-Hero visivamente identica al mockup: titolo grande a sinistra, illustrazione full-bleed a destra che si fonde con lo sfondo, due CTA pill (blu pieno + bianco bordato), card stats a tutta larghezza con 3 colonne separate da divisori.
+Hero identica al mockup 2: illustrazione nuova con bordo curvo morbido in basso, sfondo pagina pulito, pill servizi con padding più generoso.

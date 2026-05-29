@@ -1,23 +1,36 @@
 import { Link } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sportivissimo.jpg";
 import type { LucideIcon } from "lucide-react";
-import { Sun, MapPin, Users, Star } from "lucide-react";
+import { MapPin, Users, Star } from "lucide-react";
 
 type StatVariant = "primary" | "grass" | "sun";
 
-const statCls: Record<StatVariant, string> = {
-  primary: "bg-primary/10 text-primary",
-  grass:   "bg-grass/15 text-grass",
-  sun:     "bg-sun/20 text-sun-foreground",
+const statIconCls: Record<StatVariant, string> = {
+  primary: "bg-primary text-primary-foreground",
+  grass:   "bg-grass text-grass-foreground",
+  sun:     "bg-sun text-sun-foreground",
 };
 
-function StatBadge({ icon: Icon, variant, label }: { icon: LucideIcon; variant: StatVariant; label: string }) {
+function StatBadge({
+  icon: Icon,
+  variant,
+  value,
+  label,
+}: {
+  icon: LucideIcon;
+  variant: StatVariant;
+  value: string;
+  label: string;
+}) {
   return (
-    <div className="flex items-center gap-3">
-      <div className={`w-11 h-11 rounded-xl grid place-items-center shrink-0 ${statCls[variant]}`}>
-        <Icon className="w-5 h-5" />
+    <div className="flex items-center gap-4 px-6 py-2 flex-1 justify-center">
+      <div className={`w-12 h-12 rounded-full grid place-items-center shrink-0 ${statIconCls[variant]}`}>
+        <Icon className="w-6 h-6" />
       </div>
-      <span className="font-display font-bold text-foreground text-base leading-tight">{label}</span>
+      <div className="flex flex-col leading-tight">
+        <span className="font-display text-2xl font-bold text-foreground">{value}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
+      </div>
     </div>
   );
 }
@@ -25,17 +38,11 @@ function StatBadge({ icon: Icon, variant, label }: { icon: LucideIcon; variant: 
 export function HeroGameSection() {
   return (
     <section className="relative overflow-hidden bg-gradient-hero">
-      <div className="container mx-auto px-4 pt-14 pb-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[460px]">
+      <div className="container mx-auto px-4 pt-10 pb-4">
+        <div className="grid lg:grid-cols-2 gap-8 items-center min-h-[520px]">
 
           {/* Left: copy */}
           <div className="animate-pop py-8">
-            {/* Season pill */}
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-full px-4 py-1.5 mb-6">
-              <Sun className="w-3.5 h-3.5 text-flame" />
-              <span className="text-sm font-semibold">Stagione 2026 aperta!</span>
-            </div>
-
             {/* Headline */}
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-foreground">
               Dove gioco, sport e crescita diventano{" "}
@@ -68,39 +75,37 @@ export function HeroGameSection() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/area-genitori"
-                className="inline-flex items-center gap-2 bg-foreground text-background rounded-xl px-6 py-3.5 font-display text-lg font-bold shadow-pop hover:scale-105 transition-transform"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-7 py-3.5 font-display text-lg font-bold shadow-pop hover:scale-105 transition-transform"
               >
                 Iscrivi tuo figlio →
               </Link>
               <Link
                 to="/centri-estivi"
-                className="inline-flex items-center gap-2 border-2 border-foreground/20 text-foreground rounded-xl px-6 py-3.5 font-display text-lg font-bold hover:border-foreground/40 transition-colors"
+                className="inline-flex items-center gap-2 bg-white border-2 border-primary text-primary rounded-full px-7 py-3.5 font-display text-lg font-bold hover:bg-primary/5 transition-colors"
               >
-                <MapPin className="w-5 h-5 text-flame" /> Scopri i centri
+                Scopri i centri <MapPin className="w-5 h-5 text-flame" />
               </Link>
             </div>
           </div>
 
-          {/* Right: hero illustration */}
-          <div className="relative">
-            <div className="rounded-2xl overflow-hidden shadow-pop">
-              <img
-                src={heroImg}
-                alt="Bambini che giocano a sport all'aperto"
-                width={1536}
-                height={1024}
-                className="w-full h-auto object-cover"
-              />
-            </div>
+          {/* Right: hero illustration — full-bleed, no card */}
+          <div className="relative lg:-mr-12 xl:-mr-24">
+            <img
+              src={heroImg}
+              alt="Bambini che giocano a sport all'aperto"
+              width={1536}
+              height={1024}
+              className="w-full h-auto object-contain"
+            />
           </div>
         </div>
 
-        {/* Floating stats card — overlaps the section bottom */}
+        {/* Full-width stats card — overlaps section bottom */}
         <div className="relative z-10 -mb-10">
-          <div className="bg-white rounded-2xl shadow-pop border border-border px-8 py-5 flex flex-wrap gap-8 justify-around max-w-2xl mx-auto">
-            <StatBadge icon={Users}  variant="primary" label="1.200+ famiglie" />
-            <StatBadge icon={MapPin} variant="grass"   label="10 sedi nel Veneto" />
-            <StatBadge icon={Star}   variant="sun"     label="12 anni di esperienza" />
+          <div className="bg-white rounded-3xl shadow-pop border border-border px-4 md:px-8 py-5 flex flex-col sm:flex-row sm:items-stretch sm:divide-x divide-border">
+            <StatBadge icon={Users}  variant="primary" value="1.200+" label="famiglie che ci scelgono" />
+            <StatBadge icon={MapPin} variant="grass"   value="10"     label="sedi nel Veneto" />
+            <StatBadge icon={Star}   variant="sun"     value="12"     label="anni di esperienza" />
           </div>
         </div>
       </div>

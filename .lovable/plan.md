@@ -1,18 +1,13 @@
-## Aggiustamenti finali hero banner
+## Sistemare il banner contatori
 
-### 1. Ridurre altezza della hero
-- Sostituire `h-screen min-h-[640px]` con un'altezza più contenuta (es. `min-h-[520px] h-[70vh] max-h-[700px]`)
-- L'immagine deve adattarsi proporzionalmente alla nuova altezza (`object-cover`, `object-position` centrato o a destra)
+**Problema:** il banner stats (`-mt-24`) si sovrappone ai bottoni CTA della hero, coprendo "Scopri i centri".
 
-### 2. Ingrandire il testo e i bottoni
-- Titolo: aumentare da `text-4xl md:text-5xl lg:text-6xl` a `text-5xl md:text-6xl lg:text-7xl`
-- Sottotitolo: da `text-lg` a `text-xl` o `text-2xl`
-- Bottoni: ingrandire padding e testo (`text-lg` → `text-xl`, `px-7 py-3.5` → `px-8 py-4`)
-- Spaziatura tra elementi (`mt-5`, `mt-8`) da incrementare leggermente per bilanciare il testo più grande
+### Modifiche a `src/components/site/HeroGameSection.tsx`
 
-### 3. Verifica responsive
-- Assicurarsi che su mobile il layout resti leggibile con i font ingranditi
-- Il blocco testo rimane allineato a sinistra sul cielo azzurro dell'immagine
+1. **Rimuovere la sovrapposizione**: cambiare `-mt-24` in un margine positivo (es. `mt-12 md:mt-16`) così il banner si posiziona sotto la hero senza coprire i bottoni.
+2. **Mantenere l'effetto "card che galleggia"**: conservare `rounded-[2rem]`, ombra e bordo attuali.
+3. **Allineare width al contenuto hero**: portare `max-w-5xl` → `max-w-6xl` per coerenza con il contenitore della hero.
+4. **Migliorare padding interno responsive**: `p-8` → `p-6 md:p-8` per evitare contenuto troppo stretto su mobile.
+5. **Spaziatura sotto**: aggiungere `mb-12` per separare dalla sezione successiva.
 
-### File toccato
-- `src/components/site/HeroGameSection.tsx`
+Nessun'altra modifica alla hero o ai testi/bottoni (già approvati).

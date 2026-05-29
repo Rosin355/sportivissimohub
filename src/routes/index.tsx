@@ -86,7 +86,7 @@ function HomePage() {
                   <img
                     src={s.img}
                     alt={s.title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-fill"
                     loading="lazy"
                   />
                   <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />

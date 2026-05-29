@@ -5,7 +5,7 @@ import { ArrowRight, MapPin, Users, Star } from "lucide-react";
 export function HeroGameSection() {
   return (
     <>
-      <section className="relative w-full h-screen min-h-[640px] overflow-hidden">
+      <section className="relative w-full h-[70vh] min-h-[520px] max-h-[720px] overflow-hidden">
         <img
           src={heroImg}
           alt="Bambini che giocano a basket, calcio, corsa e leggono"
@@ -13,28 +13,28 @@ export function HeroGameSection() {
         />
         <div className="relative z-10 h-full max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center">
           <div className="animate-pop w-full max-w-xl">
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl tracking-tight text-slate-900 leading-[1.1]">
+            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl tracking-tight text-slate-900 leading-[1.05]">
               Dove gioco, sport e crescita diventano <br />
               <span className="text-orange-500 relative inline-block">
                 avventura
                 <span className="absolute -bottom-2 left-0 w-full h-2 bg-orange-200 rounded-full -z-10" />
               </span>
             </h1>
-            <p className="mt-5 text-lg text-slate-700 leading-relaxed font-medium max-w-lg">
+            <p className="mt-6 text-xl md:text-2xl text-slate-700 leading-relaxed font-medium max-w-lg">
               Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente sicuro, professionale e pieno di entusiasmo.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Link
                 to="/area-genitori"
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 text-white px-7 py-3.5 text-lg font-medium hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 text-white px-8 py-4 text-xl font-medium hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
-                Iscrivi tuo figlio <ArrowRight className="ml-2 w-5 h-5" strokeWidth={1.5} />
+                Iscrivi tuo figlio <ArrowRight className="ml-2 w-6 h-6" strokeWidth={1.5} />
               </Link>
               <Link
                 to="/centri-estivi"
-                className="inline-flex items-center justify-center rounded-full bg-white border-2 border-slate-200 text-slate-900 px-7 py-3.5 text-lg font-medium hover:border-slate-300 hover:bg-slate-50 transition-all"
+                className="inline-flex items-center justify-center rounded-full bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 text-xl font-medium hover:border-slate-300 hover:bg-slate-50 transition-all"
               >
-                Scopri i centri <MapPin className="ml-2 w-5 h-5" strokeWidth={1.5} />
+                Scopri i centri <MapPin className="ml-2 w-6 h-6" strokeWidth={1.5} />
               </Link>
             </div>
           </div>

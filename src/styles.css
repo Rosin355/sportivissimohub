@@ -2,13 +2,13 @@
 @source "../src";
 @import "tw-animate-css";
 
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Caveat:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chewy&family=Comic+Neue:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Caveat:wght@500;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Nunito', system-ui, sans-serif;
-  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-sans: 'Comic Neue', 'Nunito', system-ui, sans-serif;
+  --font-display: 'Chewy', 'Fredoka', system-ui, cursive;
   --font-pixel: 'Space Grotesk', system-ui, sans-serif;
   --font-hand: 'Space Grotesk', system-ui, sans-serif;
   --font-script: 'Caveat', cursive;

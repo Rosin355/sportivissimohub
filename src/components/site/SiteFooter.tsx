@@ -1,141 +1,108 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin, Phone, Mail, Instagram } from "lucide-react";
-
-function RunnerIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="15" cy="3.5" r="2" />
-      <path d="M9.5 9L13 6.5l3 2.5-2.5 3.5 3 3.5H14l-2.5-3.5L9 15.5H5.5l4-6.5z" />
-      <path d="M6.5 20.5l3-5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
-
-function FacebookIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white" xmlns="http://www.w3.org/2000/svg">
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-    </svg>
-  );
-}
-
-function YoutubeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.4a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
-      <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#1a1a2e" />
-    </svg>
-  );
-}
+import {
+  MapPin, Phone, Mail, Facebook, Instagram, Youtube,
+  PersonStanding, ArrowRight,
+} from "lucide-react";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 bg-foreground text-background">
-      <div className="container mx-auto px-4 py-14 grid gap-8 sm:grid-cols-2 md:grid-cols-5">
-
-        {/* Col 1: Brand */}
-        <div className="sm:col-span-2 md:col-span-1">
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="grid place-items-center w-8 h-8 rounded-full bg-primary shrink-0">
-              <RunnerIcon />
-            </div>
-            <div className="font-display text-base font-bold text-background leading-tight">
-              Sportivissimo A.S.D.
+    <footer className="bg-[#0A2540] text-slate-300 pt-20 pb-10 px-6 lg:px-12 border-t border-slate-800 mt-12">
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+        {/* Brand */}
+        <div>
+          <div className="flex items-center gap-2 mb-6 text-white">
+            <PersonStanding className="w-8 h-8" strokeWidth={1.5} />
+            <div>
+              <h2 className="font-display text-xl tracking-tight leading-none">Sportivissimo</h2>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">A.S.D.</p>
             </div>
           </div>
-          <p className="text-sm text-background/55 leading-relaxed mb-5">
-            Sport, educazione e crescita per bambini e ragazzi nel Veneto.
+          <p className="text-base font-medium text-slate-400 mb-6">
+            Sport, educazione e crescita per bambini e ragazzi.
           </p>
-          {/* Social icons */}
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             {[
-              { icon: <Instagram className="w-4 h-4" />, label: "Instagram" },
-              { icon: <FacebookIcon />,                  label: "Facebook" },
-              { icon: <YoutubeIcon />,                   label: "YouTube" },
-            ].map((s) => (
-              <a
-                key={s.label}
-                href="#"
-                aria-label={s.label}
-                className="w-9 h-9 rounded-lg bg-background/10 hover:bg-background/20 grid place-items-center transition-colors"
-              >
-                {s.icon}
+              { Icon: Facebook,  label: "Facebook"  },
+              { Icon: Instagram, label: "Instagram" },
+              { Icon: Youtube,   label: "YouTube"   },
+            ].map(({ Icon, label }) => (
+              <a key={label} href="#" aria-label={label}
+                 className="w-10 h-10 rounded-full border border-slate-700 flex items-center justify-center hover:bg-slate-800 hover:text-white transition-colors">
+                <Icon className="w-5 h-5" strokeWidth={1.5} />
               </a>
             ))}
           </div>
         </div>
 
-        {/* Col 2: Contatti */}
+        {/* Contatti */}
         <div>
-          <div className="font-pixel text-background/50 mb-4">Contatti</div>
-          <ul className="space-y-2.5 text-sm text-background/65">
-            <li className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-background/35" />
-              Via Roma, 23 · 35010 Limena (PD)
+          <h3 className="font-display text-xl text-white mb-6">Contatti</h3>
+          <ul className="space-y-4 font-medium">
+            <li className="flex gap-3 items-start">
+              <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-slate-500" strokeWidth={1.5} />
+              <span>Via Roma, 23<br />35010 Limena (PD)</span>
             </li>
-            <li className="flex items-center gap-2">
-              <Phone className="w-4 h-4 shrink-0 text-background/35" />
-              049 1234567
+            <li className="flex gap-3 items-center">
+              <Phone className="w-5 h-5 shrink-0 text-slate-500" strokeWidth={1.5} />
+              <span>049 1234567</span>
             </li>
-            <li className="flex items-center gap-2">
-              <Mail className="w-4 h-4 shrink-0 text-background/35" />
-              info@sportivissimoasd.it
+            <li className="flex gap-3 items-center">
+              <Mail className="w-5 h-5 shrink-0 text-slate-500" strokeWidth={1.5} />
+              <span>info@sportivissimoasd.it</span>
             </li>
           </ul>
         </div>
 
-        {/* Col 3: Link utili */}
+        {/* Link utili */}
         <div>
-          <div className="font-pixel text-background/50 mb-4">Link utili</div>
-          <ul className="space-y-2 text-sm">
-            <li><Link to="/centri-estivi" className="text-background/60 hover:text-background transition-colors">Centri Estivi</Link></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors">Doposcuola</a></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors">Progetti per le Scuole</a></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors">Corsi e Attività</a></li>
+          <h3 className="font-display text-xl text-white mb-6">Link utili</h3>
+          <ul className="space-y-3 font-medium">
+            <li><Link to="/centri-estivi" className="hover:text-white transition-colors">Centri Estivi</Link></li>
+            <li><a href="#" className="hover:text-white transition-colors">Doposcuola</a></li>
+            <li><a href="#" className="hover:text-white transition-colors">Progetti per le Scuole</a></li>
+            <li><a href="#" className="hover:text-white transition-colors">Corsi e Attività</a></li>
           </ul>
         </div>
 
-        {/* Col 4: Informazioni */}
+        {/* Informazioni */}
         <div>
-          <div className="font-pixel text-background/50 mb-4">Informazioni</div>
-          <ul className="space-y-2 text-sm">
-            <li><Link to="/come-funziona"  className="text-background/60 hover:text-background transition-colors">Come funziona</Link></li>
-            <li><Link to="/area-genitori"  className="text-background/60 hover:text-background transition-colors">Genitori</Link></li>
-            <li><Link to="/area-staff"     className="text-background/60 hover:text-background transition-colors">Staff</Link></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors">Lavora con noi</a></li>
+          <h3 className="font-display text-xl text-white mb-6">Informazioni</h3>
+          <ul className="space-y-3 font-medium">
+            <li><Link to="/come-funziona" className="hover:text-white transition-colors">Come funziona</Link></li>
+            <li><Link to="/area-genitori" className="hover:text-white transition-colors">Genitori</Link></li>
+            <li><Link to="/area-staff"    className="hover:text-white transition-colors">Staff</Link></li>
+            <li><a href="#" className="hover:text-white transition-colors">Lavora con noi</a></li>
           </ul>
         </div>
 
-        {/* Col 5: Newsletter */}
+        {/* Newsletter */}
         <div>
-          <div className="font-pixel text-background/50 mb-4">Newsletter</div>
-          <p className="text-sm text-background/55 mb-3 leading-relaxed">
-            Rimani aggiornato sulle novità e le offerte.
+          <h3 className="font-display text-xl text-white mb-6">Newsletter</h3>
+          <p className="text-base font-medium text-slate-400 mb-4">
+            Iscriviti per ricevere aggiornamenti e novità sulle attività.
           </p>
-          <div className="flex gap-2">
+          <form className="flex w-full max-w-sm items-center space-x-2" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
               placeholder="La tua email"
-              className="flex-1 min-w-0 rounded-xl bg-background/10 border border-background/15 px-3 py-2 text-sm text-background placeholder:text-background/35 focus:outline-none focus:ring-1 focus:ring-flame"
+              className="flex h-12 w-full rounded-full border border-slate-700 bg-slate-800 px-4 py-2 text-base font-medium text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
             <button
-              type="button"
-              className="bg-flame text-white rounded-xl px-3 py-2 font-bold text-sm hover:bg-flame/90 transition-colors shrink-0"
+              type="submit"
+              aria-label="Iscriviti"
+              className="inline-flex items-center justify-center rounded-full bg-orange-500 text-white w-12 h-12 shrink-0 hover:bg-orange-600 transition-colors"
             >
-              →
+              <ArrowRight className="w-5 h-5" strokeWidth={1.5} />
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="border-t border-background/10 py-4 px-4">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-3 text-sm text-background/35">
-          <span>© {new Date().getFullYear()} Sportivissimo A.S.D. – P.IVA 01234567890</span>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-background/60 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-background/60 transition-colors">Cookie Policy</a>
-          </div>
+      <div className="max-w-[1400px] mx-auto pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-medium text-slate-500">
+        <p>© {new Date().getFullYear()} Sportivissimo A.S.D. - P.IVA 01234567890</p>
+        <div className="flex items-center gap-6">
+          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
         </div>
       </div>
     </footer>

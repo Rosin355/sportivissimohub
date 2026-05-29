@@ -39,7 +39,7 @@ export function HeroGameSection() {
   return (
     <section className="relative overflow-hidden bg-white">
       <div className="container mx-auto px-4 pt-10 pb-4 relative">
-        <div className="grid lg:grid-cols-2 gap-8 items-center min-h-[520px]">
+        <div className="grid lg:grid-cols-[1fr_1.15fr] gap-8 items-center min-h-[560px]">
 
           {/* Left: copy */}
           <div className="animate-pop py-8 relative z-10">
@@ -88,22 +88,22 @@ export function HeroGameSection() {
             </div>
           </div>
 
-          {/* Right: hero illustration — masked with soft curve */}
+          {/* Right: hero illustration — masked with S-curve bottom */}
           <div
-            className="relative lg:absolute lg:inset-y-0 lg:right-0 lg:w-[58%] xl:w-[55%] h-full"
+            className="relative lg:absolute lg:top-0 lg:right-0 lg:w-[62%] xl:w-[60%] lg:h-[calc(100%-40px)]"
             style={{
-              WebkitMaskImage:
-                "radial-gradient(ellipse 140% 110% at 100% 0%, black 70%, transparent 72%)",
-              maskImage:
-                "radial-gradient(ellipse 140% 110% at 100% 0%, black 70%, transparent 72%)",
-            }}
+              clipPath:
+                "path('M 0 80 C 120 30, 260 0, 420 0 L 100% 0 L 100% 100% L 760 100% C 600 100%, 460 90%, 320 92% C 180 94%, 80 88%, 0 78% Z')",
+              WebkitClipPath:
+                "path('M 0 80 C 120 30, 260 0, 420 0 L 100% 0 L 100% 100% L 760 100% C 600 100%, 460 90%, 320 92% C 180 94%, 80 88%, 0 78% Z')",
+            } as React.CSSProperties}
           >
             <img
               src={heroImg}
               alt="Bambini che giocano a sport all'aperto"
               width={1536}
               height={1024}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-left"
             />
           </div>
         </div>

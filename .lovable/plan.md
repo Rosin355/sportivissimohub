@@ -1,13 +1,29 @@
-## Sistemare il banner contatori
+## Sostituire le illustrazioni delle card servizi
 
-**Problema:** il banner stats (`-mt-24`) si sovrappone ai bottoni CTA della hero, coprendo "Scopri i centri".
+Nella home (`src/routes/index.tsx`) le 4 card servizi mostrano icone Lucide (palla, penna, persone, grafico) come illustrazione di sfondo. Le sostituiamo con le 4 immagini caricate, abbinate per nome al servizio corrispondente.
 
-### Modifiche a `src/components/site/HeroGameSection.tsx`
+### Mappatura
+| Card servizio | Immagine caricata |
+|---|---|
+| Centri Estivi | `centri estivi.png` |
+| Doposcuola | `dopo scuola.png` |
+| Progetti per le Scuole | `Progetti per le Scuole.png` |
+| Corsi e Attività | `Corsi e Attività.png` |
 
-1. **Rimuovere la sovrapposizione**: cambiare `-mt-24` in un margine positivo (es. `mt-12 md:mt-16`) così il banner si posiziona sotto la hero senza coprire i bottoni.
-2. **Mantenere l'effetto "card che galleggia"**: conservare `rounded-[2rem]`, ombra e bordo attuali.
-3. **Allineare width al contenuto hero**: portare `max-w-5xl` → `max-w-6xl` per coerenza con il contenitore della hero.
-4. **Migliorare padding interno responsive**: `p-8` → `p-6 md:p-8` per evitare contenuto troppo stretto su mobile.
-5. **Spaziatura sotto**: aggiungere `mb-12` per separare dalla sezione successiva.
+### Modifiche
 
-Nessun'altra modifica alla hero o ai testi/bottoni (già approvati).
+1. **Copiare le 4 immagini** in `src/assets/` con nomi normalizzati:
+   - `src/assets/service-centri-estivi.png`
+   - `src/assets/service-doposcuola.png`
+   - `src/assets/service-progetti-scuole.png`
+   - `src/assets/service-corsi-attivita.png`
+
+2. **`src/routes/index.tsx`**:
+   - Importare le 4 immagini come moduli ES6.
+   - Nell'array `services`, sostituire i campi `illo` (icona Lucide) e `illoColor` con un campo `img` (URL importato).
+   - Nel rendering della card, sostituire l'`<s.illo>` con un `<img src={s.img} alt={s.title} />` che riempie la tile inferiore (`object-cover`, `w-full h-full`, `absolute inset-0`) così l'immagine si adatta bene allo slot da `h-48`.
+   - Rimuovere il padding `pb-4` dal contenitore tile e il `flex items-end justify-center` (non più necessari con immagine full-bleed); mantenere `rounded` e `overflow-hidden` (già garantito dal wrapper della card).
+
+3. **Tinte di sfondo (`s.tile`)**: restano invariate come fallback sotto l'immagine (bordi/transizioni). L'immagine copre interamente l'area quindi non si vedrà, ma manteniamo la classe per evitare flash durante il caricamento.
+
+Nessun'altra modifica alla home, alla hero o ad altre sezioni.

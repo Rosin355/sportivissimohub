@@ -1,59 +1,39 @@
-# Centri Estivi — Dettaglio sede, iscrizione multi-step e gestione admin (solo frontend)
+## Obiettivo
+Ridisegnare la sezione hero (prima sezione della homepage) in modo che corrisponda esattamente al mockup allegato, mantenendo testi, link e logica invariati.
 
-Niente DB/Supabase per ora. Dati delle sedi in un modulo TypeScript statico, iscrizioni salvate in `localStorage` come mock. Stile crayon/cartoon attuale invariato.
+## Differenze tra l'attuale e il mockup
 
-## 1. Dati statici
+**Attuale**
+- Immagine hero racchiusa in una card con bordi arrotondati e ombra, dentro una griglia 2 colonne.
+- Pill "Stagione 2026 aperta!" sopra il titolo.
+- Pulsante primario arancione/scuro con stile `shadow-pop`, secondario con bordo grigio.
+- Card statistiche bianca, centrata, larga max-2xl, badge colorati piccoli con icone quadrate.
 
-- `src/data/locations.ts`: array `LOCATIONS` (9 sedi attuali) con campi completi — slug, nome, comune, indirizzo, fascia età, descrizione, prezzo settimanale, settimane (numero, date, posti), orario giornaliero, attività, badge, servizi inclusi, servizi extra, documenti richiesti, contatti, FAQ, colore tema.
-- `src/data/enrollments.ts`: helper `saveEnrollment` / `getEnrollments` su `localStorage` (chiave `sportivissimo:enrollments`) + tipi `Enrollment`, `EnrollmentStatus`. Seed iniziale con 3–4 iscrizioni demo per popolare l'admin.
+**Mockup (target)**
+- Nessuna pill sopra il titolo: si parte direttamente con l'H1.
+- Immagine hero **a tutta altezza sul lato destro**, senza card/ombra/bordi: si fonde col background (sky → erba verde), come illustrazione full-bleed.
+- Pulsante primario blu navy pieno arrotondato (pill), pulsante secondario bianco con bordo blu navy, entrambi pill (rounded-full).
+- Card statistiche **a tutta larghezza del container**, bianca con bordi arrotondati grandi, divisori verticali sottili tra le 3 stat, icone cerchio più grandi, numeri grandi in display bold + label sotto in muted.
+- Stats: "1.200+ famiglie che ci scelgono" / "10 sedi nel Veneto" / "12 anni di esperienza" — numero su riga grande, descrizione su riga sotto.
 
-## 2. Dettaglio sede
+## Modifiche
 
-- Route `src/routes/centri-estivi.$slug.tsx`: legge da `LOCATIONS` per slug, `notFound()` se mancante.
-- Hero crayon con nome sede, comune, fascia età, badge attività, posti disponibili (progress bar gamificata).
-- Griglia info-card: settimane disponibili, orario, prezzo, servizi inclusi, servizi extra, documenti richiesti.
-- "La giornata tipo" come step orizzontali riutilizzando `LevelStep`.
-- FAQ con `Accordion` shadcn.
-- Card contatti (telefono, email, indirizzo).
-- CTA primaria "Iscrivi tuo figlio" → `/centri-estivi/$slug/iscrizione`. Secondaria "Richiedi informazioni" → mailto.
-- `LocationCard` aggiornata: diventa `<Link to="/centri-estivi/$slug" params={...}>`.
+### `src/components/site/HeroGameSection.tsx`
+1. Rimuovere la pill "Stagione 2026 aperta!".
+2. Immagine destra: rimuovere wrapper `rounded-2xl overflow-hidden shadow-pop`; renderla full-bleed che esce verso destra (overflow visibile, oggetto contain in basso). Mantenere `heroImg`.
+3. Pulsanti CTA: 
+   - Primario: `rounded-full bg-primary text-primary-foreground` (blu navy), padding ampio, freccia a destra.
+   - Secondario: `rounded-full bg-white border-2 border-primary text-primary`, con icona `MapPin` rossa/arancione.
+4. Card statistiche: 
+   - Larghezza piena del container (no `max-w-2xl`).
+   - Layout: 3 colonne con `divide-x` per i separatori verticali.
+   - Ogni stat: icona cerchio colorata (più grande, ~w-12 h-12) a sinistra + colonna testo con numero grande (font-display, text-3xl/4xl bold) e label piccola muted sotto.
+   - Posizionata sotto, con leggero overlap sull'immagine (z-10, margine negativo).
 
-## 3. Form iscrizione multi-step
+### Nessun altro file modificato
+- `SiteNav.tsx`, link, route, dati: invariati.
+- Testi: invariati ("Dove gioco, sport e crescita diventano avventura", paragrafo, CTA labels, stats).
+- Token colore: usare quelli esistenti in `styles.css` (primary, flame, grass, sun). Nessun colore custom inline.
 
-- Route `src/routes/centri-estivi.$slug.iscrizione.tsx`.
-- Componente `EnrollmentWizard` (6 step) + `WizardProgress` con frasi gamificate ("Missione 3 di 6 — sei quasi al traguardo!").
-- `react-hook-form` + `zod` per validazione per-step.
-- Stato persistente in `localStorage` come bozza (`sportivissimo:draft:<slug>`).
-- Step:
-  1. Dati genitore/tutore
-  2. Dati bambino/a (con calcolo età da data nascita)
-  3. Sede (pre-fill read-only) + settimane (checkbox dalla sede) + fascia oraria (radio) + servizi extra
-  4. Delegati al ritiro (field array dinamico "Aggiungi delegato") + consensi (checkbox obbligatori)
-  5. Upload documenti — input file, file salvati come metadata mock (nome + size, niente upload reale)
-  6. Riepilogo + CTA "Invia iscrizione"
-- Submit: `saveEnrollment()` su localStorage con stato `Nuova`, pulisce bozza, mostra schermata conferma allegra (stelle/confetti CSS) + CTA "Torna alle sedi" / "Vai alla mia area".
-
-## 4. Area admin
-
-- Aggiorno `src/routes/area-admin.tsx`: tabella iscrizioni (`getEnrollments`), filtri per sede e stato, badge stato colorati riusando `EnrollmentStatusBadge`.
-- `Sheet` shadcn per dettaglio: dati genitore, bambino, sede, settimane, servizi, consensi, documenti, delegati. Selettore stato che aggiorna localStorage, textarea note admin interne.
-
-## 5. Area genitori
-
-- Aggiorno `src/routes/area-genitori.tsx`: lista iscrizioni demo (tutte quelle in localStorage) con stato, sede, settimane e CTA "Iscrivi un altro bambino" → `/centri-estivi`. Nota: senza auth è demo per tutti.
-
-## 6. Componenti nuovi
-
-- `src/components/site/WizardProgress.tsx`
-- `src/components/site/EnrollmentWizard.tsx` (+ step files in `src/components/site/enrollment/Step*.tsx`)
-- `src/components/site/LocationDetailHero.tsx`
-- `src/components/site/FaqAccordion.tsx`
-
-## Cosa NON cambia
-
-- Homepage, nav, footer, palette, tipografia, hero/level/adventure card.
-- Lista `/centri-estivi`: stesse card, solo cliccabili.
-
-## Backend
-
-Rimandato. Quando si vorrà persistere davvero basterà sostituire i due moduli `src/data/*` con serverFn + Supabase, mantenendo invariati i componenti UI.
+## Risultato atteso
+Hero visivamente identica al mockup: titolo grande a sinistra, illustrazione full-bleed a destra che si fonde con lo sfondo, due CTA pill (blu pieno + bianco bordato), card stats a tutta larghezza con 3 colonne separate da divisori.

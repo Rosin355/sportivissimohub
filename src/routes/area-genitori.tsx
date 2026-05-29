@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
@@ -107,7 +108,7 @@ function AreaGenitori() {
   );
 }
 
-function StatCard({ gradient, icon, label, value }: { gradient: string; icon: React.ReactNode; label: string; value: string }) {
+function StatCard({ gradient, icon, label, value }: { gradient: string; icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white shadow-pop border border-border overflow-hidden">
       <div className={`p-4 ${gradient} flex items-center justify-between`}>

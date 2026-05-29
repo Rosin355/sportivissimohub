@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -301,7 +302,7 @@ function LocationDetailPage() {
   );
 }
 
-function InfoStat({ gradient, icon, label, value }: { gradient: string; icon: React.ReactNode; label: string; value: string }) {
+function InfoStat({ gradient, icon, label, value }: { gradient: string; icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white border border-border shadow-card overflow-hidden flex">
       <div className={`${gradient} grid place-items-center w-14 shrink-0 text-white`}>{icon}</div>

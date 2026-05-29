@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sportivissimo.jpg";
+import type { LucideIcon } from "lucide-react";
 import { Sun, MapPin, Users, Star } from "lucide-react";
 
 type StatVariant = "primary" | "grass" | "sun";
@@ -10,7 +11,7 @@ const statCls: Record<StatVariant, string> = {
   sun:     "bg-sun/20 text-sun-foreground",
 };
 
-function StatBadge({ icon: Icon, variant, label }: { icon: React.ElementType; variant: StatVariant; label: string }) {
+function StatBadge({ icon: Icon, variant, label }: { icon: LucideIcon; variant: StatVariant; label: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className={`w-11 h-11 rounded-xl grid place-items-center shrink-0 ${statCls[variant]}`}>

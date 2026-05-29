@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -11,28 +12,16 @@ import {
   Heart, MessageCircle, FolderLock, ShieldCheck, ListChecks,
 } from "lucide-react";
 
-// ── Illustration assets ──────────────────────────────────────────────────────
-// Drop these PNG files in src/assets/ — see plan for filenames.
-// @ts-expect-error — image asset (added by user)
-import cardCentriEstivi       from "@/assets/card-centri-estivi.png";
-// @ts-expect-error — image asset (added by user)
-import cardDoposcuola         from "@/assets/card-doposcuola.png";
-// @ts-expect-error — image asset (added by user)
-import cardProgettiScuole     from "@/assets/card-progetti-scuole.png";
-// @ts-expect-error — image asset (added by user)
-import cardCorsiAttivita      from "@/assets/card-corsi-attivita.png";
-// @ts-expect-error — image asset (added by user)
-import benefitDivertimento    from "@/assets/benefit-divertimento.png";
-// @ts-expect-error — image asset (added by user)
-import benefitSquadra         from "@/assets/benefit-squadra.png";
-// @ts-expect-error — image asset (added by user)
-import benefitMovimento       from "@/assets/benefit-movimento.png";
-// @ts-expect-error — image asset (added by user)
+import cardCentriEstivi        from "@/assets/card-centri-estivi.png";
+import cardDoposcuola          from "@/assets/card-doposcuola.png";
+import cardProgettiScuole      from "@/assets/card-progetti-scuole.png";
+import cardCorsiAttivita       from "@/assets/card-corsi-attivita.png";
+import benefitDivertimento     from "@/assets/benefit-divertimento.png";
+import benefitSquadra          from "@/assets/benefit-squadra.png";
+import benefitMovimento        from "@/assets/benefit-movimento.png";
 import benefitPiccoleConquiste from "@/assets/benefit-piccole-conquiste.png";
-// @ts-expect-error — image asset (added by user)
-import ctaBoy                 from "@/assets/cta-boy.png";
-// @ts-expect-error — image asset (added by user)
-import ctaGirl                from "@/assets/cta-girl.png";
+import ctaBoy                  from "@/assets/cta-boy.png";
+import ctaGirl                 from "@/assets/cta-girl.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -262,7 +251,7 @@ function SectionTitle({
   subtitle,
 }: {
   pill: string;
-  title: React.ReactNode;
+  title: ReactNode;
   subtitle?: string;
 }) {
   return (

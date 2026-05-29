@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
@@ -134,7 +135,7 @@ function AreaAdmin() {
   );
 }
 
-function KPI({ gradient, icon, label, value, trend }: { gradient: string; icon: React.ReactNode; label: string; value: string; trend: string }) {
+function KPI({ gradient, icon, label, value, trend }: { gradient: string; icon: ReactNode; label: string; value: string; trend: string }) {
   return (
     <div className="rounded-2xl bg-white shadow-pop border border-border overflow-hidden">
       <div className={`p-4 ${gradient} flex items-center justify-between`}>
@@ -252,7 +253,7 @@ function EnrollmentSheet({ enrollment, onClose, onUpdate }: { enrollment: Enroll
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="rounded-2xl border border-border bg-secondary/40 p-4">
       <div className="font-display text-lg font-bold mb-2">{title}</div>

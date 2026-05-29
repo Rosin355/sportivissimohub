@@ -1,3 +1,4 @@
+import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -218,7 +219,7 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) 
   );
 }
 
-function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
+function Field({ label, children, full }: { label: string; children: ReactNode; full?: boolean }) {
   return (
     <div className={full ? "md:col-span-2" : ""}>
       <Label className="font-semibold mb-1.5 block">{label}</Label>
@@ -227,7 +228,7 @@ function Field({ label, children, full }: { label: string; children: React.React
   );
 }
 
-type SetState = React.Dispatch<React.SetStateAction<WizardState>>;
+type SetState = Dispatch<SetStateAction<WizardState>>;
 
 function StepGuardian({ state, setState }: { state: WizardState; setState: SetState }) {
   const g = state.guardian;
@@ -556,7 +557,7 @@ function StepSummary({ state, location }: { state: WizardState; location: Locati
   );
 }
 
-function SummaryCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SummaryCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="rounded-2xl border border-border bg-secondary/40 p-4">
       <div className="font-display text-lg font-bold mb-2">{title}</div>

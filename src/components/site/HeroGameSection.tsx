@@ -39,7 +39,7 @@ export function HeroGameSection() {
   return (
     <section className="relative overflow-hidden bg-white">
       <div className="container mx-auto px-4 pt-10 pb-4 relative">
-        <div className="grid lg:grid-cols-2 gap-8 items-center">
+        <div className="grid lg:grid-cols-[1fr_1.25fr] gap-8 items-center">
 
           {/* Left: copy */}
           <div className="animate-pop py-8 relative z-10">
@@ -89,13 +89,13 @@ export function HeroGameSection() {
           </div>
 
           {/* Right: hero illustration — blob shape already integrated in the asset */}
-          <div className="relative w-full flex items-center justify-center">
+          <div className="relative w-full lg:-mr-[max(1rem,calc((100vw-1280px)/2))]">
             <img
               src={heroImg}
               alt="Bambini che giocano a sport all'aperto"
               width={1536}
               height={1024}
-              className="w-full h-auto object-contain"
+              className="w-full h-auto"
             />
           </div>
         </div>

@@ -1,1 +1,3 @@
-Sostituire l'asset hero con il nuovo upload e rimuovere il clipPath SVG che sta deformando l'immagine (la blob shape è già integrata nell'illustrazione). Tornare a un layout `lg:grid-cols-2` semplice con l'immagine `object-contain` allineata a destra, mantenendo testi, CTA e stats card invariati.
+1. Rigenerare `src/assets/hero-home.png` con sfondo trasparente (via imagegen edit_image, transparent_background=true) per eliminare il riquadro azzurrino attorno alla blob.
+2. In `HeroGameSection.tsx`: cambiare grid in `lg:grid-cols-[1fr_1.25fr]`, aggiungere full-bleed a destra sul wrapper immagine con margine negativo verso il viewport, e usare `w-full h-auto` (no object-contain) per farla scalare grande come nella reference.
+3. Lasciare invariati testi, CTA e stats card.

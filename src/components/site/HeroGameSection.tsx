@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import heroImg from "@/assets/hero-sportivissimo.jpg";
+import heroImg from "@/assets/hero-home.png";
 import type { LucideIcon } from "lucide-react";
 import { MapPin, Users, Star } from "lucide-react";
 
@@ -37,12 +37,12 @@ function StatBadge({
 
 export function HeroGameSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-hero">
-      <div className="container mx-auto px-4 pt-10 pb-4">
+    <section className="relative overflow-hidden bg-white">
+      <div className="container mx-auto px-4 pt-10 pb-4 relative">
         <div className="grid lg:grid-cols-2 gap-8 items-center min-h-[520px]">
 
           {/* Left: copy */}
-          <div className="animate-pop py-8">
+          <div className="animate-pop py-8 relative z-10">
             {/* Headline */}
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-foreground">
               Dove gioco, sport e crescita diventano{" "}
@@ -88,14 +88,22 @@ export function HeroGameSection() {
             </div>
           </div>
 
-          {/* Right: hero illustration — full-bleed, no card */}
-          <div className="relative lg:-mr-12 xl:-mr-24">
+          {/* Right: hero illustration — masked with soft curve */}
+          <div
+            className="relative lg:absolute lg:inset-y-0 lg:right-0 lg:w-[58%] xl:w-[55%] h-full"
+            style={{
+              WebkitMaskImage:
+                "radial-gradient(ellipse 140% 110% at 100% 0%, black 70%, transparent 72%)",
+              maskImage:
+                "radial-gradient(ellipse 140% 110% at 100% 0%, black 70%, transparent 72%)",
+            }}
+          >
             <img
               src={heroImg}
               alt="Bambini che giocano a sport all'aperto"
               width={1536}
               height={1024}
-              className="w-full h-auto object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>

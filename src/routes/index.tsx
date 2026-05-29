@@ -82,14 +82,13 @@ function HomePage() {
                     <ArrowRight className="w-6 h-6" strokeWidth={1.5} />
                   </div>
                 </div>
-                <div className={`h-40 ${s.tile} mt-4 relative overflow-hidden`}>
+                <div className={`h-48 ${s.tile} mt-6 relative overflow-hidden`}>
                   <img
                     src={s.img}
                     alt={s.title}
-                    className="absolute inset-0 w-full h-full object-fill"
+                    className="absolute inset-0 w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
                 </div>
               </Link>
             ))}

@@ -8,51 +8,41 @@ const blobBg =
 export function HeroGameSection() {
   return (
     <>
-      <section className="relative pt-12 pb-32 px-6 lg:px-12 max-w-[1400px] mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
-          <div className="max-w-2xl animate-pop">
-            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl tracking-tight text-slate-900 leading-[1.1]">
+      <section className="relative pt-8 pb-32 px-6 lg:px-12 max-w-[1600px] mx-auto">
+        <div className="grid lg:grid-cols-[1fr_1.4fr] gap-8 items-center relative z-10">
+          <div className="max-w-xl animate-pop">
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl tracking-tight text-slate-900 leading-[1.1]">
               Dove gioco, sport e crescita diventano <br />
               <span className="text-orange-500 relative inline-block">
                 avventura
                 <span className="absolute -bottom-2 left-0 w-full h-2 bg-orange-200 rounded-full -z-10" />
               </span>
             </h1>
-            <p className="mt-6 text-xl text-slate-600 leading-relaxed font-medium max-w-lg">
+            <p className="mt-5 text-lg text-slate-600 leading-relaxed font-medium max-w-lg">
               Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente sicuro, professionale e pieno di entusiasmo.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <Link
                 to="/area-genitori"
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 text-white px-8 py-4 text-xl font-medium hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 text-white px-7 py-3.5 text-lg font-medium hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
                 Iscrivi tuo figlio <ArrowRight className="ml-2 w-5 h-5" strokeWidth={1.5} />
               </Link>
               <Link
                 to="/centri-estivi"
-                className="inline-flex items-center justify-center rounded-full bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 text-xl font-medium hover:border-slate-300 hover:bg-slate-50 transition-all"
+                className="inline-flex items-center justify-center rounded-full bg-white border-2 border-slate-200 text-slate-900 px-7 py-3.5 text-lg font-medium hover:border-slate-300 hover:bg-slate-50 transition-all"
               >
                 Scopri i centri <MapPin className="ml-2 w-5 h-5" strokeWidth={1.5} />
               </Link>
             </div>
           </div>
 
-          <div
-            className="relative h-[400px] lg:h-[600px] w-full flex items-center justify-center bg-no-repeat bg-center-right bg-[size:80%]"
-            style={{
-              backgroundImage: blobBg,
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center right",
-              backgroundSize: "80%",
-            }}
-          >
-            <div className="relative w-full h-full max-w-md mx-auto">
-              <img
-                src={heroImg}
-                alt="Bambini che giocano a basket, calcio, corsa e leggono"
-                className="w-full h-full object-contain drop-shadow-xl"
-              />
-            </div>
+          <div className="relative w-full flex items-center justify-center lg:-mr-12 xl:-mr-24">
+            <img
+              src={heroImg}
+              alt="Bambini che giocano a basket, calcio, corsa e leggono"
+              className="w-full h-auto max-h-[80vh] object-contain drop-shadow-xl"
+            />
           </div>
         </div>
       </section>

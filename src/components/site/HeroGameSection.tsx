@@ -8,9 +8,9 @@ const blobBg =
 export function HeroGameSection() {
   return (
     <>
-      <section className="relative pt-8 pb-32 px-6 lg:px-12 max-w-[1600px] mx-auto">
-        <div className="grid lg:grid-cols-[1fr_1.4fr] gap-8 items-center relative z-10">
-          <div className="max-w-xl animate-pop">
+      <section className="relative pt-8 pb-32">
+        <div className="grid lg:grid-cols-2 gap-8 items-center relative z-10">
+          <div className="animate-pop w-full max-w-[640px] ml-auto px-6 lg:pl-12 lg:pr-8 xl:pl-24">
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl tracking-tight text-slate-900 leading-[1.1]">
               Dove gioco, sport e crescita diventano <br />
               <span className="text-orange-500 relative inline-block">
@@ -37,11 +37,11 @@ export function HeroGameSection() {
             </div>
           </div>
 
-          <div className="relative w-full flex items-center justify-center lg:-mr-12 xl:-mr-24">
+          <div className="relative w-full">
             <img
               src={heroImg}
               alt="Bambini che giocano a basket, calcio, corsa e leggono"
-              className="w-full h-auto max-h-[80vh] object-contain drop-shadow-xl"
+              className="w-full h-auto object-contain object-right drop-shadow-xl"
             />
           </div>
         </div>

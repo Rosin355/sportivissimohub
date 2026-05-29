@@ -92,12 +92,18 @@ export function HeroGameSection() {
           <div
             className="relative lg:absolute lg:top-0 lg:right-0 lg:w-[62%] xl:w-[60%] lg:h-[calc(100%-40px)]"
             style={{
-              clipPath:
-                "path('M 0 80 C 120 30, 260 0, 420 0 L 100% 0 L 100% 100% L 760 100% C 600 100%, 460 90%, 320 92% C 180 94%, 80 88%, 0 78% Z')",
-              WebkitClipPath:
-                "path('M 0 80 C 120 30, 260 0, 420 0 L 100% 0 L 100% 100% L 760 100% C 600 100%, 460 90%, 320 92% C 180 94%, 80 88%, 0 78% Z')",
-            } as React.CSSProperties}
+              clipPath: "url(#heroMask)",
+              WebkitClipPath: "url(#heroMask)",
+            }}
           >
+            <svg width="0" height="0" className="absolute" aria-hidden="true">
+              <defs>
+                <clipPath id="heroMask" clipPathUnits="objectBoundingBox">
+                  {/* Top-left soft curve in + S-curve bottom that rises on the right */}
+                  <path d="M 0.05 0.12 C 0.12 0.04, 0.22 0, 0.32 0 L 1 0 L 1 1 L 0.78 1 C 0.62 1, 0.48 0.92, 0.32 0.94 C 0.18 0.96, 0.08 0.9, 0 0.82 Z" />
+                </clipPath>
+              </defs>
+            </svg>
             <img
               src={heroImg}
               alt="Bambini che giocano a sport all'aperto"

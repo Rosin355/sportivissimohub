@@ -2,15 +2,17 @@ import { Link } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-home.png";
 import { ArrowRight, MapPin, Users, Star } from "lucide-react";
 
-const blobBg =
-  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23F0F9FF' d='M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,97.6,-2.2C98.4,13.6,94.1,29.7,85.2,43.4C76.3,57.1,62.8,68.4,47.8,75.9C32.8,83.4,16.4,87.1,0.6,86C-15.2,84.9,-30.4,79,-44.1,70.9C-57.8,62.8,-70,52.5,-78.5,39.6C-87,26.7,-91.8,11.2,-91.7,-4.3C-91.6,-19.8,-86.6,-35.3,-77.3,-47.9C-68,-60.5,-54.4,-70.2,-40,-77C-25.6,-83.8,-12.8,-87.7,1.2,-89.6C15.2,-91.5,30.5,-83.6,44.7,-76.4Z' transform='translate(100 100) scale(1.1)' /%3E%3C/svg%3E\")";
-
 export function HeroGameSection() {
   return (
     <>
-      <section className="relative pt-8 pb-32">
-        <div className="grid lg:grid-cols-2 gap-8 items-center relative z-10">
-          <div className="animate-pop w-full max-w-[640px] ml-auto px-6 lg:pl-12 lg:pr-8 xl:pl-24">
+      <section className="relative w-full h-screen min-h-[640px] overflow-hidden">
+        <img
+          src={heroImg}
+          alt="Bambini che giocano a basket, calcio, corsa e leggono"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="relative z-10 h-full max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center">
+          <div className="animate-pop w-full max-w-xl">
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl tracking-tight text-slate-900 leading-[1.1]">
               Dove gioco, sport e crescita diventano <br />
               <span className="text-orange-500 relative inline-block">
@@ -18,7 +20,7 @@ export function HeroGameSection() {
                 <span className="absolute -bottom-2 left-0 w-full h-2 bg-orange-200 rounded-full -z-10" />
               </span>
             </h1>
-            <p className="mt-5 text-lg text-slate-600 leading-relaxed font-medium max-w-lg">
+            <p className="mt-5 text-lg text-slate-700 leading-relaxed font-medium max-w-lg">
               Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente sicuro, professionale e pieno di entusiasmo.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -35,14 +37,6 @@ export function HeroGameSection() {
                 Scopri i centri <MapPin className="ml-2 w-5 h-5" strokeWidth={1.5} />
               </Link>
             </div>
-          </div>
-
-          <div className="relative w-full">
-            <img
-              src={heroImg}
-              alt="Bambini che giocano a basket, calcio, corsa e leggono"
-              className="w-full h-auto object-contain object-right drop-shadow-xl"
-            />
           </div>
         </div>
       </section>

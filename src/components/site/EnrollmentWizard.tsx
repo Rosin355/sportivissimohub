@@ -942,26 +942,46 @@ function SuccessScreen({
   location: Location;
   onParents: () => void;
 }) {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const confetti = (await import("canvas-confetti")).default;
+      if (cancelled) return;
+      const end = Date.now() + 1200;
+      const colors = ["#ff6b1a", "#1e3a8a", "#fbbf24", "#22c55e", "#ec4899"];
+      const frame = () => {
+        confetti({
+          particleCount: 4,
+          angle: 60,
+          spread: 65,
+          origin: { x: 0, y: 0.7 },
+          colors,
+          startVelocity: 55,
+        });
+        confetti({
+          particleCount: 4,
+          angle: 120,
+          spread: 65,
+          origin: { x: 1, y: 0.7 },
+          colors,
+          startVelocity: 55,
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.5 },
+        colors,
+      });
+      frame();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   return (
     <div className="rounded-2xl bg-gradient-hero text-white p-10 text-center shadow-pop relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 14 }).map((_, i) => (
-          <span
-            key={i}
-            className="absolute text-2xl animate-float"
-            style={
-              {
-                left: `${(i * 73) % 100}%`,
-                top: `${(i * 41) % 90}%`,
-                animationDelay: `${i * 0.2}s`,
-                "--r": `${(i * 25) % 360}deg`,
-              } as CSSProperties
-            }
-          >
-            {["🎉", "⭐", "🏆", "🎈"][i % 4]}
-          </span>
-        ))}
-      </div>
       <div className="relative">
         <div className="inline-flex items-center gap-2 bg-white/15 border border-white/20 rounded-xl px-4 py-1.5 font-pixel mb-4">
           Iscrizione #{id}

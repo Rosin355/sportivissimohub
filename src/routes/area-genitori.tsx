@@ -56,6 +56,7 @@ import {
 } from "@/lib/enrollments/documents";
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
 import { childSchema } from "@/lib/enrollments/validation";
+import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 
 export const Route = createFileRoute("/area-genitori")({
   beforeLoad: ({ context, location }) => ({
@@ -275,6 +276,19 @@ function EnrollmentCard({
             onChange={onChange}
           />
         ))}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <PdfDownloadButton
+          enrollmentId={enrollment.id}
+          template="tesseramento-acsi"
+          label="Scarica modulo tesseramento"
+        />
+        <PdfDownloadButton
+          enrollmentId={enrollment.id}
+          template="iscrizione"
+          label="Scarica modulo iscrizione"
+        />
       </div>
     </div>
   );

@@ -40,6 +40,7 @@ import {
 } from "@/lib/enrollments/admin";
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
 import { estimateForEnrollment } from "@/lib/enrollments/pricing";
+import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 import type { PaymentStatus } from "@/lib/supabase/types";
 
 export const Route = createFileRoute("/area-admin")({
@@ -568,6 +569,21 @@ function EnrollmentSheet({
                 ))}
               </div>
             )}
+          </Section>
+
+          <Section title="Moduli PDF precompilati">
+            <div className="flex flex-wrap gap-2">
+              <PdfDownloadButton
+                enrollmentId={enrollment.id}
+                template="tesseramento-acsi"
+                label="Modulo tesseramento ACSI"
+              />
+              <PdfDownloadButton
+                enrollmentId={enrollment.id}
+                template="iscrizione"
+                label="Modulo iscrizione"
+              />
+            </div>
           </Section>
 
           <Section title="Note admin (interne)">

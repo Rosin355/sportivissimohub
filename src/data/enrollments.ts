@@ -102,7 +102,7 @@ export type Enrollment = {
 
 /* ---------- query Supabase ---------- */
 
-const ENROLLMENT_SELECT = `
+export const ENROLLMENT_SELECT = `
   id, code, status, location_slug, week_ids, time_slot, extras,
   consent_privacy, consent_photos, consent_outings, consent_rules, consent_data_processing,
   consent_acsi_dati_24, consent_acsi_dati_25, consent_acsi_foto_marketing,
@@ -114,7 +114,7 @@ const ENROLLMENT_SELECT = `
   enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason, storage_path )
 `;
 
-type JoinedRow = {
+export type EnrollmentJoinedRow = {
   id: string;
   code: string;
   status: EnrollmentStatus;
@@ -193,7 +193,7 @@ function calcAge(birthDate: string): number {
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)));
 }
 
-function mapRow(row: JoinedRow): Enrollment {
+export function mapEnrollmentRow(row: EnrollmentJoinedRow): Enrollment {
   const loc = getLocationBySlug(row.location_slug);
   const weekLabels = row.week_ids
     .map((id) => loc?.weeks.find((w) => w.id === id)?.label)
@@ -285,9 +285,9 @@ export async function getEnrollments(): Promise<Enrollment[]> {
     .from("enrollments")
     .select(ENROLLMENT_SELECT)
     .order("created_at", { ascending: false })
-    .returns<JoinedRow[]>();
+    .returns<EnrollmentJoinedRow[]>();
   if (error) throw new Error("Impossibile caricare le iscrizioni.");
-  return (data ?? []).map(mapRow);
+  return (data ?? []).map(mapEnrollmentRow);
 }
 
 export async function getEnrollment(id: string): Promise<Enrollment | undefined> {
@@ -296,9 +296,9 @@ export async function getEnrollment(id: string): Promise<Enrollment | undefined>
     .from("enrollments")
     .select(ENROLLMENT_SELECT)
     .eq("id", id)
-    .maybeSingle<JoinedRow>();
+    .maybeSingle<EnrollmentJoinedRow>();
   if (error) throw new Error("Impossibile caricare l'iscrizione.");
-  return data ? mapRow(data) : undefined;
+  return data ? mapEnrollmentRow(data) : undefined;
 }
 
 // Solo admin (le RLS bloccano gli altri). Scrive anche nell'audit log.

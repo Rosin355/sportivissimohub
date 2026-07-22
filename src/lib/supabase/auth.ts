@@ -3,6 +3,7 @@ import { redirect } from "@tanstack/react-router";
 import { getSupabaseEnv } from "./client";
 import { getSupabaseServerClient } from "./server";
 import type { AppRole } from "./types";
+import { mapAuthError } from "@/lib/auth/errors";
 
 export type AuthState = {
   user: { id: string; email: string };
@@ -54,21 +55,7 @@ export function roleHome(auth: NonNullable<AuthState>): string {
   return "/area-genitori";
 }
 
-// Traduzione in italiano degli errori auth più comuni di Supabase.
+// Traduzione errori auth: delega a mapAuthError (accetta stringa o oggetto).
 export function translateAuthError(message: string): string {
-  const map: Array<[RegExp, string]> = [
-    [/invalid login credentials/i, "Email o password non corretti."],
-    [/email not confirmed/i, "Devi prima confermare l'email: controlla la tua casella di posta."],
-    [/user already registered/i, "Esiste già un account con questa email. Prova ad accedere."],
-    [/password should be at least/i, "La password deve avere almeno 6 caratteri."],
-    [/unable to validate email address/i, "Indirizzo email non valido."],
-    [/rate limit|too many requests/i, "Troppi tentativi: riprova tra qualche minuto."],
-    [/auth session missing/i, "Sessione scaduta o mancante. Accedi di nuovo."],
-    [/same password/i, "La nuova password deve essere diversa da quella attuale."],
-    [/network|fetch/i, "Problema di connessione: controlla la rete e riprova."],
-  ];
-  for (const [re, it] of map) {
-    if (re.test(message)) return it;
-  }
-  return "Si è verificato un errore. Riprova tra qualche istante.";
+  return mapAuthError(message).message;
 }

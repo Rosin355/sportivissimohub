@@ -19,8 +19,8 @@ import { Route as AreaGenitoriRouteImport } from './routes/area-genitori'
 import { Route as AreaAdminRouteImport } from './routes/area-admin'
 import { Route as AggiornaPasswordRouteImport } from './routes/aggiorna-password'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi.$slug'
-import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi.$slug.iscrizione'
+import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi_.$slug'
+import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi_.$slug_.iscrizione'
 
 const PasswordDimenticataRoute = PasswordDimenticataRouteImport.update({
   id: '/password-dimenticata',
@@ -73,15 +73,15 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CentriEstiviSlugRoute = CentriEstiviSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CentriEstiviRoute,
+  id: '/centri-estivi_/$slug',
+  path: '/centri-estivi/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CentriEstiviSlugIscrizioneRoute =
   CentriEstiviSlugIscrizioneRouteImport.update({
-    id: '/iscrizione',
-    path: '/iscrizione',
-    getParentRoute: () => CentriEstiviSlugRoute,
+    id: '/centri-estivi_/$slug_/iscrizione',
+    path: '/centri-estivi/$slug/iscrizione',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -90,12 +90,12 @@ export interface FileRoutesByFullPath {
   '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
   '/area-staff': typeof AreaStaffRoute
-  '/centri-estivi': typeof CentriEstiviRouteWithChildren
+  '/centri-estivi': typeof CentriEstiviRoute
   '/come-funziona': typeof ComeFunzionaRoute
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
-  '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
+  '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesByTo {
@@ -104,12 +104,12 @@ export interface FileRoutesByTo {
   '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
   '/area-staff': typeof AreaStaffRoute
-  '/centri-estivi': typeof CentriEstiviRouteWithChildren
+  '/centri-estivi': typeof CentriEstiviRoute
   '/come-funziona': typeof ComeFunzionaRoute
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
-  '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
+  '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesById {
@@ -119,13 +119,13 @@ export interface FileRoutesById {
   '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
   '/area-staff': typeof AreaStaffRoute
-  '/centri-estivi': typeof CentriEstiviRouteWithChildren
+  '/centri-estivi': typeof CentriEstiviRoute
   '/come-funziona': typeof ComeFunzionaRoute
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
-  '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
-  '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
+  '/centri-estivi_/$slug': typeof CentriEstiviSlugRoute
+  '/centri-estivi_/$slug_/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -168,8 +168,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
-    | '/centri-estivi/$slug'
-    | '/centri-estivi/$slug/iscrizione'
+    | '/centri-estivi_/$slug'
+    | '/centri-estivi_/$slug_/iscrizione'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,11 +178,13 @@ export interface RootRouteChildren {
   AreaAdminRoute: typeof AreaAdminRoute
   AreaGenitoriRoute: typeof AreaGenitoriRoute
   AreaStaffRoute: typeof AreaStaffRoute
-  CentriEstiviRoute: typeof CentriEstiviRouteWithChildren
+  CentriEstiviRoute: typeof CentriEstiviRoute
   ComeFunzionaRoute: typeof ComeFunzionaRoute
   LoginRoute: typeof LoginRoute
   NonAutorizzatoRoute: typeof NonAutorizzatoRoute
   PasswordDimenticataRoute: typeof PasswordDimenticataRoute
+  CentriEstiviSlugRoute: typeof CentriEstiviSlugRoute
+  CentriEstiviSlugIscrizioneRoute: typeof CentriEstiviSlugIscrizioneRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -257,45 +259,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/centri-estivi/$slug': {
-      id: '/centri-estivi/$slug'
-      path: '/$slug'
+    '/centri-estivi_/$slug': {
+      id: '/centri-estivi_/$slug'
+      path: '/centri-estivi/$slug'
       fullPath: '/centri-estivi/$slug'
       preLoaderRoute: typeof CentriEstiviSlugRouteImport
-      parentRoute: typeof CentriEstiviRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/centri-estivi/$slug/iscrizione': {
-      id: '/centri-estivi/$slug/iscrizione'
-      path: '/iscrizione'
+    '/centri-estivi_/$slug_/iscrizione': {
+      id: '/centri-estivi_/$slug_/iscrizione'
+      path: '/centri-estivi/$slug/iscrizione'
       fullPath: '/centri-estivi/$slug/iscrizione'
       preLoaderRoute: typeof CentriEstiviSlugIscrizioneRouteImport
-      parentRoute: typeof CentriEstiviSlugRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface CentriEstiviSlugRouteChildren {
-  CentriEstiviSlugIscrizioneRoute: typeof CentriEstiviSlugIscrizioneRoute
-}
-
-const CentriEstiviSlugRouteChildren: CentriEstiviSlugRouteChildren = {
-  CentriEstiviSlugIscrizioneRoute: CentriEstiviSlugIscrizioneRoute,
-}
-
-const CentriEstiviSlugRouteWithChildren =
-  CentriEstiviSlugRoute._addFileChildren(CentriEstiviSlugRouteChildren)
-
-interface CentriEstiviRouteChildren {
-  CentriEstiviSlugRoute: typeof CentriEstiviSlugRouteWithChildren
-}
-
-const CentriEstiviRouteChildren: CentriEstiviRouteChildren = {
-  CentriEstiviSlugRoute: CentriEstiviSlugRouteWithChildren,
-}
-
-const CentriEstiviRouteWithChildren = CentriEstiviRoute._addFileChildren(
-  CentriEstiviRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -303,11 +282,13 @@ const rootRouteChildren: RootRouteChildren = {
   AreaAdminRoute: AreaAdminRoute,
   AreaGenitoriRoute: AreaGenitoriRoute,
   AreaStaffRoute: AreaStaffRoute,
-  CentriEstiviRoute: CentriEstiviRouteWithChildren,
+  CentriEstiviRoute: CentriEstiviRoute,
   ComeFunzionaRoute: ComeFunzionaRoute,
   LoginRoute: LoginRoute,
   NonAutorizzatoRoute: NonAutorizzatoRoute,
   PasswordDimenticataRoute: PasswordDimenticataRoute,
+  CentriEstiviSlugRoute: CentriEstiviSlugRoute,
+  CentriEstiviSlugIscrizioneRoute: CentriEstiviSlugIscrizioneRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

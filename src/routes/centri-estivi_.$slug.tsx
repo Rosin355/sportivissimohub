@@ -31,7 +31,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-export const Route = createFileRoute("/centri-estivi/$slug")({
+export const Route = createFileRoute("/centri-estivi_/$slug")({
   head: ({ params }) => {
     const loc = getLocationBySlug(params.slug);
     const title = loc

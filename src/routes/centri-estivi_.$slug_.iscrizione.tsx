@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { EnrollmentWizard } from "@/components/site/EnrollmentWizard";
 import { getLocationBySlug, type Location } from "@/data/locations";
 
-export const Route = createFileRoute("/centri-estivi/$slug/iscrizione")({
+export const Route = createFileRoute("/centri-estivi_/$slug_/iscrizione")({
   head: ({ params }) => {
     const loc = getLocationBySlug(params.slug);
     const title = loc

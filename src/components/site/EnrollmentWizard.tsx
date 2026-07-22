@@ -1,4 +1,4 @@
-import type { ReactNode, Dispatch, SetStateAction, CSSProperties } from "react";
+import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouteContext } from "@tanstack/react-router";
 import {

@@ -3,7 +3,10 @@ import type { Database } from "./types";
 
 export function getSupabaseEnv() {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  // Lovable Cloud committa la publishable key con questo nome; in setup
+  // manuali si usa la classica anon key. Sono equivalenti per il client.
+  const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ??
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) as string | undefined;
   if (!url || !anonKey) return null;
   return { url, anonKey };
 }

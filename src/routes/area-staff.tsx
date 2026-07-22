@@ -2,17 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { MapPin, AlertTriangle, UserCheck, UserX, NotebookPen, Users } from "lucide-react";
+import { requireRole } from "@/lib/supabase/auth";
 
 export const Route = createFileRoute("/area-staff")({
+  beforeLoad: ({ context, location }) => {
+    requireRole(context.auth, "staff", location.href);
+  },
   head: () => ({ meta: [{ title: "Area Staff — Sportivissimo" }] }),
   component: AreaStaff,
 });
 
 const children = [
-  { name: "Marco R.",  age: 9,  in: true,  allergy: "Arachidi" },
-  { name: "Sofia B.",  age: 6,  in: true,  allergy: null },
-  { name: "Luca P.",   age: 8,  in: false, allergy: null },
-  { name: "Anna T.",   age: 7,  in: true,  allergy: "Lattosio" },
+  { name: "Marco R.", age: 9, in: true, allergy: "Arachidi" },
+  { name: "Sofia B.", age: 6, in: true, allergy: null },
+  { name: "Luca P.", age: 8, in: false, allergy: null },
+  { name: "Anna T.", age: 7, in: true, allergy: "Lattosio" },
   { name: "Davide F.", age: 10, in: false, allergy: null },
 ];
 
@@ -21,7 +25,6 @@ function AreaStaff() {
     <div className="min-h-screen flex flex-col">
       <SiteNav />
       <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
-
         {/* Sede selector */}
         <div className="rounded-2xl bg-gradient-grass text-grass-foreground p-5 shadow-pop relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-[50px] pointer-events-none" />
@@ -40,7 +43,7 @@ function AreaStaff() {
           <div className="mt-4 grid grid-cols-3 gap-2 text-center relative">
             <Mini label="Iscritti" value="32" />
             <Mini label="Presenti" value="24" />
-            <Mini label="Assenti"  value="8" />
+            <Mini label="Assenti" value="8" />
           </div>
         </div>
 
@@ -50,10 +53,15 @@ function AreaStaff() {
         </h2>
         <div className="space-y-3">
           {children.map((c) => (
-            <div key={c.name} className="rounded-xl border border-border bg-white shadow-card p-4 flex items-center gap-3">
+            <div
+              key={c.name}
+              className="rounded-xl border border-border bg-white shadow-card p-4 flex items-center gap-3"
+            >
               <div
                 className={`w-12 h-12 rounded-xl grid place-items-center font-display font-bold text-lg ${
-                  c.in ? "bg-gradient-grass text-grass-foreground" : "bg-secondary text-muted-foreground"
+                  c.in
+                    ? "bg-gradient-grass text-grass-foreground"
+                    : "bg-secondary text-muted-foreground"
                 }`}
               >
                 {c.name.charAt(0)}
@@ -75,7 +83,15 @@ function AreaStaff() {
                     : "bg-secondary border-border text-muted-foreground hover:bg-secondary/70"
                 }`}
               >
-                {c.in ? <><UserCheck className="w-4 h-4" /> Check-in</> : <><UserX className="w-4 h-4" /> Assente</>}
+                {c.in ? (
+                  <>
+                    <UserCheck className="w-4 h-4" /> Check-in
+                  </>
+                ) : (
+                  <>
+                    <UserX className="w-4 h-4" /> Assente
+                  </>
+                )}
               </button>
             </div>
           ))}

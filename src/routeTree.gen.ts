@@ -9,15 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PasswordDimenticataRouteImport } from './routes/password-dimenticata'
+import { Route as NonAutorizzatoRouteImport } from './routes/non-autorizzato'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComeFunzionaRouteImport } from './routes/come-funziona'
 import { Route as CentriEstiviRouteImport } from './routes/centri-estivi'
 import { Route as AreaStaffRouteImport } from './routes/area-staff'
 import { Route as AreaGenitoriRouteImport } from './routes/area-genitori'
 import { Route as AreaAdminRouteImport } from './routes/area-admin'
+import { Route as AggiornaPasswordRouteImport } from './routes/aggiorna-password'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi.$slug'
 import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi.$slug.iscrizione'
 
+const PasswordDimenticataRoute = PasswordDimenticataRouteImport.update({
+  id: '/password-dimenticata',
+  path: '/password-dimenticata',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NonAutorizzatoRoute = NonAutorizzatoRouteImport.update({
+  id: '/non-autorizzato',
+  path: '/non-autorizzato',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ComeFunzionaRoute = ComeFunzionaRouteImport.update({
   id: '/come-funziona',
   path: '/come-funziona',
@@ -43,6 +62,11 @@ const AreaAdminRoute = AreaAdminRouteImport.update({
   path: '/area-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AggiornaPasswordRoute = AggiornaPasswordRouteImport.update({
+  id: '/aggiorna-password',
+  path: '/aggiorna-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -62,32 +86,44 @@ const CentriEstiviSlugIscrizioneRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aggiorna-password': typeof AggiornaPasswordRoute
   '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
   '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRouteWithChildren
   '/come-funziona': typeof ComeFunzionaRoute
+  '/login': typeof LoginRoute
+  '/non-autorizzato': typeof NonAutorizzatoRoute
+  '/password-dimenticata': typeof PasswordDimenticataRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aggiorna-password': typeof AggiornaPasswordRoute
   '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
   '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRouteWithChildren
   '/come-funziona': typeof ComeFunzionaRoute
+  '/login': typeof LoginRoute
+  '/non-autorizzato': typeof NonAutorizzatoRoute
+  '/password-dimenticata': typeof PasswordDimenticataRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aggiorna-password': typeof AggiornaPasswordRoute
   '/area-admin': typeof AreaAdminRoute
   '/area-genitori': typeof AreaGenitoriRoute
   '/area-staff': typeof AreaStaffRoute
   '/centri-estivi': typeof CentriEstiviRouteWithChildren
   '/come-funziona': typeof ComeFunzionaRoute
+  '/login': typeof LoginRoute
+  '/non-autorizzato': typeof NonAutorizzatoRoute
+  '/password-dimenticata': typeof PasswordDimenticataRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRouteWithChildren
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
@@ -95,46 +131,83 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/aggiorna-password'
     | '/area-admin'
     | '/area-genitori'
     | '/area-staff'
     | '/centri-estivi'
     | '/come-funziona'
+    | '/login'
+    | '/non-autorizzato'
+    | '/password-dimenticata'
     | '/centri-estivi/$slug'
     | '/centri-estivi/$slug/iscrizione'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/aggiorna-password'
     | '/area-admin'
     | '/area-genitori'
     | '/area-staff'
     | '/centri-estivi'
     | '/come-funziona'
+    | '/login'
+    | '/non-autorizzato'
+    | '/password-dimenticata'
     | '/centri-estivi/$slug'
     | '/centri-estivi/$slug/iscrizione'
   id:
     | '__root__'
     | '/'
+    | '/aggiorna-password'
     | '/area-admin'
     | '/area-genitori'
     | '/area-staff'
     | '/centri-estivi'
     | '/come-funziona'
+    | '/login'
+    | '/non-autorizzato'
+    | '/password-dimenticata'
     | '/centri-estivi/$slug'
     | '/centri-estivi/$slug/iscrizione'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AggiornaPasswordRoute: typeof AggiornaPasswordRoute
   AreaAdminRoute: typeof AreaAdminRoute
   AreaGenitoriRoute: typeof AreaGenitoriRoute
   AreaStaffRoute: typeof AreaStaffRoute
   CentriEstiviRoute: typeof CentriEstiviRouteWithChildren
   ComeFunzionaRoute: typeof ComeFunzionaRoute
+  LoginRoute: typeof LoginRoute
+  NonAutorizzatoRoute: typeof NonAutorizzatoRoute
+  PasswordDimenticataRoute: typeof PasswordDimenticataRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/password-dimenticata': {
+      id: '/password-dimenticata'
+      path: '/password-dimenticata'
+      fullPath: '/password-dimenticata'
+      preLoaderRoute: typeof PasswordDimenticataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/non-autorizzato': {
+      id: '/non-autorizzato'
+      path: '/non-autorizzato'
+      fullPath: '/non-autorizzato'
+      preLoaderRoute: typeof NonAutorizzatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/come-funziona': {
       id: '/come-funziona'
       path: '/come-funziona'
@@ -168,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/area-admin'
       fullPath: '/area-admin'
       preLoaderRoute: typeof AreaAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aggiorna-password': {
+      id: '/aggiorna-password'
+      path: '/aggiorna-password'
+      fullPath: '/aggiorna-password'
+      preLoaderRoute: typeof AggiornaPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -219,12 +299,26 @@ const CentriEstiviRouteWithChildren = CentriEstiviRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AggiornaPasswordRoute: AggiornaPasswordRoute,
   AreaAdminRoute: AreaAdminRoute,
   AreaGenitoriRoute: AreaGenitoriRoute,
   AreaStaffRoute: AreaStaffRoute,
   CentriEstiviRoute: CentriEstiviRouteWithChildren,
   ComeFunzionaRoute: ComeFunzionaRoute,
+  LoginRoute: LoginRoute,
+  NonAutorizzatoRoute: NonAutorizzatoRoute,
+  PasswordDimenticataRoute: PasswordDimenticataRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

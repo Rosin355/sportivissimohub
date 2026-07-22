@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { Toaster } from "@/components/ui/sonner";
+import { fetchAuthState, type AuthState } from "@/lib/supabase/auth";
 
 function NotFoundComponent() {
   return (
@@ -69,22 +71,52 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Stato auth condiviso da nav e guardie delle aree riservate. Cache breve per
+  // non chiamare il server a ogni navigazione client-side.
+  beforeLoad: async ({ context }): Promise<{ auth: AuthState }> => {
+    const auth = await context.queryClient.fetchQuery({
+      queryKey: ["auth-state"],
+      queryFn: () => fetchAuthState(),
+      staleTime: 30_000,
+    });
+    return { auth };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Sportivissimo A.S.D." },
-      { name: "description", content: "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi." },
+      {
+        name: "description",
+        content:
+          "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi.",
+      },
       { name: "author", content: "Sportivissimo A.S.D." },
       { property: "og:title", content: "Sportivissimo A.S.D." },
-      { property: "og:description", content: "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi." },
+      {
+        property: "og:description",
+        content:
+          "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Sportivissimo A.S.D." },
-      { name: "twitter:description", content: "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a805976a-f620-48bb-9cbd-038b8c159a0e/id-preview-183fbfd1--667fe259-bf3b-40de-b8aa-81f94050e296.lovable.app-1779122353423.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a805976a-f620-48bb-9cbd-038b8c159a0e/id-preview-183fbfd1--667fe259-bf3b-40de-b8aa-81f94050e296.lovable.app-1779122353423.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Portale gestionale di Sportivissimo A.S.D.: centri estivi, doposcuola e attività educative per bambini e ragazzi.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a805976a-f620-48bb-9cbd-038b8c159a0e/id-preview-183fbfd1--667fe259-bf3b-40de-b8aa-81f94050e296.lovable.app-1779122353423.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a805976a-f620-48bb-9cbd-038b8c159a0e/id-preview-183fbfd1--667fe259-bf3b-40de-b8aa-81f94050e296.lovable.app-1779122353423.png",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -125,6 +157,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <Toaster />
     </QueryClientProvider>
   );
 }

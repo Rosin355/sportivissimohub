@@ -13,10 +13,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/site/PasswordInput";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { translateAuthError } from "@/lib/supabase/auth";
-import { KeyRound } from "lucide-react";
+import { mapAuthError, type MappedAuthError } from "@/lib/auth/errors";
+import {
+  passwordRequirements,
+  passwordMeetsRequirements,
+  passwordStrength,
+} from "@/lib/auth/password";
+import { KeyRound, Check, Circle } from "lucide-react";
 
 // Pagina di destinazione del link email di recupero password: la sessione di
 // recovery viene aperta automaticamente dal client Supabase (?code=... in URL).
@@ -32,7 +37,9 @@ export const Route = createFileRoute("/aggiorna-password")({
 
 const schema = z
   .object({
-    password: z.string().min(8, "La password deve avere almeno 8 caratteri."),
+    password: z
+      .string()
+      .refine(passwordMeetsRequirements, "La password non rispetta i requisiti indicati."),
     confirm: z.string(),
   })
   .refine((d) => d.password === d.confirm, {
@@ -43,23 +50,28 @@ const schema = z
 function UpdatePasswordPage() {
   const router = useRouter();
   const { queryClient } = Route.useRouteContext();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MappedAuthError | null>(null);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { password: "", confirm: "" },
   });
+  const passwordValue = form.watch("password");
 
   async function onSubmit(values: z.infer<typeof schema>) {
     setError(null);
-    const supabase = getSupabaseBrowserClient();
-    const { error: updateError } = await supabase.auth.updateUser({ password: values.password });
-    if (updateError) {
-      setError(translateAuthError(updateError.message));
-      return;
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error: updateError } = await supabase.auth.updateUser({ password: values.password });
+      if (updateError) {
+        setError(mapAuthError(updateError));
+        return;
+      }
+      queryClient.removeQueries({ queryKey: ["auth-state"] });
+      await router.invalidate();
+      router.history.push("/area-genitori");
+    } catch (e) {
+      setError(mapAuthError(e as Error));
     }
-    queryClient.removeQueries({ queryKey: ["auth-state"] });
-    await router.invalidate();
-    router.history.push("/area-genitori");
   }
 
   return (
@@ -81,8 +93,10 @@ function UpdatePasswordPage() {
                   <FormItem>
                     <FormLabel className="font-semibold">Nuova password</FormLabel>
                     <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
+                      <PasswordInput autoComplete="new-password" {...field} />
                     </FormControl>
+                    <StrengthBar value={passwordValue} />
+                    <PasswordChecklist value={passwordValue} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -94,7 +108,7 @@ function UpdatePasswordPage() {
                   <FormItem>
                     <FormLabel className="font-semibold">Conferma password</FormLabel>
                     <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
+                      <PasswordInput autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -102,10 +116,15 @@ function UpdatePasswordPage() {
               />
               {error && (
                 <div className="bg-flame/10 border border-flame/30 text-flame rounded-xl px-4 py-3 text-sm font-semibold">
-                  {error}{" "}
-                  <Link to="/password-dimenticata" className="underline">
-                    Richiedi un nuovo link
-                  </Link>
+                  {error.message}
+                  {(error.kind === "session_missing" || error.kind === "unknown") && (
+                    <>
+                      {" "}
+                      <Link to="/password-dimenticata" className="underline">
+                        Richiedi un nuovo link
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
               <button
@@ -121,6 +140,44 @@ function UpdatePasswordPage() {
         </div>
       </main>
       <SiteFooter />
+    </div>
+  );
+}
+
+function PasswordChecklist({ value }: { value: string }) {
+  return (
+    <ul className="mt-2 space-y-1 text-sm" aria-live="polite">
+      {passwordRequirements.map((r) => {
+        const ok = r.test(value);
+        return (
+          <li
+            key={r.id}
+            className={ok ? "flex items-center gap-2 text-grass" : "flex items-center gap-2 text-muted-foreground"}
+          >
+            {ok ? <Check className="w-4 h-4" /> : <Circle className="w-3 h-3" />}
+            <span>{r.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function StrengthBar({ value }: { value: string }) {
+  const s = passwordStrength(value);
+  if (s.tone === "empty") return null;
+  const toneClass =
+    s.tone === "strong" ? "bg-grass" : s.tone === "medium" ? "bg-sun" : "bg-flame";
+  const toneText =
+    s.tone === "strong" ? "text-grass" : s.tone === "medium" ? "text-sun-foreground" : "text-flame";
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1" aria-hidden="true">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= s.score ? toneClass : "bg-muted"}`} />
+        ))}
+      </div>
+      <p className={`mt-1 text-xs font-semibold ${toneText}`}>Robustezza: {s.label}</p>
     </div>
   );
 }

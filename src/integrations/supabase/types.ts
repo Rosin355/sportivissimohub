@@ -86,44 +86,71 @@ export type Database = {
         Row: {
           allergies: string
           birth_date: string
+          cittadinanza: string | null
+          comune_nascita: string | null
           created_at: string
           first_name: string
-          fiscal_code: string
+          fiscal_code: string | null
           grade: string
+          has_italian_cf: boolean
           id: string
           last_name: string
           medical_notes: string
+          nazione_nascita: string | null
+          nazione_residenza: string | null
+          numero_documento: string | null
           parent_id: string
+          provincia_nascita: string | null
           school: string
+          sesso: Database["public"]["Enums"]["child_sex"] | null
           special_needs: string
+          tipo_documento: string | null
         }
         Insert: {
           allergies?: string
           birth_date: string
+          cittadinanza?: string | null
+          comune_nascita?: string | null
           created_at?: string
           first_name: string
-          fiscal_code: string
+          fiscal_code?: string | null
           grade?: string
+          has_italian_cf?: boolean
           id?: string
           last_name: string
           medical_notes?: string
+          nazione_nascita?: string | null
+          nazione_residenza?: string | null
+          numero_documento?: string | null
           parent_id: string
+          provincia_nascita?: string | null
           school?: string
+          sesso?: Database["public"]["Enums"]["child_sex"] | null
           special_needs?: string
+          tipo_documento?: string | null
         }
         Update: {
           allergies?: string
           birth_date?: string
+          cittadinanza?: string | null
+          comune_nascita?: string | null
           created_at?: string
           first_name?: string
-          fiscal_code?: string
+          fiscal_code?: string | null
           grade?: string
+          has_italian_cf?: boolean
           id?: string
           last_name?: string
           medical_notes?: string
+          nazione_nascita?: string | null
+          nazione_residenza?: string | null
+          numero_documento?: string | null
           parent_id?: string
+          provincia_nascita?: string | null
           school?: string
+          sesso?: Database["public"]["Enums"]["child_sex"] | null
           special_needs?: string
+          tipo_documento?: string | null
         }
         Relationships: [
           {
@@ -184,6 +211,9 @@ export type Database = {
           admin_notes: string
           child_id: string
           code: string
+          consent_acsi_dati_24: boolean
+          consent_acsi_dati_25: boolean
+          consent_acsi_foto_marketing: boolean
           consent_data_processing: boolean
           consent_outings: boolean
           consent_photos: boolean
@@ -191,11 +221,15 @@ export type Database = {
           consent_rules: boolean
           created_at: string
           extras: string[]
+          figlio_ordine: number
           id: string
           location_slug: string
           parent_id: string
           payment_status: string
+          residente_nel_comune: boolean
+          secondary_guardian: Json | null
           status: Database["public"]["Enums"]["enrollment_status"]
+          tessera_tipo: Database["public"]["Enums"]["tessera_tipo"]
           time_slot: string
           updated_at: string
           week_ids: string[]
@@ -204,6 +238,9 @@ export type Database = {
           admin_notes?: string
           child_id: string
           code?: string
+          consent_acsi_dati_24?: boolean
+          consent_acsi_dati_25?: boolean
+          consent_acsi_foto_marketing?: boolean
           consent_data_processing?: boolean
           consent_outings?: boolean
           consent_photos?: boolean
@@ -211,11 +248,15 @@ export type Database = {
           consent_rules?: boolean
           created_at?: string
           extras?: string[]
+          figlio_ordine?: number
           id?: string
           location_slug: string
           parent_id: string
           payment_status?: string
+          residente_nel_comune?: boolean
+          secondary_guardian?: Json | null
           status?: Database["public"]["Enums"]["enrollment_status"]
+          tessera_tipo?: Database["public"]["Enums"]["tessera_tipo"]
           time_slot: string
           updated_at?: string
           week_ids: string[]
@@ -224,6 +265,9 @@ export type Database = {
           admin_notes?: string
           child_id?: string
           code?: string
+          consent_acsi_dati_24?: boolean
+          consent_acsi_dati_25?: boolean
+          consent_acsi_foto_marketing?: boolean
           consent_data_processing?: boolean
           consent_outings?: boolean
           consent_photos?: boolean
@@ -231,11 +275,15 @@ export type Database = {
           consent_rules?: boolean
           created_at?: string
           extras?: string[]
+          figlio_ordine?: number
           id?: string
           location_slug?: string
           parent_id?: string
           payment_status?: string
+          residente_nel_comune?: boolean
+          secondary_guardian?: Json | null
           status?: Database["public"]["Enums"]["enrollment_status"]
+          tessera_tipo?: Database["public"]["Enums"]["tessera_tipo"]
           time_slot?: string
           updated_at?: string
           week_ids?: string[]
@@ -364,6 +412,7 @@ export type Database = {
     }
     Enums: {
       app_role: "genitore" | "staff" | "admin"
+      child_sex: "M" | "F"
       document_status: "caricato" | "verificato" | "rifiutato"
       enrollment_status:
         | "nuova"
@@ -373,6 +422,7 @@ export type Database = {
         | "confermata"
         | "lista-attesa"
         | "annullata"
+      tessera_tipo: "base" | "super_integrativa"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -501,6 +551,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["genitore", "staff", "admin"],
+      child_sex: ["M", "F"],
       document_status: ["caricato", "verificato", "rifiutato"],
       enrollment_status: [
         "nuova",
@@ -511,6 +562,7 @@ export const Constants = {
         "lista-attesa",
         "annullata",
       ],
+      tessera_tipo: ["base", "super_integrativa"],
     },
   },
 } as const

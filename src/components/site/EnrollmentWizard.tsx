@@ -14,6 +14,8 @@ import {
 } from "@/data/enrollments";
 import { submitEnrollment } from "@/lib/enrollments/server-fns";
 import { enrollmentSubmissionSchema } from "@/lib/enrollments/validation";
+import { uploadEnrollmentDocument, validateDocumentFile } from "@/lib/enrollments/documents";
+import { toast } from "sonner";
 import type { Location } from "@/data/locations";
 import { WizardProgress } from "@/components/site/WizardProgress";
 import { Input } from "@/components/ui/input";
@@ -88,6 +90,9 @@ export function EnrollmentWizard({ location }: { location: Location }) {
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // File reali selezionati nello StepDocuments, per doc_type. Non finiscono
+  // nella bozza localStorage: dopo un reload vanno riselezionati.
+  const docFilesRef = useRef(new Map<string, File>());
 
   const [state, setState] = useState<WizardState>(() => ({
     guardian: emptyGuardian,
@@ -184,6 +189,35 @@ export function EnrollmentWizard({ location }: { location: Location }) {
         setError(result.error);
         return;
       }
+
+      // Upload dei documenti selezionati nel bucket privato, ora che esiste
+      // l'iscrizione. Un errore qui non blocca la conferma: si può ricaricare
+      // dall'area genitori.
+      const toUpload = state.documents.filter((d) => docFilesRef.current.has(d.type));
+      let failed = 0;
+      for (const doc of toUpload) {
+        const file = docFilesRef.current.get(doc.type);
+        if (!file) continue;
+        const upload = await uploadEnrollmentDocument({
+          userId: auth.user.id,
+          enrollmentId: result.id,
+          docType: doc.type,
+          file,
+        });
+        if (!upload.ok) {
+          failed++;
+          toast.error(`${doc.type}: ${upload.error}`);
+        }
+      }
+      if (toUpload.length > 0 && failed === 0) {
+        toast.success("Documenti caricati.");
+      } else if (failed > 0) {
+        toast.warning("Potrai ricaricare i documenti mancanti dall'area genitori.");
+      }
+      if (state.documents.length > toUpload.length) {
+        toast.info("Alcuni documenti della bozza vanno ricaricati dall'area genitori.");
+      }
+
       clearDraft(location.slug);
       setSubmitted(result.code);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -213,7 +247,9 @@ export function EnrollmentWizard({ location }: { location: Location }) {
         {step === 2 && <StepChild state={state} setState={setState} />}
         {step === 3 && <StepSession state={state} setState={setState} location={location} />}
         {step === 4 && <StepDelegates state={state} setState={setState} />}
-        {step === 5 && <StepDocuments state={state} setState={setState} />}
+        {step === 5 && (
+          <StepDocuments state={state} setState={setState} files={docFilesRef.current} />
+        )}
         {step === 6 && <StepSummary state={state} location={location} />}
 
         {step === total && !auth && (
@@ -689,14 +725,31 @@ function ConsentRow({
   );
 }
 
-function StepDocuments({ state, setState }: { state: WizardState; setState: SetState }) {
+function StepDocuments({
+  state,
+  setState,
+  files,
+}: {
+  state: WizardState;
+  setState: SetState;
+  files: Map<string, File>;
+}) {
   const addFromInput = (type: string, file: File | null) => {
     if (!file) return;
+    const invalid = validateDocumentFile(file);
+    if (invalid) {
+      toast.error(invalid);
+      return;
+    }
+    files.set(type, file);
     const meta: DocumentMeta = { type, fileName: file.name, size: file.size };
     setState((s) => ({ ...s, documents: [...s.documents.filter((d) => d.type !== type), meta] }));
   };
-  const remove = (idx: number) =>
+  const remove = (idx: number) => {
+    const doc = state.documents[idx];
+    if (doc) files.delete(doc.type);
     setState((s) => ({ ...s, documents: s.documents.filter((_, i) => i !== idx) }));
+  };
 
   return (
     <div>

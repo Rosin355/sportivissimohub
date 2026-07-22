@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getLocationBySlug } from "@/data/locations";
 import { enrollmentSubmissionSchema, type EnrollmentSubmission } from "./validation";
@@ -129,4 +130,28 @@ export const submitEnrollment = createServerFn({ method: "POST" })
     }
 
     return { ok: true, id: enrollment.id, code: enrollment.code };
+  });
+
+export type SignedUrlResult = { ok: true; url: string } | { ok: false; error: string };
+
+// Download sempre via URL firmato a scadenza breve, generato server-side.
+// Le RLS decidono chi può vedere il documento (genitore proprietario o admin).
+export const getDocumentDownloadUrl = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ documentId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }): Promise<SignedUrlResult> => {
+    const supabase = getSupabaseServerClient();
+    const { data: doc } = await supabase
+      .from("enrollment_documents")
+      .select("storage_path")
+      .eq("id", data.documentId)
+      .maybeSingle();
+    if (!doc) return { ok: false, error: "Documento non trovato o non accessibile." };
+
+    const { data: signed, error } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(doc.storage_path, 60);
+    if (error || !signed) {
+      return { ok: false, error: "Impossibile generare il link di download." };
+    }
+    return { ok: true, url: signed.signedUrl };
   });

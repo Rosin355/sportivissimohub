@@ -64,6 +64,7 @@ export type DocumentMeta = {
   size: number;
   status?: DocumentStatus;
   rejectionReason?: string | null;
+  storagePath?: string;
 };
 
 export type Enrollment = {
@@ -90,7 +91,7 @@ const ENROLLMENT_SELECT = `
   profiles ( email, first_name, last_name, phone, fiscal_code, address, city, province, zip ),
   children ( first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs ),
   pickup_delegates ( id, first_name, last_name, phone, document ),
-  enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason )
+  enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason, storage_path )
 `;
 
 type JoinedRow = {
@@ -146,6 +147,7 @@ type JoinedRow = {
     size_bytes: number;
     status: DocumentStatus;
     rejection_reason: string | null;
+    storage_path: string;
   }>;
 };
 
@@ -217,6 +219,7 @@ function mapRow(row: JoinedRow): Enrollment {
       size: d.size_bytes,
       status: d.status,
       rejectionReason: d.rejection_reason,
+      storagePath: d.storage_path,
     })),
     adminNotes: row.admin_notes || undefined,
   };

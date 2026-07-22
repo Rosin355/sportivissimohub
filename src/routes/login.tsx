@@ -16,9 +16,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/site/PasswordInput";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { roleHome, translateAuthError } from "@/lib/supabase/auth";
-import { LogIn, UserPlus, MailCheck } from "lucide-react";
+import { roleHome } from "@/lib/supabase/auth";
+import { mapAuthError, type MappedAuthError } from "@/lib/auth/errors";
+import {
+  passwordRequirements,
+  passwordMeetsRequirements,
+  passwordStrength,
+} from "@/lib/auth/password";
+import { LogIn, UserPlus, MailCheck, Check, Circle } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { next?: string } => ({
@@ -46,7 +53,9 @@ const registerSchema = z
     firstName: z.string().min(1, "Inserisci il nome."),
     lastName: z.string().min(1, "Inserisci il cognome."),
     email: z.string().email("Inserisci un'email valida."),
-    password: z.string().min(8, "La password deve avere almeno 8 caratteri."),
+    password: z
+      .string()
+      .refine(passwordMeetsRequirements, "La password non rispetta i requisiti indicati."),
     confirm: z.string(),
   })
   .refine((d) => d.password === d.confirm, {
@@ -56,6 +65,7 @@ const registerSchema = z
 
 function LoginPage() {
   const { next } = Route.useSearch();
+  const [tab, setTab] = useState<"accesso" | "registrazione">("accesso");
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -69,7 +79,7 @@ function LoginPage() {
         </div>
 
         <div className="rounded-2xl bg-white border border-border shadow-pop p-6 md:p-8">
-          <Tabs defaultValue="accesso">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "accesso" | "registrazione")}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="accesso" className="font-display font-bold">
                 <LogIn className="w-4 h-4 mr-2" /> Accedi
@@ -82,7 +92,7 @@ function LoginPage() {
               <SignInForm next={next} />
             </TabsContent>
             <TabsContent value="registrazione">
-              <SignUpForm next={next} />
+              <SignUpForm next={next} onGoToLogin={() => setTab("accesso")} />
             </TabsContent>
           </Tabs>
         </div>
@@ -92,11 +102,87 @@ function LoginPage() {
   );
 }
 
-function FormError({ message }: { message: string | null }) {
-  if (!message) return null;
+function FormError({
+  error,
+  onGoToLogin,
+}: {
+  error: MappedAuthError | null;
+  onGoToLogin?: () => void;
+}) {
+  if (!error) return null;
   return (
     <div className="bg-flame/10 border border-flame/30 text-flame rounded-xl px-4 py-3 text-sm font-semibold">
-      {message}
+      {error.message}
+      {error.kind === "email_exists" && onGoToLogin && (
+        <>
+          {" "}
+          <button
+            type="button"
+            onClick={onGoToLogin}
+            className="underline font-bold hover:opacity-80"
+          >
+            Vai ad Accedi
+          </button>
+        </>
+      )}
+      {error.kind === "email_exists" && !onGoToLogin && (
+        <>
+          {" "}
+          <Link to="/login" className="underline font-bold">
+            Vai ad Accedi
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
+
+function PasswordChecklist({ value }: { value: string }) {
+  return (
+    <ul className="mt-2 space-y-1 text-sm" aria-live="polite">
+      {passwordRequirements.map((r) => {
+        const ok = r.test(value);
+        return (
+          <li
+            key={r.id}
+            className={ok ? "flex items-center gap-2 text-grass" : "flex items-center gap-2 text-muted-foreground"}
+          >
+            {ok ? <Check className="w-4 h-4" /> : <Circle className="w-3 h-3" />}
+            <span>{r.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function StrengthBar({ value }: { value: string }) {
+  const s = passwordStrength(value);
+  if (s.tone === "empty") return null;
+  const filled = s.score;
+  const toneClass =
+    s.tone === "strong"
+      ? "bg-grass"
+      : s.tone === "medium"
+        ? "bg-sun"
+        : "bg-flame";
+  const toneText =
+    s.tone === "strong"
+      ? "text-grass"
+      : s.tone === "medium"
+        ? "text-sun-foreground"
+        : "text-flame";
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1" aria-hidden="true">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full ${i <= filled ? toneClass : "bg-muted"}`}
+          />
+        ))}
+      </div>
+      <p className={`mt-1 text-xs font-semibold ${toneText}`}>Robustezza: {s.label}</p>
     </div>
   );
 }
@@ -125,7 +211,7 @@ async function enterApp(
 function SignInForm({ next }: { next?: string }) {
   const router = useRouter();
   const { queryClient } = Route.useRouteContext();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MappedAuthError | null>(null);
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -133,16 +219,20 @@ function SignInForm({ next }: { next?: string }) {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setError(null);
-    const supabase = getSupabaseBrowserClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-    if (signInError) {
-      setError(translateAuthError(signInError.message));
-      return;
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+      if (signInError) {
+        setError(mapAuthError(signInError));
+        return;
+      }
+      await enterApp(router, queryClient, next);
+    } catch (e) {
+      setError(mapAuthError(e as Error));
     }
-    await enterApp(router, queryClient, next);
   }
 
   return (
@@ -168,13 +258,13 @@ function SignInForm({ next }: { next?: string }) {
             <FormItem>
               <FormLabel className="font-semibold">Password</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="current-password" {...field} />
+                <PasswordInput autoComplete="current-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormError message={error} />
+        <FormError error={error} />
         <button
           type="submit"
           disabled={form.formState.isSubmitting}
@@ -196,37 +286,42 @@ function SignInForm({ next }: { next?: string }) {
   );
 }
 
-function SignUpForm({ next }: { next?: string }) {
+function SignUpForm({ next, onGoToLogin }: { next?: string; onGoToLogin?: () => void }) {
   const router = useRouter();
   const { queryClient } = Route.useRouteContext();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MappedAuthError | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: { firstName: "", lastName: "", email: "", password: "", confirm: "" },
   });
+  const passwordValue = form.watch("password");
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setError(null);
-    const supabase = getSupabaseBrowserClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        // Letti dal trigger handle_new_user per creare la riga in profiles.
-        data: { first_name: values.firstName, last_name: values.lastName },
-        emailRedirectTo: `${window.location.origin}/login`,
-      },
-    });
-    if (signUpError) {
-      setError(translateAuthError(signUpError.message));
-      return;
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          // Letti dal trigger handle_new_user per creare la riga in profiles.
+          data: { first_name: values.firstName, last_name: values.lastName },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
+      });
+      if (signUpError) {
+        setError(mapAuthError(signUpError));
+        return;
+      }
+      if (!data.session) {
+        setConfirmationSent(true);
+        return;
+      }
+      await enterApp(router, queryClient, next);
+    } catch (e) {
+      setError(mapAuthError(e as Error));
     }
-    if (!data.session) {
-      setConfirmationSent(true);
-      return;
-    }
-    await enterApp(router, queryClient, next);
   }
 
   if (confirmationSent) {
@@ -295,8 +390,10 @@ function SignUpForm({ next }: { next?: string }) {
             <FormItem>
               <FormLabel className="font-semibold">Password</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <PasswordInput autoComplete="new-password" {...field} />
               </FormControl>
+              <StrengthBar value={passwordValue} />
+              <PasswordChecklist value={passwordValue} />
               <FormMessage />
             </FormItem>
           )}
@@ -308,13 +405,13 @@ function SignUpForm({ next }: { next?: string }) {
             <FormItem>
               <FormLabel className="font-semibold">Conferma password</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <PasswordInput autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormError message={error} />
+        <FormError error={error} onGoToLogin={onGoToLogin} />
         <button
           type="submit"
           disabled={form.formState.isSubmitting}

@@ -1,9 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getLocationBySlug } from "@/data/locations";
 import type {
+  ChildSex,
   DocumentStatus,
   EnrollmentStatus as DbEnrollmentStatus,
   PaymentStatus,
+  TesseraTipo,
 } from "@/lib/supabase/types";
 
 export type EnrollmentStatus = DbEnrollmentStatus;
@@ -24,13 +26,22 @@ export type ChildData = {
   firstName: string;
   lastName: string;
   birthDate: string;
-  fiscalCode: string;
+  fiscalCode: string; // "" per minori senza CF italiano
   age: number;
   school: string;
   grade: string;
   allergies: string;
   medicalNotes: string;
   specialNeeds: string;
+  sesso: ChildSex | "";
+  comuneNascita: string;
+  provinciaNascita: string;
+  nazioneNascita: string;
+  hasItalianCf: boolean;
+  cittadinanza: string;
+  nazioneResidenza: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
 };
 
 export type SessionData = {
@@ -40,6 +51,8 @@ export type SessionData = {
   weekLabels: string[];
   timeSlot: string;
   extras: string[];
+  residenteNelComune: boolean;
+  tesseraTipo: TesseraTipo;
 };
 
 export type PickupDelegate = {
@@ -55,6 +68,9 @@ export type ConsentsData = {
   outings: boolean;
   rules: boolean;
   dataProcessing: boolean;
+  acsiDati24: boolean;
+  acsiDati25: boolean;
+  acsiFotoMarketing: boolean;
 };
 
 export type DocumentMeta = {
@@ -73,7 +89,9 @@ export type Enrollment = {
   createdAt: string;
   status: EnrollmentStatus;
   paymentStatus: PaymentStatus;
+  figlioOrdine: number;
   guardian: GuardianData;
+  secondaryGuardian: GuardianData | null;
   child: ChildData;
   session: SessionData;
   delegates: PickupDelegate[];
@@ -87,9 +105,11 @@ export type Enrollment = {
 const ENROLLMENT_SELECT = `
   id, code, status, location_slug, week_ids, time_slot, extras,
   consent_privacy, consent_photos, consent_outings, consent_rules, consent_data_processing,
+  consent_acsi_dati_24, consent_acsi_dati_25, consent_acsi_foto_marketing,
+  secondary_guardian, residente_nel_comune, tessera_tipo, figlio_ordine,
   payment_status, admin_notes, created_at, parent_id,
   profiles ( email, first_name, last_name, phone, fiscal_code, address, city, province, zip ),
-  children ( first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs ),
+  children ( first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs, sesso, comune_nascita, provincia_nascita, nazione_nascita, has_italian_cf, cittadinanza, nazione_residenza, tipo_documento, numero_documento ),
   pickup_delegates ( id, first_name, last_name, phone, document ),
   enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason, storage_path )
 `;
@@ -107,6 +127,13 @@ type JoinedRow = {
   consent_outings: boolean;
   consent_rules: boolean;
   consent_data_processing: boolean;
+  consent_acsi_dati_24: boolean;
+  consent_acsi_dati_25: boolean;
+  consent_acsi_foto_marketing: boolean;
+  secondary_guardian: GuardianData | null;
+  residente_nel_comune: boolean;
+  tessera_tipo: TesseraTipo;
+  figlio_ordine: number;
   payment_status: PaymentStatus;
   admin_notes: string;
   created_at: string;
@@ -126,12 +153,21 @@ type JoinedRow = {
     first_name: string;
     last_name: string;
     birth_date: string;
-    fiscal_code: string;
+    fiscal_code: string | null;
     school: string;
     grade: string;
     allergies: string;
     medical_notes: string;
     special_needs: string;
+    sesso: ChildSex | null;
+    comune_nascita: string | null;
+    provincia_nascita: string | null;
+    nazione_nascita: string | null;
+    has_italian_cf: boolean;
+    cittadinanza: string | null;
+    nazione_residenza: string | null;
+    tipo_documento: string | null;
+    numero_documento: string | null;
   } | null;
   pickup_delegates: Array<{
     id: string;
@@ -168,6 +204,8 @@ function mapRow(row: JoinedRow): Enrollment {
     createdAt: row.created_at,
     status: row.status,
     paymentStatus: row.payment_status,
+    figlioOrdine: row.figlio_ordine ?? 1,
+    secondaryGuardian: row.secondary_guardian,
     guardian: {
       firstName: row.profiles?.first_name ?? "",
       lastName: row.profiles?.last_name ?? "",
@@ -190,6 +228,15 @@ function mapRow(row: JoinedRow): Enrollment {
       allergies: row.children?.allergies ?? "",
       medicalNotes: row.children?.medical_notes ?? "",
       specialNeeds: row.children?.special_needs ?? "",
+      sesso: row.children?.sesso ?? "",
+      comuneNascita: row.children?.comune_nascita ?? "",
+      provinciaNascita: row.children?.provincia_nascita ?? "",
+      nazioneNascita: row.children?.nazione_nascita ?? "Italia",
+      hasItalianCf: row.children?.has_italian_cf ?? true,
+      cittadinanza: row.children?.cittadinanza ?? "",
+      nazioneResidenza: row.children?.nazione_residenza ?? "",
+      tipoDocumento: row.children?.tipo_documento ?? "",
+      numeroDocumento: row.children?.numero_documento ?? "",
     },
     session: {
       locationSlug: row.location_slug,
@@ -198,6 +245,8 @@ function mapRow(row: JoinedRow): Enrollment {
       weekLabels,
       timeSlot: row.time_slot,
       extras: row.extras,
+      residenteNelComune: row.residente_nel_comune ?? false,
+      tesseraTipo: row.tessera_tipo ?? "base",
     },
     delegates: row.pickup_delegates.map((d) => ({
       firstName: d.first_name,
@@ -211,6 +260,9 @@ function mapRow(row: JoinedRow): Enrollment {
       outings: row.consent_outings,
       rules: row.consent_rules,
       dataProcessing: row.consent_data_processing,
+      acsiDati24: row.consent_acsi_dati_24 ?? false,
+      acsiDati25: row.consent_acsi_dati_25 ?? false,
+      acsiFotoMarketing: row.consent_acsi_foto_marketing ?? false,
     },
     documents: row.enrollment_documents.map((d) => ({
       id: d.id,
@@ -284,7 +336,7 @@ export async function getChildren(): Promise<ChildRecord[]> {
   const { data, error } = await supabase
     .from("children")
     .select(
-      "id, first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs",
+      "id, first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs, sesso, comune_nascita, provincia_nascita, nazione_nascita, has_italian_cf, cittadinanza, nazione_residenza, tipo_documento, numero_documento",
     )
     .order("created_at", { ascending: true });
   if (error) throw new Error("Impossibile caricare i figli registrati.");
@@ -293,18 +345,42 @@ export async function getChildren(): Promise<ChildRecord[]> {
     firstName: c.first_name,
     lastName: c.last_name,
     birthDate: c.birth_date,
-    fiscalCode: c.fiscal_code,
+    fiscalCode: c.fiscal_code ?? "",
     age: calcAge(c.birth_date),
     school: c.school,
     grade: c.grade,
     allergies: c.allergies,
     medicalNotes: c.medical_notes,
     specialNeeds: c.special_needs,
+    sesso: c.sesso ?? "",
+    comuneNascita: c.comune_nascita ?? "",
+    provinciaNascita: c.provincia_nascita ?? "",
+    nazioneNascita: c.nazione_nascita ?? "Italia",
+    hasItalianCf: c.has_italian_cf ?? true,
+    cittadinanza: c.cittadinanza ?? "",
+    nazioneResidenza: c.nazione_residenza ?? "",
+    tipoDocumento: c.tipo_documento ?? "",
+    numeroDocumento: c.numero_documento ?? "",
   }));
 }
 
+export type NewChildInput = Pick<
+  ChildData,
+  | "firstName"
+  | "lastName"
+  | "birthDate"
+  | "fiscalCode"
+  | "school"
+  | "grade"
+  | "allergies"
+  | "medicalNotes"
+  | "specialNeeds"
+>;
+
+// I campi anagrafici estesi (sesso, luogo di nascita, ecc.) vengono completati
+// alla prima iscrizione dal wizard: qui basta l'anagrafica minima.
 export async function addChild(
-  input: Omit<ChildData, "age">,
+  input: NewChildInput,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const supabase = getSupabaseBrowserClient();
   const {

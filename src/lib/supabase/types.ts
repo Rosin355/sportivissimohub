@@ -18,6 +18,10 @@ export type DocumentStatus = "caricato" | "verificato" | "rifiutato";
 
 export type PaymentStatus = "non-pagato" | "acconto" | "pagato";
 
+export type ChildSex = "M" | "F";
+
+export type TesseraTipo = "base" | "super_integrativa";
+
 export type Database = {
   public: {
     Tables: {
@@ -85,12 +89,21 @@ export type Database = {
           first_name: string;
           last_name: string;
           birth_date: string;
-          fiscal_code: string;
+          fiscal_code: string | null;
           school: string;
           grade: string;
           allergies: string;
           medical_notes: string;
           special_needs: string;
+          sesso: ChildSex | null;
+          comune_nascita: string | null;
+          provincia_nascita: string | null;
+          nazione_nascita: string | null;
+          has_italian_cf: boolean;
+          cittadinanza: string | null;
+          nazione_residenza: string | null;
+          tipo_documento: string | null;
+          numero_documento: string | null;
           created_at: string;
         };
         Insert: {
@@ -99,12 +112,21 @@ export type Database = {
           first_name: string;
           last_name: string;
           birth_date: string;
-          fiscal_code: string;
+          fiscal_code?: string | null;
           school?: string;
           grade?: string;
           allergies?: string;
           medical_notes?: string;
           special_needs?: string;
+          sesso?: ChildSex | null;
+          comune_nascita?: string | null;
+          provincia_nascita?: string | null;
+          nazione_nascita?: string | null;
+          has_italian_cf?: boolean;
+          cittadinanza?: string | null;
+          nazione_residenza?: string | null;
+          tipo_documento?: string | null;
+          numero_documento?: string | null;
           created_at?: string;
         };
         Update: {
@@ -113,12 +135,21 @@ export type Database = {
           first_name?: string;
           last_name?: string;
           birth_date?: string;
-          fiscal_code?: string;
+          fiscal_code?: string | null;
           school?: string;
           grade?: string;
           allergies?: string;
           medical_notes?: string;
           special_needs?: string;
+          sesso?: ChildSex | null;
+          comune_nascita?: string | null;
+          provincia_nascita?: string | null;
+          nazione_nascita?: string | null;
+          has_italian_cf?: boolean;
+          cittadinanza?: string | null;
+          nazione_residenza?: string | null;
+          tipo_documento?: string | null;
+          numero_documento?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -149,6 +180,13 @@ export type Database = {
           consent_data_processing: boolean;
           payment_status: string;
           admin_notes: string;
+          secondary_guardian: Json | null;
+          residente_nel_comune: boolean;
+          tessera_tipo: TesseraTipo;
+          figlio_ordine: number;
+          consent_acsi_dati_24: boolean;
+          consent_acsi_dati_25: boolean;
+          consent_acsi_foto_marketing: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -169,6 +207,13 @@ export type Database = {
           consent_data_processing?: boolean;
           payment_status?: string;
           admin_notes?: string;
+          secondary_guardian?: Json | null;
+          residente_nel_comune?: boolean;
+          tessera_tipo?: TesseraTipo;
+          figlio_ordine?: number;
+          consent_acsi_dati_24?: boolean;
+          consent_acsi_dati_25?: boolean;
+          consent_acsi_foto_marketing?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -189,6 +234,13 @@ export type Database = {
           consent_data_processing?: boolean;
           payment_status?: string;
           admin_notes?: string;
+          secondary_guardian?: Json | null;
+          residente_nel_comune?: boolean;
+          tessera_tipo?: TesseraTipo;
+          figlio_ordine?: number;
+          consent_acsi_dati_24?: boolean;
+          consent_acsi_dati_25?: boolean;
+          consent_acsi_foto_marketing?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -368,6 +420,8 @@ export type Database = {
       app_role: AppRole;
       enrollment_status: EnrollmentStatus;
       document_status: DocumentStatus;
+      child_sex: ChildSex;
+      tessera_tipo: TesseraTipo;
     };
     CompositeTypes: Record<string, never>;
   };

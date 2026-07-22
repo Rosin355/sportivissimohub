@@ -14,7 +14,10 @@ import {
 } from "@/data/enrollments";
 import { submitEnrollment } from "@/lib/enrollments/server-fns";
 import { enrollmentSubmissionSchema } from "@/lib/enrollments/validation";
+import { isValidFiscalCode } from "@/lib/enrollments/fiscal-code";
+import { computeEstimate, extrasCostFor, isHalfDay } from "@/lib/enrollments/pricing";
 import { uploadEnrollmentDocument, validateDocumentFile } from "@/lib/enrollments/documents";
+import { getEnrollments } from "@/data/enrollments";
 import { toast } from "sonner";
 import type { Location } from "@/data/locations";
 import { WizardProgress } from "@/components/site/WizardProgress";
@@ -37,6 +40,7 @@ const STEP_LABELS = ["Genitore", "Bambino", "Sede", "Deleghe", "Documenti", "Rie
 
 type WizardState = {
   guardian: GuardianData;
+  secondaryGuardian: GuardianData | null;
   child: ChildData;
   session: SessionData;
   delegates: PickupDelegate[];
@@ -66,6 +70,26 @@ const emptyChild: ChildData = {
   allergies: "",
   medicalNotes: "",
   specialNeeds: "",
+  sesso: "",
+  comuneNascita: "",
+  provinciaNascita: "",
+  nazioneNascita: "Italia",
+  hasItalianCf: true,
+  cittadinanza: "",
+  nazioneResidenza: "",
+  tipoDocumento: "",
+  numeroDocumento: "",
+};
+
+const emptyConsents: ConsentsData = {
+  privacy: false,
+  photos: false,
+  outings: false,
+  rules: false,
+  dataProcessing: false,
+  acsiDati24: false,
+  acsiDati25: false,
+  acsiFotoMarketing: false,
 };
 
 function calcAge(birth: string) {
@@ -96,6 +120,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
 
   const [state, setState] = useState<WizardState>(() => ({
     guardian: emptyGuardian,
+    secondaryGuardian: null,
     child: emptyChild,
     session: {
       locationSlug: location.slug,
@@ -104,29 +129,82 @@ export function EnrollmentWizard({ location }: { location: Location }) {
       weekLabels: [],
       timeSlot: location.timeSlots[0] ?? "",
       extras: [],
+      residenteNelComune: false,
+      tesseraTipo: "base",
     },
     delegates: [],
-    consents: {
-      privacy: false,
-      photos: false,
-      outings: false,
-      rules: false,
-      dataProcessing: false,
-    },
+    consents: emptyConsents,
     documents: [],
   }));
+
+  // Figli già iscritti nella stagione (per stimare lo sconto fratelli).
+  // Il valore autoritativo di figlio_ordine viene comunque calcolato server-side.
+  const [enrolledChildren, setEnrolledChildren] = useState<
+    Array<{ cf: string; nameKey: string; birthDate: string }>
+  >([]);
+  useEffect(() => {
+    if (!auth) return;
+    getEnrollments()
+      .then((list) => {
+        const year = new Date().getFullYear();
+        const seen = new Map<string, { cf: string; nameKey: string; birthDate: string }>();
+        for (const e of list) {
+          if (e.status === "annullata") continue;
+          if (new Date(e.createdAt).getFullYear() !== year) continue;
+          const cf = e.child.fiscalCode.toUpperCase();
+          const nameKey = `${e.child.firstName}|${e.child.lastName}`.toLowerCase();
+          seen.set(cf || `${nameKey}|${e.child.birthDate}`, {
+            cf,
+            nameKey,
+            birthDate: e.child.birthDate,
+          });
+        }
+        setEnrolledChildren([...seen.values()]);
+      })
+      .catch(() => {});
+  }, [auth]);
+
+  const figlioOrdine = useMemo(() => {
+    const cf = state.child.fiscalCode.trim().toUpperCase();
+    const nameKey = `${state.child.firstName}|${state.child.lastName}`.toLowerCase();
+    const others = enrolledChildren.filter(
+      (k) =>
+        !(cf && k.cf === cf) && !(k.nameKey === nameKey && k.birthDate === state.child.birthDate),
+    );
+    return others.length + 1;
+  }, [
+    enrolledChildren,
+    state.child.fiscalCode,
+    state.child.firstName,
+    state.child.lastName,
+    state.child.birthDate,
+  ]);
 
   // hydrate draft once
   const hydrated = useRef(false);
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
-    const draft = readDraft<WizardState>(location.slug);
+    const draft = readDraft<Partial<WizardState>>(location.slug);
     if (draft) {
-      setState({
-        ...draft,
-        session: { ...draft.session, locationSlug: location.slug, locationName: location.name },
-      });
+      // merge campo per campo: le bozze salvate prima della M9 non hanno i
+      // nuovi campi e devono ereditare i default.
+      setState((prev) => ({
+        guardian: { ...prev.guardian, ...draft.guardian },
+        secondaryGuardian: draft.secondaryGuardian
+          ? { ...emptyGuardian, ...draft.secondaryGuardian }
+          : null,
+        child: { ...prev.child, ...draft.child },
+        session: {
+          ...prev.session,
+          ...draft.session,
+          locationSlug: location.slug,
+          locationName: location.name,
+        },
+        delegates: draft.delegates ?? prev.delegates,
+        consents: { ...prev.consents, ...draft.consents },
+        documents: draft.documents ?? prev.documents,
+      }));
     }
   }, [location.slug, location.name]);
 
@@ -164,6 +242,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
     // stessa schema viene rieseguita nella server function.
     const parsed = enrollmentSubmissionSchema.safeParse({
       guardian: state.guardian,
+      secondaryGuardian: state.secondaryGuardian,
       child: state.child,
       session: state.session,
       delegates: state.delegates,
@@ -245,12 +324,21 @@ export function EnrollmentWizard({ location }: { location: Location }) {
       <div className="rounded-2xl bg-white border border-border shadow-pop p-6 md:p-8">
         {step === 1 && <StepGuardian state={state} setState={setState} />}
         {step === 2 && <StepChild state={state} setState={setState} />}
-        {step === 3 && <StepSession state={state} setState={setState} location={location} />}
+        {step === 3 && (
+          <StepSession
+            state={state}
+            setState={setState}
+            location={location}
+            figlioOrdine={figlioOrdine}
+          />
+        )}
         {step === 4 && <StepDelegates state={state} setState={setState} />}
         {step === 5 && (
           <StepDocuments state={state} setState={setState} files={docFilesRef.current} />
         )}
-        {step === 6 && <StepSummary state={state} location={location} />}
+        {step === 6 && (
+          <StepSummary state={state} location={location} figlioOrdine={figlioOrdine} />
+        )}
 
         {step === total && !auth && (
           <div className="mt-5 bg-sky/10 border border-sky/30 rounded-xl px-4 py-3 text-sm font-semibold">
@@ -311,14 +399,31 @@ function validateStep(step: number, s: WizardState, loc: Location): string | nul
     if (!g.firstName || !g.lastName) return "Inserisci nome e cognome del genitore.";
     if (!/^\S+@\S+\.\S+$/.test(g.email)) return "Inserisci un'email valida.";
     if (g.phone.replace(/\D/g, "").length < 8) return "Inserisci un numero di telefono valido.";
-    if (g.fiscalCode.length < 11) return "Codice fiscale del genitore non valido.";
+    if (!isValidFiscalCode(g.fiscalCode))
+      return "Codice fiscale del genitore non valido (controlla anche l'ultimo carattere).";
     if (!g.address || !g.city || !g.province || !g.zip) return "Completa l'indirizzo.";
+    const sg = s.secondaryGuardian;
+    if (sg) {
+      if (!sg.firstName || !sg.lastName || !sg.email || !sg.phone)
+        return "Completa i dati del secondo genitore o rimuovi il blocco.";
+      if (!isValidFiscalCode(sg.fiscalCode))
+        return "Codice fiscale del secondo genitore non valido.";
+      if (!sg.address || !sg.city || !sg.province || !sg.zip)
+        return "Completa l'indirizzo del secondo genitore.";
+    }
   }
   if (step === 2) {
     const c = s.child;
     if (!c.firstName || !c.lastName) return "Inserisci nome e cognome del bambino.";
     if (!c.birthDate) return "Inserisci la data di nascita.";
-    if (c.fiscalCode.length < 11) return "Codice fiscale del bambino non valido.";
+    if (!c.sesso) return "Indica il sesso del bambino.";
+    if (!c.comuneNascita) return "Inserisci il comune (o la città) di nascita.";
+    if (c.hasItalianCf) {
+      if (!isValidFiscalCode(c.fiscalCode))
+        return "Codice fiscale del bambino non valido (controlla anche l'ultimo carattere).";
+    } else if (!c.cittadinanza || !c.nazioneResidenza || !c.tipoDocumento || !c.numeroDocumento) {
+      return "Per un bambino senza CF italiano completa cittadinanza, nazione di residenza e documento.";
+    }
     if (!c.school || !c.grade) return "Completa scuola e classe.";
   }
   if (step === 3) {
@@ -334,6 +439,8 @@ function validateStep(step: number, s: WizardState, loc: Location): string | nul
     const c = s.consents;
     if (!c.privacy || !c.rules || !c.dataProcessing)
       return "Devi accettare privacy, regolamento e trattamento dati.";
+    if (!c.acsiDati24)
+      return "Il consenso ACSI al trattamento dati per il tesseramento è obbligatorio.";
   }
   if (step === 6) {
     return (
@@ -414,15 +521,121 @@ function StepGuardian({ state, setState }: { state: WizardState; setState: SetSt
           <Input value={g.zip} onChange={(e) => upd("zip", e.target.value)} maxLength={5} />
         </Field>
       </div>
+
+      <div className="mt-8">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="font-display text-lg font-bold">Secondo genitore</h3>
+          {state.secondaryGuardian === null ? (
+            <button
+              onClick={() => setState((s) => ({ ...s, secondaryGuardian: { ...emptyGuardian } }))}
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold border border-dashed border-primary text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Aggiungi
+            </button>
+          ) : (
+            <button
+              onClick={() => setState((s) => ({ ...s, secondaryGuardian: null }))}
+              className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold"
+            >
+              <Trash2 className="w-4 h-4" /> Rimuovi
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 mb-3">
+          Facoltativo: il modulo di tesseramento ACSI prevede i dati di entrambi i genitori.
+        </p>
+        {state.secondaryGuardian && <SecondaryGuardianFields state={state} setState={setState} />}
+      </div>
+    </div>
+  );
+}
+
+function SecondaryGuardianFields({ state, setState }: { state: WizardState; setState: SetState }) {
+  const sg = state.secondaryGuardian;
+  if (!sg) return null;
+  const upd = (k: keyof GuardianData, v: string) =>
+    setState((s) => ({
+      ...s,
+      secondaryGuardian: s.secondaryGuardian ? { ...s.secondaryGuardian, [k]: v } : null,
+    }));
+  return (
+    <div className="rounded-xl border border-border p-4 bg-secondary/30">
+      <div className="grid md:grid-cols-2 gap-4">
+        <Field label="Nome">
+          <Input value={sg.firstName} onChange={(e) => upd("firstName", e.target.value)} />
+        </Field>
+        <Field label="Cognome">
+          <Input value={sg.lastName} onChange={(e) => upd("lastName", e.target.value)} />
+        </Field>
+        <Field label="Email">
+          <Input type="email" value={sg.email} onChange={(e) => upd("email", e.target.value)} />
+        </Field>
+        <Field label="Telefono">
+          <Input value={sg.phone} onChange={(e) => upd("phone", e.target.value)} />
+        </Field>
+        <Field label="Codice fiscale" full>
+          <Input
+            value={sg.fiscalCode}
+            onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())}
+          />
+        </Field>
+        <Field label="Indirizzo" full>
+          <Input value={sg.address} onChange={(e) => upd("address", e.target.value)} />
+        </Field>
+        <Field label="Comune">
+          <Input value={sg.city} onChange={(e) => upd("city", e.target.value)} />
+        </Field>
+        <Field label="Provincia">
+          <Input
+            value={sg.province}
+            onChange={(e) => upd("province", e.target.value.toUpperCase())}
+            maxLength={2}
+          />
+        </Field>
+        <Field label="CAP">
+          <Input value={sg.zip} onChange={(e) => upd("zip", e.target.value)} maxLength={5} />
+        </Field>
+      </div>
     </div>
   );
 }
 
 function StepChild({ state, setState }: { state: WizardState; setState: SetState }) {
   const c = state.child;
-  const upd = (k: keyof ChildData, v: string | number) =>
+  const upd = (k: keyof ChildData, v: string | number | boolean) =>
     setState((s) => ({ ...s, child: { ...s.child, [k]: v } }));
   const age = calcAge(c.birthDate);
+
+  // Genera il CF con codice-fiscale-js (mappa dei codici catastali dei comuni).
+  // Il valore resta modificabile e viene comunque rivalidato.
+  async function computeChildCf() {
+    if (!c.firstName || !c.lastName || !c.birthDate || !c.sesso || !c.comuneNascita) {
+      toast.error(
+        "Per calcolare il codice fiscale servono nome, cognome, data di nascita, sesso e comune di nascita.",
+      );
+      return;
+    }
+    try {
+      const { default: CodiceFiscale } = await import("codice-fiscale-js");
+      const d = new Date(c.birthDate);
+      const cf = CodiceFiscale.compute({
+        name: c.firstName,
+        surname: c.lastName,
+        gender: c.sesso,
+        day: d.getDate(),
+        month: d.getMonth() + 1,
+        year: d.getFullYear(),
+        birthplace: c.comuneNascita,
+        birthplaceProvincia: c.provinciaNascita || undefined,
+      });
+      upd("fiscalCode", cf.toUpperCase());
+    } catch {
+      toast.error(
+        "Comune di nascita non riconosciuto: controlla il nome (ed eventualmente la provincia) o inserisci il codice fiscale a mano.",
+      );
+    }
+  }
+
   return (
     <div>
       <SectionTitle
@@ -448,12 +661,119 @@ function StepChild({ state, setState }: { state: WizardState; setState: SetState
             {age > 0 ? `${age} anni` : "—"}
           </div>
         </Field>
-        <Field label="Codice fiscale" full>
+        <Field label="Sesso">
+          <div className="flex gap-2">
+            {(["M", "F"] as const).map((sx) => (
+              <label
+                key={sx}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-xl border p-2.5 cursor-pointer transition-colors font-semibold ${
+                  c.sesso === sx
+                    ? "bg-primary/10 border-primary"
+                    : "bg-white border-border hover:bg-secondary"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="childSex"
+                  className="accent-primary"
+                  checked={c.sesso === sx}
+                  onChange={() => upd("sesso", sx)}
+                />
+                {sx === "M" ? "Maschio" : "Femmina"}
+              </label>
+            ))}
+          </div>
+        </Field>
+        <Field label="Comune (o città) di nascita">
+          <Input value={c.comuneNascita} onChange={(e) => upd("comuneNascita", e.target.value)} />
+        </Field>
+        <Field label="Provincia di nascita">
           <Input
-            value={c.fiscalCode}
-            onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())}
+            value={c.provinciaNascita}
+            onChange={(e) => upd("provinciaNascita", e.target.value.toUpperCase())}
+            maxLength={2}
+            placeholder="es. PD (vuoto se estero)"
           />
         </Field>
+        <Field label="Nazione di nascita">
+          <Input value={c.nazioneNascita} onChange={(e) => upd("nazioneNascita", e.target.value)} />
+        </Field>
+        <Field label="Il bambino ha il codice fiscale italiano?" full>
+          <div className="flex gap-2">
+            {(
+              [
+                [true, "Sì, ha il codice fiscale"],
+                [false, "No (bambino straniero senza CF)"],
+              ] as const
+            ).map(([val, label]) => (
+              <label
+                key={String(val)}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-xl border p-2.5 cursor-pointer transition-colors text-sm font-semibold ${
+                  c.hasItalianCf === val
+                    ? "bg-primary/10 border-primary"
+                    : "bg-white border-border hover:bg-secondary"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="hasItalianCf"
+                  className="accent-primary"
+                  checked={c.hasItalianCf === val}
+                  onChange={() => upd("hasItalianCf", val)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </Field>
+        {c.hasItalianCf ? (
+          <Field label="Codice fiscale" full>
+            <div className="flex gap-2">
+              <Input
+                value={c.fiscalCode}
+                onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())}
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={computeChildCf}
+                className="shrink-0 rounded-xl px-4 py-2 font-display font-bold border border-primary text-primary hover:bg-primary/10 transition-colors"
+              >
+                Calcola
+              </button>
+            </div>
+            {c.fiscalCode.length === 16 && !isValidFiscalCode(c.fiscalCode) && (
+              <p className="text-xs font-semibold text-flame mt-1">
+                Codice fiscale non valido: controlla anche l'ultimo carattere.
+              </p>
+            )}
+          </Field>
+        ) : (
+          <>
+            <Field label="Cittadinanza">
+              <Input value={c.cittadinanza} onChange={(e) => upd("cittadinanza", e.target.value)} />
+            </Field>
+            <Field label="Nazione di residenza">
+              <Input
+                value={c.nazioneResidenza}
+                onChange={(e) => upd("nazioneResidenza", e.target.value)}
+              />
+            </Field>
+            <Field label="Tipo documento">
+              <Input
+                value={c.tipoDocumento}
+                onChange={(e) => upd("tipoDocumento", e.target.value)}
+                placeholder="es. passaporto, carta d'identità"
+              />
+            </Field>
+            <Field label="Numero documento">
+              <Input
+                value={c.numeroDocumento}
+                onChange={(e) => upd("numeroDocumento", e.target.value)}
+              />
+            </Field>
+          </>
+        )}
         <Field label="Scuola frequentata">
           <Input value={c.school} onChange={(e) => upd("school", e.target.value)} />
         </Field>
@@ -490,12 +810,23 @@ function StepSession({
   state,
   setState,
   location,
+  figlioOrdine,
 }: {
   state: WizardState;
   setState: SetState;
   location: Location;
+  figlioOrdine: number;
 }) {
   const sess = state.session;
+  const estimate = computeEstimate({
+    pricing: location.pricing,
+    weeksCount: sess.weekIds.length,
+    halfDay: isHalfDay(sess.timeSlot),
+    residente: sess.residenteNelComune,
+    tessera: sess.tesseraTipo,
+    figlioOrdine,
+    extrasCost: extrasCostFor(location, sess.extras, sess.weekIds.length),
+  });
   const toggleWeek = (id: string, label: string) => {
     const isSel = sess.weekIds.includes(id);
     const ids = isSel ? sess.weekIds.filter((x) => x !== id) : [...sess.weekIds, id];
@@ -578,6 +909,78 @@ function StepSession({
         })}
       </div>
 
+      <h3 className="font-display text-lg font-bold mb-2">Residenza</h3>
+      <p className="text-xs text-muted-foreground mb-2">
+        La tariffa settimanale cambia per i residenti nel comune della sede.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-2 mb-6">
+        {(
+          [
+            [true, "Residente nel comune della sede"],
+            [false, "Non residente"],
+          ] as const
+        ).map(([val, label]) => (
+          <label
+            key={String(val)}
+            className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
+              sess.residenteNelComune === val
+                ? "bg-primary/10 border-primary"
+                : "bg-white border-border hover:bg-secondary"
+            }`}
+          >
+            <input
+              type="radio"
+              name="residente"
+              className="accent-primary"
+              checked={sess.residenteNelComune === val}
+              onChange={() =>
+                setState((s) => ({ ...s, session: { ...s.session, residenteNelComune: val } }))
+              }
+            />
+            <span className="font-semibold">{label}</span>
+          </label>
+        ))}
+      </div>
+
+      <h3 className="font-display text-lg font-bold mb-2">Tesseramento ACSI</h3>
+      <div className="grid sm:grid-cols-2 gap-2 mb-6">
+        {(
+          [
+            ["base", "Tessera base", location.pricing.membershipBase],
+            [
+              "super_integrativa",
+              "Tessera super-integrativa",
+              location.pricing.membershipBase + location.pricing.membershipSuperIntegrativa,
+            ],
+          ] as const
+        ).map(([val, label, price]) => (
+          <label
+            key={val}
+            className={`flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
+              sess.tesseraTipo === val
+                ? "bg-magic/10 border-magic"
+                : "bg-white border-border hover:bg-secondary"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <input
+                type="radio"
+                name="tessera"
+                className="accent-primary"
+                checked={sess.tesseraTipo === val}
+                onChange={() =>
+                  setState((s) => ({ ...s, session: { ...s.session, tesseraTipo: val } }))
+                }
+              />
+              <span className="font-semibold">{label}</span>
+            </div>
+            <span className="font-pixel bg-flame/10 text-flame border border-flame/30 rounded-lg px-2 py-0.5">
+              € {price}
+            </span>
+          </label>
+        ))}
+      </div>
+
       <h3 className="font-display text-lg font-bold mb-2">Servizi extra</h3>
       <div className="grid sm:grid-cols-2 gap-2">
         {location.extraServices.map((s) => {
@@ -597,6 +1000,21 @@ function StepSession({
             </label>
           );
         })}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-border bg-secondary/40 p-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="font-display text-lg font-bold">Costo stimato</div>
+          <div className="font-display text-3xl font-bold text-grass">€ {estimate.total}</div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          {estimate.weeks} settimana/e × € {estimate.perWeek}
+          {estimate.siblingDiscountPerWeek > 0 &&
+            ` − € ${estimate.siblingDiscountPerWeek}/sett. sconto fratelli (figlio n. ${figlioOrdine})`}{" "}
+          + tessera € {estimate.membership}
+          {estimate.extras > 0 && ` + servizi extra € ${estimate.extras}`}. Verrà confermato dallo
+          staff.
+        </p>
       </div>
     </div>
   );
@@ -694,9 +1112,34 @@ function StepDelegates({ state, setState }: { state: WizardState; setState: SetS
             onChange={(v) => updConsent("outings", v)}
           />
           <ConsentRow
-            label="Autorizzo l'uso di foto e video per i canali Sportivissimo"
+            label="Autorizzo l'uso di foto e video per i canali Sportivissimo (uso interno)"
             checked={state.consents.photos}
             onChange={(v) => updConsent("photos", v)}
+          />
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="font-display text-lg font-bold mb-1">Consensi tesseramento ACSI</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          L'iscrizione comprende il tesseramento ACSI del minore: servono i consensi
+          dell'informativa ACSI. Nessuna casella è pre-spuntata.
+        </p>
+        <div className="space-y-2">
+          <ConsentRow
+            label="Acconsento al trattamento dei dati personali per il tesseramento e le finalità istituzionali ACSI — punto 2.4 dell'informativa (obbligatorio)"
+            checked={state.consents.acsiDati24}
+            onChange={(v) => updConsent("acsiDati24", v)}
+          />
+          <ConsentRow
+            label="Acconsento alle comunicazioni su iniziative e convenzioni ACSI — punto 2.5 dell'informativa (facoltativo)"
+            checked={state.consents.acsiDati25}
+            onChange={(v) => updConsent("acsiDati25", v)}
+          />
+          <ConsentRow
+            label="Autorizzo l'uso di foto e video per finalità promozionali ACSI — diffusione esterna, distinta dall'autorizzazione precedente (facoltativo)"
+            checked={state.consents.acsiFotoMarketing}
+            onChange={(v) => updConsent("acsiFotoMarketing", v)}
           />
         </div>
       </div>
@@ -823,15 +1266,28 @@ function StepDocuments({
   );
 }
 
-function StepSummary({ state, location }: { state: WizardState; location: Location }) {
-  const total = useMemo(() => {
-    const weeks = state.session.weekIds.length || 0;
-    const extrasCost = state.session.extras.reduce((acc, id) => {
-      const e = location.extraServices.find((x) => x.id === id);
-      return acc + (e ? e.price * weeks : 0);
-    }, 0);
-    return location.pricePerWeek * weeks + extrasCost;
-  }, [state, location]);
+function StepSummary({
+  state,
+  location,
+  figlioOrdine,
+}: {
+  state: WizardState;
+  location: Location;
+  figlioOrdine: number;
+}) {
+  const estimate = useMemo(
+    () =>
+      computeEstimate({
+        pricing: location.pricing,
+        weeksCount: state.session.weekIds.length,
+        halfDay: isHalfDay(state.session.timeSlot),
+        residente: state.session.residenteNelComune,
+        tessera: state.session.tesseraTipo,
+        figlioOrdine,
+        extrasCost: extrasCostFor(location, state.session.extras, state.session.weekIds.length),
+      }),
+    [state, location, figlioOrdine],
+  );
 
   return (
     <div>
@@ -845,6 +1301,14 @@ function StepSummary({ state, location }: { state: WizardState; location: Locati
           <SummaryRow label="Settimane" value={state.session.weekLabels.join(", ") || "—"} />
           <SummaryRow label="Orario" value={state.session.timeSlot || "—"} />
           <SummaryRow
+            label="Residenza"
+            value={state.session.residenteNelComune ? "Residente nel comune" : "Non residente"}
+          />
+          <SummaryRow
+            label="Tessera ACSI"
+            value={state.session.tesseraTipo === "base" ? "Base" : "Super-integrativa"}
+          />
+          <SummaryRow
             label="Servizi extra"
             value={
               state.session.extras
@@ -855,10 +1319,14 @@ function StepSummary({ state, location }: { state: WizardState; location: Locati
           />
         </SummaryCard>
         <SummaryCard title="Stima totale">
-          <div className="font-display text-4xl font-bold text-grass">€ {total}</div>
+          <div className="font-display text-4xl font-bold text-grass">€ {estimate.total}</div>
           <p className="text-xs text-muted-foreground mt-1">
-            Calcolo indicativo: {state.session.weekIds.length} settimana/e × €{" "}
-            {location.pricePerWeek} + servizi extra. Verrà confermato dallo staff.
+            {estimate.weeks} settimana/e × € {estimate.perWeek}
+            {estimate.siblingDiscountPerWeek > 0 &&
+              ` − € ${estimate.siblingDiscountPerWeek}/sett. sconto fratelli (figlio n. ${figlioOrdine})`}{" "}
+            + tessera € {estimate.membership}
+            {estimate.extras > 0 && ` + servizi extra € ${estimate.extras}`}. Verrà confermato dallo
+            staff.
           </p>
         </SummaryCard>
         <SummaryCard title="Genitore / Tutore">
@@ -871,6 +1339,14 @@ function StepSummary({ state, location }: { state: WizardState; location: Locati
           <SummaryRow
             label="Indirizzo"
             value={`${state.guardian.address}, ${state.guardian.zip} ${state.guardian.city} (${state.guardian.province})`}
+          />
+          <SummaryRow
+            label="Secondo genitore"
+            value={
+              state.secondaryGuardian
+                ? `${state.secondaryGuardian.firstName} ${state.secondaryGuardian.lastName}`
+                : "—"
+            }
           />
         </SummaryCard>
         <SummaryCard title="Bambino / a">

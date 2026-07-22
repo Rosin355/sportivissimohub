@@ -20,6 +20,19 @@ export type DayBlock = {
 
 export type LocationFaq = { q: string; a: string };
 
+// Tariffe reali per settimana e quote tessera (regolamento 2026).
+export type LocationPricing = {
+  residentFullDay: number;
+  residentHalfDay: number;
+  nonResidentFullDay: number;
+  nonResidentHalfDay: number;
+  siblingDiscountFullDay: number; // sconto per settimana dal 2° figlio
+  siblingDiscountHalfDay: number;
+  membershipBase: number; // tessera ACSI base
+  membershipSuperIntegrativa: number; // supplemento tessera super-integrativa
+  lateFee: number; // mora iscrizione fuori termine
+};
+
 export type Location = {
   slug: string;
   name: string;
@@ -30,7 +43,7 @@ export type Location = {
   ageMax: number;
   tagline: string;
   description: string;
-  pricePerWeek: number;
+  pricing: LocationPricing;
   totalSpots: number;
   bookedSpots: number;
   badges: ActivityBadge[];
@@ -124,6 +137,35 @@ const defaultIncluded = [
   "Maglietta Sportivissimo",
 ];
 
+// Prezzi placeholder per le sedi senza regolamento confermato: struttura reale,
+// valori derivati dal vecchio prezzo unico. DA CONFERMARE CON L'ASSOCIAZIONE.
+function placeholderPricing(fullDay: number): LocationPricing {
+  return {
+    residentFullDay: fullDay,
+    residentHalfDay: Math.max(fullDay - 35, 25),
+    nonResidentFullDay: fullDay + 20,
+    nonResidentHalfDay: Math.max(fullDay - 15, 40),
+    siblingDiscountFullDay: 10,
+    siblingDiscountHalfDay: 5,
+    membershipBase: 10,
+    membershipSuperIntegrativa: 30,
+    lateFee: 15,
+  };
+}
+
+// Galzignano Terme 2026: 9 settimane dall'8 giugno al 7 agosto.
+const galzignanoWeeks: CampWeek[] = [
+  { id: "w1", number: 1, label: "8 - 12 giugno", spots: 12 },
+  { id: "w2", number: 2, label: "15 - 19 giugno", spots: 12 },
+  { id: "w3", number: 3, label: "22 - 26 giugno", spots: 12 },
+  { id: "w4", number: 4, label: "29 giu - 3 lug", spots: 12 },
+  { id: "w5", number: 5, label: "6 - 10 luglio", spots: 12 },
+  { id: "w6", number: 6, label: "13 - 17 luglio", spots: 12 },
+  { id: "w7", number: 7, label: "20 - 24 luglio", spots: 12 },
+  { id: "w8", number: 8, label: "27 - 31 luglio", spots: 12 },
+  { id: "w9", number: 9, label: "3 - 7 agosto", spots: 12 },
+];
+
 function base(partial: Partial<Location> & Pick<Location, "slug" | "name" | "comune">): Location {
   return {
     address: "Via dello Sport 1",
@@ -133,7 +175,7 @@ function base(partial: Partial<Location> & Pick<Location, "slug" | "name" | "com
     tagline: "Una settimana di sport, amici e avventure!",
     description:
       "Una sede pensata per far divertire i bambini con sport, laboratori e tantissimi nuovi amici. Lo staff Sportivissimo accompagna ogni piccolo atleta in una giornata piena di energia.",
-    pricePerWeek: 120,
+    pricing: placeholderPricing(120),
     totalSpots: 60,
     bookedSpots: 46,
     badges: [
@@ -193,7 +235,20 @@ export const LOCATIONS: Location[] = [
     ageMin: 6,
     ageMax: 13,
     tagline: "Centro estivo immerso nel verde dei Colli Euganei.",
-    pricePerWeek: 130,
+    // Valori reali dal regolamento 2026
+    pricing: {
+      residentFullDay: 75,
+      residentHalfDay: 40,
+      nonResidentFullDay: 95,
+      nonResidentHalfDay: 55,
+      siblingDiscountFullDay: 10,
+      siblingDiscountHalfDay: 5,
+      membershipBase: 10,
+      membershipSuperIntegrativa: 30,
+      lateFee: 15,
+    },
+    weeks: galzignanoWeeks,
+    timeSlots: ["07:45 - 16:00 (giornata intera)", "07:45 - 12:30 (mezza giornata)"],
     totalSpots: 60,
     bookedSpots: 46,
     badges: [
@@ -213,7 +268,7 @@ export const LOCATIONS: Location[] = [
     ageMin: 8,
     ageMax: 14,
     tagline: "Il camp per i veri campioni del pallone.",
-    pricePerWeek: 150,
+    pricing: placeholderPricing(150), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 50,
     bookedSpots: 28,
     badges: [
@@ -239,7 +294,7 @@ export const LOCATIONS: Location[] = [
     ageMin: 5,
     ageMax: 11,
     tagline: "Tanti laboratori creativi per piccoli artisti.",
-    pricePerWeek: 115,
+    pricing: placeholderPricing(115), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 45,
     bookedSpots: 36,
     badges: [
@@ -259,7 +314,7 @@ export const LOCATIONS: Location[] = [
     ageMin: 6,
     ageMax: 12,
     tagline: "Avventure nel cuore dei Colli Euganei.",
-    pricePerWeek: 120,
+    pricing: placeholderPricing(120), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 40,
     bookedSpots: 22,
     badges: [
@@ -284,7 +339,7 @@ export const LOCATIONS: Location[] = [
     age: "5-11 anni",
     ageMin: 5,
     ageMax: 11,
-    pricePerWeek: 110,
+    pricing: placeholderPricing(110), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 35,
     bookedSpots: 23,
     badges: [
@@ -299,7 +354,7 @@ export const LOCATIONS: Location[] = [
     name: "Sossano",
     comune: "Sossano (VI)",
     address: "Via dello Sport 3 — Sossano",
-    pricePerWeek: 125,
+    pricing: placeholderPricing(125), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 40,
     bookedSpots: 33,
     badges: [
@@ -317,7 +372,7 @@ export const LOCATIONS: Location[] = [
     age: "5-12 anni",
     ageMin: 5,
     ageMax: 12,
-    pricePerWeek: 115,
+    pricing: placeholderPricing(115), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 38,
     bookedSpots: 22,
     badges: [
@@ -332,7 +387,7 @@ export const LOCATIONS: Location[] = [
     name: "Noventa Vicentina",
     comune: "Noventa Vicentina (VI)",
     address: "Via Roma 22 — Noventa Vicentina",
-    pricePerWeek: 135,
+    pricing: placeholderPricing(135), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 55,
     bookedSpots: 35,
     badges: [
@@ -350,7 +405,7 @@ export const LOCATIONS: Location[] = [
     age: "7-14 anni",
     ageMin: 7,
     ageMax: 14,
-    pricePerWeek: 140,
+    pricing: placeholderPricing(140), // DA CONFERMARE CON L'ASSOCIAZIONE
     totalSpots: 45,
     bookedSpots: 34,
     badges: [

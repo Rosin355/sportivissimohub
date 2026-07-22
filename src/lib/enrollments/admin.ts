@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Json, PaymentStatus } from "@/lib/supabase/types";
 import type { Enrollment } from "@/data/enrollments";
+import { estimateForEnrollment } from "./pricing";
 
 // Operazioni riservate all'admin: le RLS bloccano chiunque altro. Ogni azione
 // scrive anche in audit_log (dati di minori: tracciabilità).
@@ -69,9 +70,16 @@ export function enrollmentsToCsv(list: Enrollment[]): string {
     "Sede",
     "Settimane",
     "Orario",
+    "Residente",
+    "Tessera ACSI",
+    "Figlio n.",
+    "Costo stimato EUR",
     "Servizi extra",
     "Bambino",
+    "Sesso",
+    "Nato/a a",
     "CF bambino",
+    "Documento (senza CF)",
     "Data nascita",
     "Allergie",
     "Note mediche",
@@ -80,19 +88,36 @@ export function enrollmentsToCsv(list: Enrollment[]): string {
     "Telefono",
     "CF genitore",
     "Indirizzo",
+    "Secondo genitore",
+    "CF secondo genitore",
+    "Consenso ACSI 2.4",
+    "Consenso ACSI 2.5",
+    "Consenso ACSI foto",
     "Data iscrizione",
   ];
-  const rows = list.map((e) =>
-    [
+  const rows = list.map((e) => {
+    const estimate = estimateForEnrollment(e);
+    return [
       e.code,
       e.status,
       e.paymentStatus,
       e.session.locationName,
       e.session.weekLabels.join("; "),
       e.session.timeSlot,
+      e.session.residenteNelComune ? "Sì" : "No",
+      e.session.tesseraTipo === "base" ? "base" : "super-integrativa",
+      String(e.figlioOrdine),
+      estimate ? String(estimate.total) : "",
       e.session.extras.join("; "),
       `${e.child.firstName} ${e.child.lastName}`,
+      e.child.sesso || "",
+      e.child.comuneNascita
+        ? `${e.child.comuneNascita}${e.child.provinciaNascita ? ` (${e.child.provinciaNascita})` : ""} - ${e.child.nazioneNascita}`
+        : "",
       e.child.fiscalCode,
+      e.child.hasItalianCf
+        ? ""
+        : `${e.child.cittadinanza}; ${e.child.tipoDocumento} ${e.child.numeroDocumento}`.trim(),
       e.child.birthDate,
       e.child.allergies,
       e.child.medicalNotes,
@@ -101,11 +126,16 @@ export function enrollmentsToCsv(list: Enrollment[]): string {
       e.guardian.phone,
       e.guardian.fiscalCode,
       `${e.guardian.address}, ${e.guardian.zip} ${e.guardian.city} (${e.guardian.province})`,
+      e.secondaryGuardian ? `${e.secondaryGuardian.firstName} ${e.secondaryGuardian.lastName}` : "",
+      e.secondaryGuardian?.fiscalCode ?? "",
+      e.consents.acsiDati24 ? "Sì" : "No",
+      e.consents.acsiDati25 ? "Sì" : "No",
+      e.consents.acsiFotoMarketing ? "Sì" : "No",
       new Date(e.createdAt).toLocaleDateString("it-IT"),
     ]
       .map(csvEscape)
-      .join(";"),
-  );
+      .join(";");
+  });
   // BOM per l'apertura corretta degli accenti in Excel
   return "﻿" + [headers.map(csvEscape).join(";"), ...rows].join("\r\n");
 }

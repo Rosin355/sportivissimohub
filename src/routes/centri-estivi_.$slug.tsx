@@ -210,7 +210,7 @@ function LocationDetailPage() {
             gradient="bg-gradient-royal"
             icon={<Wallet className="w-5 h-5" />}
             label="Prezzo settimanale"
-            value={`€ ${loc.pricePerWeek}`}
+            value={`da € ${loc.pricing.residentFullDay}`}
           />
           <InfoStat
             gradient="bg-gradient-magic"

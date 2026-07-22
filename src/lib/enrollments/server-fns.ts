@@ -55,8 +55,9 @@ export const submitEnrollment = createServerFn({ method: "POST" })
       return { ok: false, error: "Impossibile salvare i dati del genitore. Riprova." };
     }
 
-    // Upsert del figlio per (genitore, codice fiscale): riusabile tra iscrizioni.
-    const childFiscalCode = data.child.fiscalCode.toUpperCase();
+    // Upsert del figlio: per CF italiano si riusa la riga con lo stesso CF;
+    // per minori senza CF italiano si riusa per (nome, cognome, data nascita).
+    const childFiscalCode = data.child.hasItalianCf ? data.child.fiscalCode.toUpperCase() : null;
     const childRecord = {
       first_name: data.child.firstName,
       last_name: data.child.lastName,
@@ -67,13 +68,25 @@ export const submitEnrollment = createServerFn({ method: "POST" })
       allergies: data.child.allergies,
       medical_notes: data.child.medicalNotes,
       special_needs: data.child.specialNeeds,
+      sesso: data.child.sesso,
+      comune_nascita: data.child.comuneNascita,
+      provincia_nascita: data.child.provinciaNascita || null,
+      nazione_nascita: data.child.nazioneNascita,
+      has_italian_cf: data.child.hasItalianCf,
+      cittadinanza: data.child.hasItalianCf ? null : data.child.cittadinanza,
+      nazione_residenza: data.child.hasItalianCf ? null : data.child.nazioneResidenza,
+      tipo_documento: data.child.hasItalianCf ? null : data.child.tipoDocumento,
+      numero_documento: data.child.hasItalianCf ? null : data.child.numeroDocumento,
     };
-    const { data: existingChild } = await supabase
-      .from("children")
-      .select("id")
-      .eq("parent_id", user.id)
-      .eq("fiscal_code", childFiscalCode)
-      .maybeSingle();
+    const childLookup = supabase.from("children").select("id").eq("parent_id", user.id);
+    const { data: existingChild } = await (
+      childFiscalCode
+        ? childLookup.eq("fiscal_code", childFiscalCode)
+        : childLookup
+            .eq("first_name", data.child.firstName)
+            .eq("last_name", data.child.lastName)
+            .eq("birth_date", data.child.birthDate)
+    ).maybeSingle();
 
     let childId: string;
     if (existingChild) {
@@ -92,6 +105,20 @@ export const submitEnrollment = createServerFn({ method: "POST" })
       childId = inserted.id;
     }
 
+    // figlio_ordine: 1 + numero di ALTRI figli con iscrizioni attive del
+    // genitore nella stagione corrente. Calcolato qui, mai scelto dal client.
+    const seasonStart = `${new Date().getFullYear()}-01-01`;
+    const { data: seasonEnrollments } = await supabase
+      .from("enrollments")
+      .select("child_id")
+      .eq("parent_id", user.id)
+      .neq("status", "annullata")
+      .gte("created_at", seasonStart);
+    const otherChildren = new Set(
+      (seasonEnrollments ?? []).map((e) => e.child_id).filter((id) => id !== childId),
+    );
+    const figlioOrdine = otherChildren.size + 1;
+
     const { data: enrollment, error: enrollmentError } = await supabase
       .from("enrollments")
       .insert({
@@ -101,11 +128,23 @@ export const submitEnrollment = createServerFn({ method: "POST" })
         week_ids: data.session.weekIds,
         time_slot: data.session.timeSlot,
         extras: data.session.extras,
+        residente_nel_comune: data.session.residenteNelComune,
+        tessera_tipo: data.session.tesseraTipo,
+        figlio_ordine: figlioOrdine,
+        secondary_guardian: data.secondaryGuardian
+          ? {
+              ...data.secondaryGuardian,
+              fiscalCode: data.secondaryGuardian.fiscalCode.toUpperCase(),
+            }
+          : null,
         consent_privacy: data.consents.privacy,
         consent_photos: data.consents.photos,
         consent_outings: data.consents.outings,
         consent_rules: data.consents.rules,
         consent_data_processing: data.consents.dataProcessing,
+        consent_acsi_dati_24: data.consents.acsiDati24,
+        consent_acsi_dati_25: data.consents.acsiDati25,
+        consent_acsi_foto_marketing: data.consents.acsiFotoMarketing,
       })
       .select("id, code")
       .single();

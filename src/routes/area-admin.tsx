@@ -39,6 +39,7 @@ import {
   downloadCsv,
 } from "@/lib/enrollments/admin";
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
+import { estimateForEnrollment } from "@/lib/enrollments/pricing";
 import type { PaymentStatus } from "@/lib/supabase/types";
 
 export const Route = createFileRoute("/area-admin")({
@@ -377,6 +378,8 @@ function EnrollmentSheet({
   }, [enrollment]);
   if (!enrollment) return null;
 
+  const estimate = estimateForEnrollment(enrollment);
+
   function setStatus(s: EnrollmentStatus) {
     updateEnrollmentStatus(enrollment!.id, s, notes)
       .then(onUpdate)
@@ -456,9 +459,54 @@ function EnrollmentSheet({
             />
           </Section>
 
+          {enrollment.secondaryGuardian && (
+            <Section title="Secondo genitore">
+              <KV
+                k="Nome"
+                v={`${enrollment.secondaryGuardian.firstName} ${enrollment.secondaryGuardian.lastName}`}
+              />
+              <KV k="Email" v={enrollment.secondaryGuardian.email || "—"} />
+              <KV k="Telefono" v={enrollment.secondaryGuardian.phone || "—"} />
+              <KV k="Codice fiscale" v={enrollment.secondaryGuardian.fiscalCode || "—"} />
+            </Section>
+          )}
+
           <Section title="Bambino">
             <KV k="Nome" v={`${enrollment.child.firstName} ${enrollment.child.lastName}`} />
+            <KV
+              k="Sesso"
+              v={
+                enrollment.child.sesso === "M"
+                  ? "Maschio"
+                  : enrollment.child.sesso === "F"
+                    ? "Femmina"
+                    : "—"
+              }
+            />
             <KV k="Data nascita" v={enrollment.child.birthDate} />
+            <KV
+              k="Nato/a a"
+              v={
+                enrollment.child.comuneNascita
+                  ? `${enrollment.child.comuneNascita}${enrollment.child.provinciaNascita ? ` (${enrollment.child.provinciaNascita})` : ""} · ${enrollment.child.nazioneNascita}`
+                  : "—"
+              }
+            />
+            {enrollment.child.hasItalianCf ? (
+              <KV k="Codice fiscale" v={enrollment.child.fiscalCode || "—"} />
+            ) : (
+              <>
+                <KV k="Cittadinanza" v={enrollment.child.cittadinanza || "—"} />
+                <KV k="Residenza (nazione)" v={enrollment.child.nazioneResidenza || "—"} />
+                <KV
+                  k="Documento"
+                  v={
+                    `${enrollment.child.tipoDocumento} ${enrollment.child.numeroDocumento}`.trim() ||
+                    "—"
+                  }
+                />
+              </>
+            )}
             <KV k="Età" v={`${enrollment.child.age} anni`} />
             <KV k="Scuola / classe" v={`${enrollment.child.school} · ${enrollment.child.grade}`} />
             <KV k="Allergie" v={enrollment.child.allergies || "—"} />
@@ -470,6 +518,16 @@ function EnrollmentSheet({
             <KV k="Settimane" v={enrollment.session.weekLabels.join(", ") || "—"} />
             <KV k="Orario" v={enrollment.session.timeSlot} />
             <KV k="Servizi extra" v={enrollment.session.extras.join(", ") || "Nessuno"} />
+            <KV
+              k="Residenza"
+              v={enrollment.session.residenteNelComune ? "Residente nel comune" : "Non residente"}
+            />
+            <KV
+              k="Tessera ACSI"
+              v={enrollment.session.tesseraTipo === "base" ? "Base" : "Super-integrativa"}
+            />
+            <KV k="Figlio n." v={String(enrollment.figlioOrdine)} />
+            {estimate && <KV k="Costo stimato" v={`€ ${estimate.total}`} />}
           </Section>
 
           <Section title="Consensi">
@@ -477,6 +535,12 @@ function EnrollmentSheet({
             <KV k="Foto/video" v={enrollment.consents.photos ? "Sì" : "No"} />
             <KV k="Uscite" v={enrollment.consents.outings ? "Sì" : "No"} />
             <KV k="Regolamento" v={enrollment.consents.rules ? "Sì" : "No"} />
+            <KV k="ACSI dati 2.4 (obblig.)" v={enrollment.consents.acsiDati24 ? "Sì" : "No"} />
+            <KV k="ACSI comunicazioni 2.5" v={enrollment.consents.acsiDati25 ? "Sì" : "No"} />
+            <KV
+              k="ACSI foto promozionali"
+              v={enrollment.consents.acsiFotoMarketing ? "Sì" : "No"}
+            />
           </Section>
 
           <Section title="Delegati al ritiro">

@@ -115,7 +115,7 @@ function LocationDetailPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-gradient-hero text-white relative overflow-hidden">
+        <section className="bg-gradient-hero text-foreground relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-magic/25 blur-[110px]" />
             <div className="absolute -bottom-32 left-1/4 w-80 h-80 rounded-full bg-flame/20 blur-[100px]" />
@@ -123,30 +123,30 @@ function LocationDetailPage() {
           <div className="container mx-auto px-4 py-14 relative">
             <Link
               to="/centri-estivi"
-              className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-semibold mb-4"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm font-semibold mb-4"
             >
               ← Tutte le sedi
             </Link>
             <div className="grid md:grid-cols-[1fr_auto] gap-6 items-end">
               <div>
-                <span className="inline-flex items-center bg-white/15 border border-white/20 rounded-xl px-3 py-1 font-pixel text-white mb-3">
+                <span className="inline-flex items-center bg-primary/10 border border-primary/20 rounded-xl px-3 py-1 font-pixel text-primary mb-3">
                   Centro Estivo 2026
                 </span>
-                <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight">
+                <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-foreground">
                   {loc.name}
                 </h1>
-                <p className="text-white/70 mt-2 inline-flex items-center gap-2">
+                <p className="text-muted-foreground mt-2 inline-flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> {loc.comune} · {loc.address}
                 </p>
-                <p className="text-lg text-white/85 mt-3 max-w-2xl">{loc.tagline}</p>
+                <p className="text-lg text-foreground/80 mt-3 max-w-2xl">{loc.tagline}</p>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="bg-white/10 border border-white/20 text-white font-pixel rounded-lg px-3 py-1">
+                  <span className="bg-secondary border border-border text-foreground font-pixel rounded-lg px-3 py-1">
                     {loc.age}
                   </span>
                   {loc.badges.map((b) => (
                     <span
                       key={b.label}
-                      className={`font-pixel rounded-lg px-3 py-1 border ${tagStyle[b.color]} bg-white/10 text-white border-white/20`}
+                      className={`font-pixel rounded-lg px-3 py-1 border ${tagStyle[b.color]}`}
                     >
                       {b.label}
                     </span>
@@ -184,7 +184,7 @@ function LocationDetailPage() {
               </Link>
               <a
                 href={`mailto:${loc.contacts.email}?subject=${encodeURIComponent("Info " + loc.name)}`}
-                className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white rounded-xl px-6 py-3.5 font-display font-bold hover:bg-white/20 transition-colors"
+                className="inline-flex items-center gap-2 bg-white border border-border text-foreground rounded-xl px-6 py-3.5 font-display font-bold hover:bg-secondary transition-colors"
               >
                 <MessageCircle className="w-4 h-4" /> Richiedi informazioni
               </a>
@@ -385,12 +385,12 @@ function LocationDetailPage() {
 
         {/* Final CTA */}
         <section className="container mx-auto px-4 pb-16">
-          <div className="rounded-2xl bg-gradient-hero text-white p-8 shadow-pop relative overflow-hidden">
+          <div className="rounded-2xl bg-gradient-hero text-foreground p-8 shadow-pop relative overflow-hidden border border-border">
             <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-flame/30 blur-[60px] pointer-events-none" />
             <div className="relative flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="font-display text-3xl font-bold">Pronto a partire?</h2>
-                <p className="text-white/75">
+                <p className="text-muted-foreground">
                   Un'estate di sport, amici e nuove avventure ti aspetta a {loc.name}.
                 </p>
               </div>

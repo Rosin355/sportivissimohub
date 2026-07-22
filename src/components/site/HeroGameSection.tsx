@@ -23,7 +23,8 @@ export function HeroGameSection() {
                 </span>
               </h1>
               <p className="mt-4 text-base sm:text-lg text-slate-700 leading-relaxed font-medium">
-                Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente sicuro, professionale e pieno di entusiasmo.
+                Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente
+                sicuro, professionale e pieno di entusiasmo.
               </p>
               <div className="mt-6 flex flex-col gap-3">
                 <Link
@@ -59,7 +60,8 @@ export function HeroGameSection() {
               </span>
             </h1>
             <p className="mt-6 text-xl md:text-2xl text-slate-700 leading-relaxed font-medium max-w-lg">
-              Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente sicuro, professionale e pieno di entusiasmo.
+              Centri estivi, doposcuola e attività educative per bambini e ragazzi in un ambiente
+              sicuro, professionale e pieno di entusiasmo.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Link
@@ -87,8 +89,12 @@ export function HeroGameSection() {
               <Users className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
             </div>
             <div>
-              <div className="font-display text-2xl md:text-3xl tracking-tight text-blue-600">1.200+</div>
-              <div className="text-sm md:text-base font-medium text-slate-500 leading-tight">famiglie che ci scelgono</div>
+              <div className="font-display text-2xl md:text-3xl tracking-tight text-blue-600">
+                1.200+
+              </div>
+              <div className="text-sm md:text-base font-medium text-slate-500 leading-tight">
+                famiglie che ci scelgono
+              </div>
             </div>
           </div>
           <div className="hidden md:block w-px h-12 bg-slate-100" />
@@ -98,8 +104,12 @@ export function HeroGameSection() {
               <MapPin className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
             </div>
             <div>
-              <div className="font-display text-2xl md:text-3xl tracking-tight text-green-600">10</div>
-              <div className="text-sm md:text-base font-medium text-slate-500 leading-tight">sedi nel Veneto</div>
+              <div className="font-display text-2xl md:text-3xl tracking-tight text-green-600">
+                10
+              </div>
+              <div className="text-sm md:text-base font-medium text-slate-500 leading-tight">
+                sedi nel Veneto
+              </div>
             </div>
           </div>
           <div className="hidden md:block w-px h-12 bg-slate-100" />
@@ -109,8 +119,12 @@ export function HeroGameSection() {
               <Star className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
             </div>
             <div>
-              <div className="font-display text-2xl md:text-3xl tracking-tight text-yellow-500">12</div>
-              <div className="text-sm md:text-base font-medium text-slate-500 leading-tight">anni di esperienza</div>
+              <div className="font-display text-2xl md:text-3xl tracking-tight text-yellow-500">
+                12
+              </div>
+              <div className="text-sm md:text-base font-medium text-slate-500 leading-tight">
+                anni di esperienza
+              </div>
             </div>
           </div>
         </div>

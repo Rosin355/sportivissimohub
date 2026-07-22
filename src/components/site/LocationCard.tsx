@@ -12,7 +12,7 @@ export type Location = {
 };
 
 const tagStyle: Record<string, string> = {
-  sun:   "bg-sun/15 text-sun-foreground border-sun/30",
+  sun: "bg-sun/15 text-sun-foreground border-sun/30",
   grass: "bg-grass/15 text-grass border-grass/30",
   magic: "bg-magic/15 text-magic border-magic/30",
   flame: "bg-flame/15 text-flame border-flame/30",
@@ -34,7 +34,9 @@ export function LocationCard({ loc }: { loc: Location }) {
           <MapPin className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-display text-lg font-bold leading-tight text-white truncate">{loc.name}</div>
+          <div className="font-display text-lg font-bold leading-tight text-white truncate">
+            {loc.name}
+          </div>
           <div className="text-xs text-white/70 font-semibold">{loc.age}</div>
         </div>
         {isHot && (
@@ -59,17 +61,21 @@ export function LocationCard({ loc }: { loc: Location }) {
 
         <div className="flex items-center gap-4 text-sm font-semibold">
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <Calendar className="w-4 h-4 text-magic" />{loc.weeks} settimane
+            <Calendar className="w-4 h-4 text-magic" />
+            {loc.weeks} settimane
           </span>
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <Users className="w-4 h-4 text-grass" />{loc.spots} posti
+            <Users className="w-4 h-4 text-grass" />
+            {loc.spots} posti
           </span>
         </div>
 
         <div>
           <div className="flex justify-between text-xs font-semibold mb-1.5">
             <span className="text-muted-foreground">Disponibilità</span>
-            <span className={isHot ? "text-coral font-bold" : "text-muted-foreground"}>{pct}% prenotato</span>
+            <span className={isHot ? "text-coral font-bold" : "text-muted-foreground"}>
+              {pct}% prenotato
+            </span>
           </div>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
             <div

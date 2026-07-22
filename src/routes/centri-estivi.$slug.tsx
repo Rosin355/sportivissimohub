@@ -5,17 +5,38 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { LevelStep } from "@/components/site/LevelStep";
 import { getLocationBySlug, type Location } from "@/data/locations";
 import {
-  MapPin, Calendar, Clock, Wallet, ShieldCheck, FileText, Phone, Mail, Users,
-  CheckCircle2, ArrowRight, MessageCircle, Sun, Trophy, UtensilsCrossed, Palette, Users2, Heart,
+  MapPin,
+  Calendar,
+  Clock,
+  Wallet,
+  ShieldCheck,
+  FileText,
+  Phone,
+  Mail,
+  Users,
+  CheckCircle2,
+  ArrowRight,
+  MessageCircle,
+  Sun,
+  Trophy,
+  UtensilsCrossed,
+  Palette,
+  Users2,
+  Heart,
 } from "lucide-react";
 import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/centri-estivi/$slug")({
   head: ({ params }) => {
     const loc = getLocationBySlug(params.slug);
-    const title = loc ? `${loc.name} — Centro Estivo Sportivissimo` : "Centro estivo — Sportivissimo";
+    const title = loc
+      ? `${loc.name} — Centro Estivo Sportivissimo`
+      : "Centro estivo — Sportivissimo";
     const desc = loc?.tagline ?? "Scopri il centro estivo Sportivissimo.";
     return {
       meta: [
@@ -37,7 +58,10 @@ export const Route = createFileRoute("/centri-estivi/$slug")({
       <main className="flex-1 container mx-auto px-4 py-20 text-center">
         <h1 className="font-display text-4xl font-bold mb-3">Sede non trovata</h1>
         <p className="text-muted-foreground mb-6">Questa sede non esiste o è stata spostata.</p>
-        <Link to="/centri-estivi" className="inline-flex items-center gap-2 bg-gradient-royal text-primary-foreground rounded-xl px-5 py-3 font-display font-bold shadow-sticker">
+        <Link
+          to="/centri-estivi"
+          className="inline-flex items-center gap-2 bg-gradient-royal text-primary-foreground rounded-xl px-5 py-3 font-display font-bold shadow-sticker"
+        >
           Torna alle sedi
         </Link>
       </main>
@@ -50,7 +74,10 @@ export const Route = createFileRoute("/centri-estivi/$slug")({
       <main className="flex-1 container mx-auto px-4 py-20 text-center">
         <h1 className="font-display text-3xl font-bold mb-3">Ops, qualcosa è andato storto</h1>
         <p className="text-muted-foreground mb-6">{error.message}</p>
-        <button onClick={reset} className="bg-gradient-royal text-primary-foreground rounded-xl px-5 py-3 font-display font-bold shadow-sticker">
+        <button
+          onClick={reset}
+          className="bg-gradient-royal text-primary-foreground rounded-xl px-5 py-3 font-display font-bold shadow-sticker"
+        >
           Riprova
         </button>
       </main>
@@ -61,7 +88,7 @@ export const Route = createFileRoute("/centri-estivi/$slug")({
 });
 
 const tagStyle: Record<string, string> = {
-  sun:   "bg-sun/15 text-sun-foreground border-sun/30",
+  sun: "bg-sun/15 text-sun-foreground border-sun/30",
   grass: "bg-grass/15 text-grass border-grass/30",
   magic: "bg-magic/15 text-magic border-magic/30",
   flame: "bg-flame/15 text-flame border-flame/30",
@@ -69,7 +96,12 @@ const tagStyle: Record<string, string> = {
 };
 
 const iconForDayBlock = {
-  sun: Sun, ball: Trophy, lunch: UtensilsCrossed, art: Palette, team: Users2, hug: Heart,
+  sun: Sun,
+  ball: Trophy,
+  lunch: UtensilsCrossed,
+  art: Palette,
+  team: Users2,
+  hug: Heart,
 } as const;
 
 function LocationDetailPage() {
@@ -89,7 +121,10 @@ function LocationDetailPage() {
             <div className="absolute -bottom-32 left-1/4 w-80 h-80 rounded-full bg-flame/20 blur-[100px]" />
           </div>
           <div className="container mx-auto px-4 py-14 relative">
-            <Link to="/centri-estivi" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-semibold mb-4">
+            <Link
+              to="/centri-estivi"
+              className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-semibold mb-4"
+            >
               ← Tutte le sedi
             </Link>
             <div className="grid md:grid-cols-[1fr_auto] gap-6 items-end">
@@ -97,13 +132,22 @@ function LocationDetailPage() {
                 <span className="inline-flex items-center bg-white/15 border border-white/20 rounded-xl px-3 py-1 font-pixel text-white mb-3">
                   Centro Estivo 2026
                 </span>
-                <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight">{loc.name}</h1>
-                <p className="text-white/70 mt-2 inline-flex items-center gap-2"><MapPin className="w-4 h-4" /> {loc.comune} · {loc.address}</p>
+                <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight">
+                  {loc.name}
+                </h1>
+                <p className="text-white/70 mt-2 inline-flex items-center gap-2">
+                  <MapPin className="w-4 h-4" /> {loc.comune} · {loc.address}
+                </p>
                 <p className="text-lg text-white/85 mt-3 max-w-2xl">{loc.tagline}</p>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="bg-white/10 border border-white/20 text-white font-pixel rounded-lg px-3 py-1">{loc.age}</span>
+                  <span className="bg-white/10 border border-white/20 text-white font-pixel rounded-lg px-3 py-1">
+                    {loc.age}
+                  </span>
                   {loc.badges.map((b) => (
-                    <span key={b.label} className={`font-pixel rounded-lg px-3 py-1 border ${tagStyle[b.color]} bg-white/10 text-white border-white/20`}>
+                    <span
+                      key={b.label}
+                      className={`font-pixel rounded-lg px-3 py-1 border ${tagStyle[b.color]} bg-white/10 text-white border-white/20`}
+                    >
                       {b.label}
                     </span>
                   ))}
@@ -113,11 +157,19 @@ function LocationDetailPage() {
               {/* Availability sticker */}
               <div className="rounded-2xl bg-white/95 text-foreground p-5 shadow-pop min-w-[260px]">
                 <div className="font-pixel text-muted-foreground mb-1">Posti disponibili</div>
-                <div className="font-display text-4xl font-bold text-grass">{available}<span className="text-muted-foreground text-lg font-bold">/{loc.totalSpots}</span></div>
-                <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${pct >= 80 ? "bg-gradient-flame" : "bg-gradient-grass"}`} style={{ width: `${pct}%` }} />
+                <div className="font-display text-4xl font-bold text-grass">
+                  {available}
+                  <span className="text-muted-foreground text-lg font-bold">/{loc.totalSpots}</span>
                 </div>
-                <div className="mt-1.5 text-xs font-semibold text-muted-foreground text-right">{pct}% prenotato</div>
+                <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${pct >= 80 ? "bg-gradient-flame" : "bg-gradient-grass"}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="mt-1.5 text-xs font-semibold text-muted-foreground text-right">
+                  {pct}% prenotato
+                </div>
               </div>
             </div>
 
@@ -142,10 +194,30 @@ function LocationDetailPage() {
 
         {/* Quick info cards */}
         <section className="container mx-auto px-4 py-10 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <InfoStat gradient="bg-gradient-grass" icon={<Calendar className="w-5 h-5" />} label="Settimane disponibili" value={`${loc.weeks.length}`} />
-          <InfoStat gradient="bg-gradient-sun"   icon={<Clock className="w-5 h-5" />}    label="Orari"                 value={loc.timeSlots.length + " fasce"} />
-          <InfoStat gradient="bg-gradient-royal" icon={<Wallet className="w-5 h-5" />}   label="Prezzo settimanale"    value={`€ ${loc.pricePerWeek}`} />
-          <InfoStat gradient="bg-gradient-magic" icon={<Users className="w-5 h-5" />}    label="Fascia età"            value={loc.age} />
+          <InfoStat
+            gradient="bg-gradient-grass"
+            icon={<Calendar className="w-5 h-5" />}
+            label="Settimane disponibili"
+            value={`${loc.weeks.length}`}
+          />
+          <InfoStat
+            gradient="bg-gradient-sun"
+            icon={<Clock className="w-5 h-5" />}
+            label="Orari"
+            value={loc.timeSlots.length + " fasce"}
+          />
+          <InfoStat
+            gradient="bg-gradient-royal"
+            icon={<Wallet className="w-5 h-5" />}
+            label="Prezzo settimanale"
+            value={`€ ${loc.pricePerWeek}`}
+          />
+          <InfoStat
+            gradient="bg-gradient-magic"
+            icon={<Users className="w-5 h-5" />}
+            label="Fascia età"
+            value={loc.age}
+          />
         </section>
 
         {/* Description + daily routine */}
@@ -159,7 +231,13 @@ function LocationDetailPage() {
                 return (
                   <div key={i}>
                     <div className="font-pixel text-muted-foreground mb-1">{d.time}</div>
-                    <LevelStep level={i + 1} title={d.title} description={d.description} icon={Icon} color={d.color} />
+                    <LevelStep
+                      level={i + 1}
+                      title={d.title}
+                      description={d.description}
+                      icon={Icon}
+                      color={d.color}
+                    />
                   </div>
                 );
               })}
@@ -172,7 +250,12 @@ function LocationDetailPage() {
               <h3 className="font-display text-xl font-bold mb-3">Attività principali</h3>
               <div className="flex flex-wrap gap-2">
                 {loc.activities.map((a) => (
-                  <span key={a} className="bg-secondary text-foreground rounded-lg px-3 py-1.5 text-sm font-semibold">{a}</span>
+                  <span
+                    key={a}
+                    className="bg-secondary text-foreground rounded-lg px-3 py-1.5 text-sm font-semibold"
+                  >
+                    {a}
+                  </span>
                 ))}
               </div>
             </div>
@@ -182,8 +265,12 @@ function LocationDetailPage() {
               <ul className="space-y-2">
                 {loc.weeks.map((w) => (
                   <li key={w.id} className="flex items-center justify-between text-sm">
-                    <span className="font-semibold">Sett. {w.number} · {w.label}</span>
-                    <span className={`font-pixel rounded-lg px-2 py-0.5 border ${w.spots <= 5 ? "bg-flame/10 text-flame border-flame/30" : "bg-grass/10 text-grass border-grass/30"}`}>
+                    <span className="font-semibold">
+                      Sett. {w.number} · {w.label}
+                    </span>
+                    <span
+                      className={`font-pixel rounded-lg px-2 py-0.5 border ${w.spots <= 5 ? "bg-flame/10 text-flame border-flame/30" : "bg-grass/10 text-grass border-grass/30"}`}
+                    >
                       {w.spots} posti
                     </span>
                   </li>
@@ -195,7 +282,9 @@ function LocationDetailPage() {
               <h3 className="font-display text-xl font-bold mb-3">Orari</h3>
               <ul className="space-y-1.5 text-sm font-semibold">
                 {loc.timeSlots.map((t) => (
-                  <li key={t} className="inline-flex items-center gap-2"><Clock className="w-4 h-4 text-magic" /> {t}</li>
+                  <li key={t} className="inline-flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-magic" /> {t}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -225,9 +314,14 @@ function LocationDetailPage() {
             </div>
             <ul className="space-y-2">
               {loc.extraServices.map((s) => (
-                <li key={s.id} className="flex items-center justify-between border-b border-dashed border-border last:border-0 pb-2 last:pb-0">
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between border-b border-dashed border-border last:border-0 pb-2 last:pb-0"
+                >
                   <span className="text-sm font-semibold">{s.label}</span>
-                  <span className="font-pixel bg-flame/10 text-flame border border-flame/30 rounded-lg px-2 py-0.5">+ € {s.price}</span>
+                  <span className="font-pixel bg-flame/10 text-flame border border-flame/30 rounded-lg px-2 py-0.5">
+                    + € {s.price}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -243,7 +337,10 @@ function LocationDetailPage() {
             </div>
             <ul className="space-y-2">
               {loc.requiredDocuments.map((d) => (
-                <li key={d} className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <li
+                  key={d}
+                  className="flex items-center gap-2 text-sm font-semibold text-foreground"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-magic" /> {d}
                 </li>
               ))}
@@ -252,11 +349,19 @@ function LocationDetailPage() {
 
           <div className="rounded-2xl bg-white border border-border shadow-pop p-6">
             <h3 className="font-display text-2xl font-bold mb-3">Hai una domanda?</h3>
-            <p className="text-sm text-muted-foreground mb-4">Lo staff Sportivissimo risponde entro 24 ore.</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Lo staff Sportivissimo risponde entro 24 ore.
+            </p>
             <ul className="space-y-2 text-sm font-semibold">
-              <li className="inline-flex items-center gap-2"><Phone className="w-4 h-4 text-grass" /> {loc.contacts.phone}</li>
-              <li className="inline-flex items-center gap-2"><Mail className="w-4 h-4 text-magic" /> {loc.contacts.email}</li>
-              <li className="inline-flex items-center gap-2"><MapPin className="w-4 h-4 text-flame" /> {loc.address}</li>
+              <li className="inline-flex items-center gap-2">
+                <Phone className="w-4 h-4 text-grass" /> {loc.contacts.phone}
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <Mail className="w-4 h-4 text-magic" /> {loc.contacts.email}
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-flame" /> {loc.address}
+              </li>
             </ul>
           </div>
         </section>
@@ -268,7 +373,9 @@ function LocationDetailPage() {
             <Accordion type="single" collapsible className="w-full">
               {loc.faq.map((f, i) => (
                 <AccordionItem key={i} value={`f${i}`}>
-                  <AccordionTrigger className="text-left font-display text-base">{f.q}</AccordionTrigger>
+                  <AccordionTrigger className="text-left font-display text-base">
+                    {f.q}
+                  </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
                 </AccordionItem>
               ))}
@@ -283,7 +390,9 @@ function LocationDetailPage() {
             <div className="relative flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="font-display text-3xl font-bold">Pronto a partire?</h2>
-                <p className="text-white/75">Un'estate di sport, amici e nuove avventure ti aspetta a {loc.name}.</p>
+                <p className="text-white/75">
+                  Un'estate di sport, amici e nuove avventure ti aspetta a {loc.name}.
+                </p>
               </div>
               <Link
                 to="/centri-estivi/$slug/iscrizione"
@@ -302,7 +411,17 @@ function LocationDetailPage() {
   );
 }
 
-function InfoStat({ gradient, icon, label, value }: { gradient: string; icon: ReactNode; label: string; value: string }) {
+function InfoStat({
+  gradient,
+  icon,
+  label,
+  value,
+}: {
+  gradient: string;
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-2xl bg-white border border-border shadow-card overflow-hidden flex">
       <div className={`${gradient} grid place-items-center w-14 shrink-0 text-white`}>{icon}</div>

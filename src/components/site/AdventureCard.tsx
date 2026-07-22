@@ -5,14 +5,14 @@ import { ArrowRight } from "lucide-react";
 export type Variant = "sun" | "grass" | "magic" | "royal";
 
 const iconBg: Record<Variant, string> = {
-  sun:   "bg-flame",
+  sun: "bg-flame",
   grass: "bg-grass",
   royal: "bg-primary",
   magic: "bg-magic",
 };
 
 const bottomBg: Record<Variant, string> = {
-  sun:   "bg-flame/10",
+  sun: "bg-flame/10",
   grass: "bg-grass/10",
   royal: "bg-primary/10",
   magic: "bg-magic/10",
@@ -57,7 +57,9 @@ export function AdventureCard({
       {/* Top text area */}
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-start gap-3 mb-3">
-          <div className={`w-11 h-11 rounded-xl grid place-items-center shrink-0 ${iconBg[variant]}`}>
+          <div
+            className={`w-11 h-11 rounded-xl grid place-items-center shrink-0 ${iconBg[variant]}`}
+          >
             <Icon className="w-5 h-5 text-white" />
           </div>
           <span className="mt-1 bg-secondary text-muted-foreground font-pixel px-2.5 py-0.5 rounded-lg self-start">

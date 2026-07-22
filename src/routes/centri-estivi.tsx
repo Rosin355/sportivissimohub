@@ -8,7 +8,11 @@ export const Route = createFileRoute("/centri-estivi")({
   head: () => ({
     meta: [
       { title: "Centri Estivi 2026 — Sportivissimo A.S.D." },
-      { name: "description", content: "Scopri tutte le sedi dei centri estivi Sportivissimo nel Veneto. Iscrizioni online aperte." },
+      {
+        name: "description",
+        content:
+          "Scopri tutte le sedi dei centri estivi Sportivissimo nel Veneto. Iscrizioni online aperte.",
+      },
     ],
   }),
   component: CentriEstiviPage,
@@ -38,7 +42,9 @@ function CentriEstiviPage() {
 
         <section className="container mx-auto px-4 py-12">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {locations.map((l) => <LocationCard key={l.slug} loc={l} />)}
+            {locations.map((l) => (
+              <LocationCard key={l.slug} loc={l} />
+            ))}
           </div>
         </section>
       </main>

@@ -16,7 +16,10 @@ export function HorizontalStepper({ steps }: { steps: StepperStep[] }) {
         <div className="absolute top-[68px] left-[8%] right-[8%] border-t-2 border-dashed border-primary/25 z-0" />
 
         {steps.map((step) => (
-          <div key={step.number} className="flex flex-col items-center text-center flex-1 relative z-10 px-2">
+          <div
+            key={step.number}
+            className="flex flex-col items-center text-center flex-1 relative z-10 px-2"
+          >
             {/* Icon badge above the number circle */}
             <div className="w-10 h-10 rounded-xl bg-primary/10 grid place-items-center mb-2">
               <step.icon className="w-5 h-5 text-primary" />

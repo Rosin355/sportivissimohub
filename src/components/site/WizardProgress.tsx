@@ -23,12 +23,19 @@ export function WizardProgress({
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="font-pixel text-muted-foreground">Missione iscrizione</div>
-          <div className="font-display text-xl font-bold">Step {current} di {total} · {labels[current - 1]}</div>
+          <div className="font-display text-xl font-bold">
+            Step {current} di {total} · {labels[current - 1]}
+          </div>
         </div>
-        <div className="font-pixel bg-grass/10 text-grass border border-grass/30 rounded-lg px-3 py-1">{cheer}</div>
+        <div className="font-pixel bg-grass/10 text-grass border border-grass/30 rounded-lg px-3 py-1">
+          {cheer}
+        </div>
       </div>
       <div className="h-3 bg-secondary rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-grass rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full bg-gradient-grass rounded-full transition-all"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <ol className="mt-4 grid grid-cols-3 md:grid-cols-6 gap-2">
         {labels.map((l, i) => {
@@ -46,7 +53,9 @@ export function WizardProgress({
                     : "bg-secondary border-border text-muted-foreground"
               }`}
             >
-              <span className={`w-6 h-6 grid place-items-center rounded-full text-[10px] font-bold ${active ? "bg-primary text-primary-foreground" : done ? "bg-grass text-grass-foreground" : "bg-white border border-border text-muted-foreground"}`}>
+              <span
+                className={`w-6 h-6 grid place-items-center rounded-full text-[10px] font-bold ${active ? "bg-primary text-primary-foreground" : done ? "bg-grass text-grass-foreground" : "bg-white border border-border text-muted-foreground"}`}
+              >
                 {done ? <Check className="w-3.5 h-3.5" /> : n}
               </span>
               <span className="leading-tight">{l}</span>

@@ -1,7 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import {
-  MapPin, Phone, Mail, Facebook, Instagram, Youtube,
-  PersonStanding, ArrowRight,
+  MapPin,
+  Phone,
+  Mail,
+  Facebook,
+  Instagram,
+  Youtube,
+  PersonStanding,
+  ArrowRight,
 } from "lucide-react";
 
 export function SiteFooter() {
@@ -14,7 +20,9 @@ export function SiteFooter() {
             <PersonStanding className="w-8 h-8" strokeWidth={1.5} />
             <div>
               <h2 className="font-display text-xl tracking-tight leading-none">Sportivissimo</h2>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">A.S.D.</p>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">
+                A.S.D.
+              </p>
             </div>
           </div>
           <p className="text-base font-medium text-slate-400 mb-6">
@@ -22,12 +30,16 @@ export function SiteFooter() {
           </p>
           <div className="flex gap-4">
             {[
-              { Icon: Facebook,  label: "Facebook"  },
+              { Icon: Facebook, label: "Facebook" },
               { Icon: Instagram, label: "Instagram" },
-              { Icon: Youtube,   label: "YouTube"   },
+              { Icon: Youtube, label: "YouTube" },
             ].map(({ Icon, label }) => (
-              <a key={label} href="#" aria-label={label}
-                 className="w-10 h-10 rounded-full border border-slate-700 flex items-center justify-center hover:bg-slate-800 hover:text-white transition-colors">
+              <a
+                key={label}
+                href="#"
+                aria-label={label}
+                className="w-10 h-10 rounded-full border border-slate-700 flex items-center justify-center hover:bg-slate-800 hover:text-white transition-colors"
+              >
                 <Icon className="w-5 h-5" strokeWidth={1.5} />
               </a>
             ))}
@@ -40,7 +52,11 @@ export function SiteFooter() {
           <ul className="space-y-4 font-medium">
             <li className="flex gap-3 items-start">
               <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-slate-500" strokeWidth={1.5} />
-              <span>Via Roma, 23<br />35010 Limena (PD)</span>
+              <span>
+                Via Roma, 23
+                <br />
+                35010 Limena (PD)
+              </span>
             </li>
             <li className="flex gap-3 items-center">
               <Phone className="w-5 h-5 shrink-0 text-slate-500" strokeWidth={1.5} />
@@ -57,10 +73,26 @@ export function SiteFooter() {
         <div>
           <h3 className="font-display text-xl text-white mb-6">Link utili</h3>
           <ul className="space-y-3 font-medium">
-            <li><Link to="/centri-estivi" className="hover:text-white transition-colors">Centri Estivi</Link></li>
-            <li><a href="#" className="hover:text-white transition-colors">Doposcuola</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">Progetti per le Scuole</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">Corsi e Attività</a></li>
+            <li>
+              <Link to="/centri-estivi" className="hover:text-white transition-colors">
+                Centri Estivi
+              </Link>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white transition-colors">
+                Doposcuola
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white transition-colors">
+                Progetti per le Scuole
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white transition-colors">
+                Corsi e Attività
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -68,10 +100,26 @@ export function SiteFooter() {
         <div>
           <h3 className="font-display text-xl text-white mb-6">Informazioni</h3>
           <ul className="space-y-3 font-medium">
-            <li><Link to="/come-funziona" className="hover:text-white transition-colors">Come funziona</Link></li>
-            <li><Link to="/area-genitori" className="hover:text-white transition-colors">Genitori</Link></li>
-            <li><Link to="/area-staff"    className="hover:text-white transition-colors">Staff</Link></li>
-            <li><a href="#" className="hover:text-white transition-colors">Lavora con noi</a></li>
+            <li>
+              <Link to="/come-funziona" className="hover:text-white transition-colors">
+                Come funziona
+              </Link>
+            </li>
+            <li>
+              <Link to="/area-genitori" className="hover:text-white transition-colors">
+                Genitori
+              </Link>
+            </li>
+            <li>
+              <Link to="/area-staff" className="hover:text-white transition-colors">
+                Staff
+              </Link>
+            </li>
+            <li>
+              <a href="#" className="hover:text-white transition-colors">
+                Lavora con noi
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -81,7 +129,10 @@ export function SiteFooter() {
           <p className="text-base font-medium text-slate-400 mb-4">
             Iscriviti per ricevere aggiornamenti e novità sulle attività.
           </p>
-          <form className="flex w-full max-w-sm items-center space-x-2" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex w-full max-w-sm items-center space-x-2"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <input
               type="email"
               placeholder="La tua email"
@@ -101,8 +152,12 @@ export function SiteFooter() {
       <div className="max-w-[1400px] mx-auto pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-medium text-slate-500">
         <p>© {new Date().getFullYear()} Sportivissimo A.S.D. - P.IVA 01234567890</p>
         <div className="flex items-center gap-6">
-          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+          <a href="#" className="hover:text-white transition-colors">
+            Privacy Policy
+          </a>
+          <a href="#" className="hover:text-white transition-colors">
+            Cookie Policy
+          </a>
         </div>
       </div>
     </footer>

@@ -1,8 +1,6 @@
 export function GamifiedProgressBar({ value, label }: { value: number; label?: string }) {
   const barClass =
-    value >= 100 ? "bg-gradient-grass" :
-    value >= 75  ? "bg-gradient-royal" :
-                   "bg-gradient-sun";
+    value >= 100 ? "bg-gradient-grass" : value >= 75 ? "bg-gradient-royal" : "bg-gradient-sun";
   return (
     <div>
       {label && (

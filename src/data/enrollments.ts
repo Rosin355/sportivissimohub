@@ -1,11 +1,12 @@
-export type EnrollmentStatus =
-  | "nuova"
-  | "revisione"
-  | "documenti-mancanti"
-  | "attesa-pagamento"
-  | "confermata"
-  | "lista-attesa"
-  | "annullata";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getLocationBySlug } from "@/data/locations";
+import type {
+  DocumentStatus,
+  EnrollmentStatus as DbEnrollmentStatus,
+  PaymentStatus,
+} from "@/lib/supabase/types";
+
+export type EnrollmentStatus = DbEnrollmentStatus;
 
 export type GuardianData = {
   firstName: string;
@@ -57,15 +58,20 @@ export type ConsentsData = {
 };
 
 export type DocumentMeta = {
+  id?: string;
   type: string;
   fileName: string;
   size: number;
+  status?: DocumentStatus;
+  rejectionReason?: string | null;
 };
 
 export type Enrollment = {
-  id: string;
+  id: string; // uuid della riga in enrollments
+  code: string; // codice leggibile, es. ENR-2026-0042
   createdAt: string;
   status: EnrollmentStatus;
+  paymentStatus: PaymentStatus;
   guardian: GuardianData;
   child: ChildData;
   session: SessionData;
@@ -75,150 +81,202 @@ export type Enrollment = {
   adminNotes?: string;
 };
 
-const STORAGE_KEY = "sportivissimo:enrollments";
-const SEED_FLAG = "sportivissimo:enrollments:seeded";
+/* ---------- query Supabase ---------- */
+
+const ENROLLMENT_SELECT = `
+  id, code, status, location_slug, week_ids, time_slot, extras,
+  consent_privacy, consent_photos, consent_outings, consent_rules, consent_data_processing,
+  payment_status, admin_notes, created_at, parent_id,
+  profiles ( email, first_name, last_name, phone, fiscal_code, address, city, province, zip ),
+  children ( first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs ),
+  pickup_delegates ( id, first_name, last_name, phone, document ),
+  enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason )
+`;
+
+type JoinedRow = {
+  id: string;
+  code: string;
+  status: EnrollmentStatus;
+  location_slug: string;
+  week_ids: string[];
+  time_slot: string;
+  extras: string[];
+  consent_privacy: boolean;
+  consent_photos: boolean;
+  consent_outings: boolean;
+  consent_rules: boolean;
+  consent_data_processing: boolean;
+  payment_status: PaymentStatus;
+  admin_notes: string;
+  created_at: string;
+  parent_id: string;
+  profiles: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    fiscal_code: string;
+    address: string | null;
+    city: string | null;
+    province: string | null;
+    zip: string | null;
+  } | null;
+  children: {
+    first_name: string;
+    last_name: string;
+    birth_date: string;
+    fiscal_code: string;
+    school: string;
+    grade: string;
+    allergies: string;
+    medical_notes: string;
+    special_needs: string;
+  } | null;
+  pickup_delegates: Array<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    document: string;
+  }>;
+  enrollment_documents: Array<{
+    id: string;
+    doc_type: string;
+    file_name: string;
+    size_bytes: number;
+    status: DocumentStatus;
+    rejection_reason: string | null;
+  }>;
+};
+
+function calcAge(birthDate: string): number {
+  const d = new Date(birthDate);
+  if (Number.isNaN(d.getTime())) return 0;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)));
+}
+
+function mapRow(row: JoinedRow): Enrollment {
+  const loc = getLocationBySlug(row.location_slug);
+  const weekLabels = row.week_ids
+    .map((id) => loc?.weeks.find((w) => w.id === id)?.label)
+    .filter((l): l is string => Boolean(l));
+  return {
+    id: row.id,
+    code: row.code,
+    createdAt: row.created_at,
+    status: row.status,
+    paymentStatus: row.payment_status,
+    guardian: {
+      firstName: row.profiles?.first_name ?? "",
+      lastName: row.profiles?.last_name ?? "",
+      email: row.profiles?.email ?? "",
+      phone: row.profiles?.phone ?? "",
+      fiscalCode: row.profiles?.fiscal_code ?? "",
+      address: row.profiles?.address ?? "",
+      city: row.profiles?.city ?? "",
+      province: row.profiles?.province ?? "",
+      zip: row.profiles?.zip ?? "",
+    },
+    child: {
+      firstName: row.children?.first_name ?? "",
+      lastName: row.children?.last_name ?? "",
+      birthDate: row.children?.birth_date ?? "",
+      fiscalCode: row.children?.fiscal_code ?? "",
+      age: row.children ? calcAge(row.children.birth_date) : 0,
+      school: row.children?.school ?? "",
+      grade: row.children?.grade ?? "",
+      allergies: row.children?.allergies ?? "",
+      medicalNotes: row.children?.medical_notes ?? "",
+      specialNeeds: row.children?.special_needs ?? "",
+    },
+    session: {
+      locationSlug: row.location_slug,
+      locationName: loc?.name ?? row.location_slug,
+      weekIds: row.week_ids,
+      weekLabels,
+      timeSlot: row.time_slot,
+      extras: row.extras,
+    },
+    delegates: row.pickup_delegates.map((d) => ({
+      firstName: d.first_name,
+      lastName: d.last_name,
+      phone: d.phone,
+      document: d.document,
+    })),
+    consents: {
+      privacy: row.consent_privacy,
+      photos: row.consent_photos,
+      outings: row.consent_outings,
+      rules: row.consent_rules,
+      dataProcessing: row.consent_data_processing,
+    },
+    documents: row.enrollment_documents.map((d) => ({
+      id: d.id,
+      type: d.doc_type,
+      fileName: d.file_name,
+      size: d.size_bytes,
+      status: d.status,
+      rejectionReason: d.rejection_reason,
+    })),
+    adminNotes: row.admin_notes || undefined,
+  };
+}
+
+// Le RLS delimitano già il perimetro: il genitore vede solo le proprie
+// iscrizioni, admin e staff tutte.
+export async function getEnrollments(): Promise<Enrollment[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("enrollments")
+    .select(ENROLLMENT_SELECT)
+    .order("created_at", { ascending: false })
+    .returns<JoinedRow[]>();
+  if (error) throw new Error("Impossibile caricare le iscrizioni.");
+  return (data ?? []).map(mapRow);
+}
+
+export async function getEnrollment(id: string): Promise<Enrollment | undefined> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("enrollments")
+    .select(ENROLLMENT_SELECT)
+    .eq("id", id)
+    .maybeSingle<JoinedRow>();
+  if (error) throw new Error("Impossibile caricare l'iscrizione.");
+  return data ? mapRow(data) : undefined;
+}
+
+// Solo admin (le RLS bloccano gli altri). Scrive anche nell'audit log.
+export async function updateEnrollmentStatus(
+  id: string,
+  status: EnrollmentStatus,
+  adminNotes?: string,
+): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const patch: { status: EnrollmentStatus; admin_notes?: string } = { status };
+  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
+  const { error } = await supabase.from("enrollments").update(patch).eq("id", id);
+  if (error) throw new Error("Aggiornamento non riuscito: verifica i permessi.");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.from("audit_log").insert({
+      actor_id: user.id,
+      action: "update_status",
+      entity: "enrollment",
+      entity_id: id,
+      detail: { status, admin_notes: adminNotes ?? null },
+    });
+  }
+}
+
+/* ---------- draft (per-slug, resta in localStorage) ---------- */
 
 function isBrowser() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
-
-function seed(): Enrollment[] {
-  const now = Date.now();
-  return [
-    {
-      id: "ENR-001",
-      createdAt: new Date(now - 86400000 * 6).toISOString(),
-      status: "confermata",
-      guardian: {
-        firstName: "Giulia", lastName: "Rossi", email: "giulia.rossi@example.it", phone: "+39 333 1234567",
-        fiscalCode: "RSSGLI80A41L840A", address: "Via Roma 5", city: "Padova", province: "PD", zip: "35100",
-      },
-      child: {
-        firstName: "Marco", lastName: "Rossi", birthDate: "2016-04-12", fiscalCode: "RSSMRC16D12L840B",
-        age: 9, school: "Scuola primaria Dante", grade: "4ª elementare",
-        allergies: "Nessuna", medicalNotes: "—", specialNeeds: "—",
-      },
-      session: {
-        locationSlug: "galzignano-terme", locationName: "Galzignano Terme",
-        weekIds: ["w3", "w4"], weekLabels: ["24 - 28 giugno", "1 - 5 luglio"],
-        timeSlot: "08:30 - 17:00 (tempo pieno)", extras: ["mensa"],
-      },
-      delegates: [
-        { firstName: "Luca", lastName: "Bianchi", phone: "+39 333 7654321", document: "CI AX1234567" },
-      ],
-      consents: { privacy: true, photos: true, outings: true, rules: true, dataProcessing: true },
-      documents: [
-        { type: "Documento genitore", fileName: "carta_identita.pdf", size: 312000 },
-        { type: "Tessera sanitaria",  fileName: "tessera_marco.pdf",  size: 184000 },
-      ],
-      adminNotes: "Iscrizione completa e pagamento ricevuto.",
-    },
-    {
-      id: "ENR-002",
-      createdAt: new Date(now - 86400000 * 3).toISOString(),
-      status: "documenti-mancanti",
-      guardian: {
-        firstName: "Andrea", lastName: "Verdi", email: "andrea.verdi@example.it", phone: "+39 348 8765432",
-        fiscalCode: "VRDNDR78H10L840Z", address: "Via Verdi 12", city: "Vicenza", province: "VI", zip: "36100",
-      },
-      child: {
-        firstName: "Sofia", lastName: "Verdi", birthDate: "2018-09-22", fiscalCode: "VRDSFO18P62L840Y",
-        age: 6, school: "Scuola primaria Manzoni", grade: "1ª elementare",
-        allergies: "Intolleranza al lattosio", medicalNotes: "—", specialNeeds: "—",
-      },
-      session: {
-        locationSlug: "vo-euganeo", locationName: "Vo' Euganeo",
-        weekIds: ["w5"], weekLabels: ["8 - 12 luglio"],
-        timeSlot: "08:30 - 13:00 (mezza giornata)", extras: ["anticipo"],
-      },
-      delegates: [],
-      consents: { privacy: true, photos: false, outings: true, rules: true, dataProcessing: true },
-      documents: [
-        { type: "Documento genitore", fileName: "doc_andrea.pdf", size: 240000 },
-      ],
-      adminNotes: "Manca il certificato medico.",
-    },
-    {
-      id: "ENR-003",
-      createdAt: new Date(now - 86400000 * 1).toISOString(),
-      status: "nuova",
-      guardian: {
-        firstName: "Martina", lastName: "Neri", email: "martina.neri@example.it", phone: "+39 320 1112223",
-        fiscalCode: "NRMRTN85B41L840K", address: "Via Mazzini 8", city: "Noventa Vicentina", province: "VI", zip: "36025",
-      },
-      child: {
-        firstName: "Luca", lastName: "Neri", birthDate: "2015-11-03", fiscalCode: "NRELCU15S03L840W",
-        age: 10, school: "Scuola primaria Foscolo", grade: "5ª elementare",
-        allergies: "Nessuna", medicalNotes: "—", specialNeeds: "—",
-      },
-      session: {
-        locationSlug: "noventa-vicentina", locationName: "Noventa Vicentina",
-        weekIds: ["w1", "w2", "w6"], weekLabels: ["10 - 14 giugno", "17 - 21 giugno", "15 - 19 luglio"],
-        timeSlot: "08:30 - 17:00 (tempo pieno)", extras: ["mensa", "gite"],
-      },
-      delegates: [
-        { firstName: "Anna", lastName: "Neri", phone: "+39 333 0001112", document: "CI BX0099887" },
-      ],
-      consents: { privacy: true, photos: true, outings: true, rules: true, dataProcessing: true },
-      documents: [
-        { type: "Documento genitore",  fileName: "doc_martina.pdf",   size: 210000 },
-        { type: "Tessera sanitaria",   fileName: "tessera_luca.pdf",  size: 160000 },
-        { type: "Certificato medico",  fileName: "certificato.pdf",   size: 320000 },
-      ],
-      adminNotes: "",
-    },
-  ];
-}
-
-function read(): Enrollment[] {
-  if (!isBrowser()) return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Enrollment[];
-  } catch {
-    /* ignore */
-  }
-  const seeded = seed();
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-  window.localStorage.setItem(SEED_FLAG, "1");
-  return seeded;
-}
-
-function write(list: Enrollment[]) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-export function getEnrollments(): Enrollment[] {
-  return read().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-}
-
-export function getEnrollment(id: string): Enrollment | undefined {
-  return read().find((e) => e.id === id);
-}
-
-export function saveEnrollment(
-  data: Omit<Enrollment, "id" | "createdAt" | "status">,
-): Enrollment {
-  const list = read();
-  const id = `ENR-${String(list.length + 1).padStart(3, "0")}`;
-  const newEnrollment: Enrollment = {
-    id,
-    createdAt: new Date().toISOString(),
-    status: "nuova",
-    ...data,
-  };
-  write([newEnrollment, ...list]);
-  return newEnrollment;
-}
-
-export function updateEnrollmentStatus(id: string, status: EnrollmentStatus, adminNotes?: string) {
-  const list = read();
-  const next = list.map((e) => (e.id === id ? { ...e, status, adminNotes: adminNotes ?? e.adminNotes } : e));
-  write(next);
-}
-
-/* ---------- draft (per-slug) ---------- */
 
 export function draftKey(slug: string) {
   return `sportivissimo:draft:${slug}`;

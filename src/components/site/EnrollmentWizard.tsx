@@ -1,11 +1,19 @@
-import type { ReactNode, Dispatch, SetStateAction } from "react";
+import type { ReactNode, Dispatch, SetStateAction, CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouteContext } from "@tanstack/react-router";
 import {
-  saveEnrollment, readDraft, writeDraft, clearDraft,
-  type GuardianData, type ChildData, type SessionData, type PickupDelegate,
-  type ConsentsData, type DocumentMeta,
+  readDraft,
+  writeDraft,
+  clearDraft,
+  type GuardianData,
+  type ChildData,
+  type SessionData,
+  type PickupDelegate,
+  type ConsentsData,
+  type DocumentMeta,
 } from "@/data/enrollments";
+import { submitEnrollment } from "@/lib/enrollments/server-fns";
+import { enrollmentSubmissionSchema } from "@/lib/enrollments/validation";
 import type { Location } from "@/data/locations";
 import { WizardProgress } from "@/components/site/WizardProgress";
 import { Input } from "@/components/ui/input";
@@ -13,7 +21,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  ArrowLeft, ArrowRight, Plus, Trash2, Upload, FileText, PartyPopper, MapPin,
+  ArrowLeft,
+  ArrowRight,
+  Plus,
+  Trash2,
+  Upload,
+  FileText,
+  PartyPopper,
+  MapPin,
 } from "lucide-react";
 
 const STEP_LABELS = ["Genitore", "Bambino", "Sede", "Deleghe", "Documenti", "Riepilogo"];
@@ -28,12 +43,27 @@ type WizardState = {
 };
 
 const emptyGuardian: GuardianData = {
-  firstName: "", lastName: "", email: "", phone: "", fiscalCode: "",
-  address: "", city: "", province: "", zip: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  fiscalCode: "",
+  address: "",
+  city: "",
+  province: "",
+  zip: "",
 };
 const emptyChild: ChildData = {
-  firstName: "", lastName: "", birthDate: "", fiscalCode: "", age: 0,
-  school: "", grade: "", allergies: "", medicalNotes: "", specialNeeds: "",
+  firstName: "",
+  lastName: "",
+  birthDate: "",
+  fiscalCode: "",
+  age: 0,
+  school: "",
+  grade: "",
+  allergies: "",
+  medicalNotes: "",
+  specialNeeds: "",
 };
 
 function calcAge(birth: string) {
@@ -53,8 +83,10 @@ const DOC_TYPES = [
 
 export function EnrollmentWizard({ location }: { location: Location }) {
   const navigate = useNavigate();
+  const { auth } = useRouteContext({ from: "__root__" });
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [state, setState] = useState<WizardState>(() => ({
@@ -69,7 +101,13 @@ export function EnrollmentWizard({ location }: { location: Location }) {
       extras: [],
     },
     delegates: [],
-    consents: { privacy: false, photos: false, outings: false, rules: false, dataProcessing: false },
+    consents: {
+      privacy: false,
+      photos: false,
+      outings: false,
+      rules: false,
+      dataProcessing: false,
+    },
     documents: [],
   }));
 
@@ -97,7 +135,10 @@ export function EnrollmentWizard({ location }: { location: Location }) {
 
   function next() {
     const err = validateStep(step, state, location);
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      return;
+    }
     setError(null);
     setStep((s) => Math.min(total, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -108,24 +149,59 @@ export function EnrollmentWizard({ location }: { location: Location }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function submit() {
+  async function submit() {
     const err = validateStep(6, state, location);
-    if (err) { setError(err); return; }
-    const created = saveEnrollment({
+    if (err) {
+      setError(err);
+      return;
+    }
+    // Validazione zod speculare a validateStep (regex CF reale inclusa); la
+    // stessa schema viene rieseguita nella server function.
+    const parsed = enrollmentSubmissionSchema.safeParse({
       guardian: state.guardian,
-      child: { ...state.child, age: calcAge(state.child.birthDate) },
+      child: state.child,
       session: state.session,
       delegates: state.delegates,
       consents: state.consents,
-      documents: state.documents,
     });
-    clearDraft(location.slug);
-    setSubmitted(created.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Controlla i dati inseriti.");
+      return;
+    }
+    if (!auth) {
+      // La bozza resta in localStorage: al ritorno dal login si riparte da qui.
+      navigate({
+        to: "/login",
+        search: { next: `/centri-estivi/${location.slug}/iscrizione` },
+      });
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const result = await submitEnrollment({ data: parsed.data });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      clearDraft(location.slug);
+      setSubmitted(result.code);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setError("Errore durante l'invio. Controlla la connessione e riprova.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
-    return <SuccessScreen id={submitted} location={location} onParents={() => navigate({ to: "/area-genitori" })} />;
+    return (
+      <SuccessScreen
+        id={submitted}
+        location={location}
+        onParents={() => navigate({ to: "/area-genitori" })}
+      />
+    );
   }
 
   return (
@@ -134,11 +210,18 @@ export function EnrollmentWizard({ location }: { location: Location }) {
 
       <div className="rounded-2xl bg-white border border-border shadow-pop p-6 md:p-8">
         {step === 1 && <StepGuardian state={state} setState={setState} />}
-        {step === 2 && <StepChild    state={state} setState={setState} />}
-        {step === 3 && <StepSession  state={state} setState={setState} location={location} />}
+        {step === 2 && <StepChild state={state} setState={setState} />}
+        {step === 3 && <StepSession state={state} setState={setState} location={location} />}
         {step === 4 && <StepDelegates state={state} setState={setState} />}
         {step === 5 && <StepDocuments state={state} setState={setState} />}
-        {step === 6 && <StepSummary  state={state} location={location} />}
+        {step === 6 && <StepSummary state={state} location={location} />}
+
+        {step === total && !auth && (
+          <div className="mt-5 bg-sky/10 border border-sky/30 rounded-xl px-4 py-3 text-sm font-semibold">
+            Per inviare l'iscrizione devi accedere o creare un account. La bozza resta salvata su
+            questo dispositivo.
+          </div>
+        )}
 
         {error && (
           <div className="mt-5 bg-flame/10 border border-flame/30 text-flame rounded-xl px-4 py-3 text-sm font-semibold">
@@ -154,16 +237,28 @@ export function EnrollmentWizard({ location }: { location: Location }) {
           >
             <ArrowLeft className="w-4 h-4" /> Indietro
           </button>
-          <Link to="/centri-estivi/$slug" params={{ slug: location.slug }} className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+          <Link
+            to="/centri-estivi/$slug"
+            params={{ slug: location.slug }}
+            className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
             Esci e salva bozza
           </Link>
           {step < total ? (
-            <button onClick={next} className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 font-display font-bold bg-gradient-royal text-primary-foreground shadow-sticker hover:scale-105 transition-transform">
+            <button
+              onClick={next}
+              className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 font-display font-bold bg-gradient-royal text-primary-foreground shadow-sticker hover:scale-105 transition-transform"
+            >
               Avanti <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button onClick={submit} className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 font-display font-bold bg-gradient-flame text-flame-foreground shadow-sticker hover:scale-105 transition-transform">
-              <PartyPopper className="w-4 h-4" /> Invia iscrizione
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 font-display font-bold bg-gradient-flame text-flame-foreground shadow-sticker hover:scale-105 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+            >
+              <PartyPopper className="w-4 h-4" />
+              {submitting ? "Invio in corso…" : auth ? "Invia iscrizione" : "Accedi e invia"}
             </button>
           )}
         </div>
@@ -197,13 +292,20 @@ function validateStep(step: number, s: WizardState, loc: Location): string | nul
   }
   if (step === 4) {
     for (const d of s.delegates) {
-      if (!d.firstName || !d.lastName || !d.phone) return "Completa i dati di tutti i delegati o eliminali.";
+      if (!d.firstName || !d.lastName || !d.phone)
+        return "Completa i dati di tutti i delegati o eliminali.";
     }
     const c = s.consents;
-    if (!c.privacy || !c.rules || !c.dataProcessing) return "Devi accettare privacy, regolamento e trattamento dati.";
+    if (!c.privacy || !c.rules || !c.dataProcessing)
+      return "Devi accettare privacy, regolamento e trattamento dati.";
   }
   if (step === 6) {
-    return validateStep(1, s, loc) || validateStep(2, s, loc) || validateStep(3, s, loc) || validateStep(4, s, loc);
+    return (
+      validateStep(1, s, loc) ||
+      validateStep(2, s, loc) ||
+      validateStep(3, s, loc) ||
+      validateStep(4, s, loc)
+    );
   }
   return null;
 }
@@ -236,17 +338,45 @@ function StepGuardian({ state, setState }: { state: WizardState; setState: SetSt
     setState((s) => ({ ...s, guardian: { ...s.guardian, [k]: v } }));
   return (
     <div>
-      <SectionTitle title="Dati genitore o tutore" subtitle="Servono per i contatti e la documentazione ufficiale." />
+      <SectionTitle
+        title="Dati genitore o tutore"
+        subtitle="Servono per i contatti e la documentazione ufficiale."
+      />
       <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Nome"><Input value={g.firstName} onChange={(e) => upd("firstName", e.target.value)} /></Field>
-        <Field label="Cognome"><Input value={g.lastName} onChange={(e) => upd("lastName", e.target.value)} /></Field>
-        <Field label="Email"><Input type="email" value={g.email} onChange={(e) => upd("email", e.target.value)} /></Field>
-        <Field label="Telefono"><Input value={g.phone} onChange={(e) => upd("phone", e.target.value)} /></Field>
-        <Field label="Codice fiscale" full><Input value={g.fiscalCode} onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())} /></Field>
-        <Field label="Indirizzo" full><Input value={g.address} onChange={(e) => upd("address", e.target.value)} /></Field>
-        <Field label="Comune"><Input value={g.city} onChange={(e) => upd("city", e.target.value)} /></Field>
-        <Field label="Provincia"><Input value={g.province} onChange={(e) => upd("province", e.target.value.toUpperCase())} maxLength={2} /></Field>
-        <Field label="CAP"><Input value={g.zip} onChange={(e) => upd("zip", e.target.value)} maxLength={5} /></Field>
+        <Field label="Nome">
+          <Input value={g.firstName} onChange={(e) => upd("firstName", e.target.value)} />
+        </Field>
+        <Field label="Cognome">
+          <Input value={g.lastName} onChange={(e) => upd("lastName", e.target.value)} />
+        </Field>
+        <Field label="Email">
+          <Input type="email" value={g.email} onChange={(e) => upd("email", e.target.value)} />
+        </Field>
+        <Field label="Telefono">
+          <Input value={g.phone} onChange={(e) => upd("phone", e.target.value)} />
+        </Field>
+        <Field label="Codice fiscale" full>
+          <Input
+            value={g.fiscalCode}
+            onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())}
+          />
+        </Field>
+        <Field label="Indirizzo" full>
+          <Input value={g.address} onChange={(e) => upd("address", e.target.value)} />
+        </Field>
+        <Field label="Comune">
+          <Input value={g.city} onChange={(e) => upd("city", e.target.value)} />
+        </Field>
+        <Field label="Provincia">
+          <Input
+            value={g.province}
+            onChange={(e) => upd("province", e.target.value.toUpperCase())}
+            maxLength={2}
+          />
+        </Field>
+        <Field label="CAP">
+          <Input value={g.zip} onChange={(e) => upd("zip", e.target.value)} maxLength={5} />
+        </Field>
       </div>
     </div>
   );
@@ -259,38 +389,80 @@ function StepChild({ state, setState }: { state: WizardState; setState: SetState
   const age = calcAge(c.birthDate);
   return (
     <div>
-      <SectionTitle title="Dati del bambino o della bambina" subtitle="Ci aiutano a creare l'esperienza migliore per lui o lei." />
+      <SectionTitle
+        title="Dati del bambino o della bambina"
+        subtitle="Ci aiutano a creare l'esperienza migliore per lui o lei."
+      />
       <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Nome"><Input value={c.firstName} onChange={(e) => upd("firstName", e.target.value)} /></Field>
-        <Field label="Cognome"><Input value={c.lastName} onChange={(e) => upd("lastName", e.target.value)} /></Field>
-        <Field label="Data di nascita"><Input type="date" value={c.birthDate} onChange={(e) => upd("birthDate", e.target.value)} /></Field>
+        <Field label="Nome">
+          <Input value={c.firstName} onChange={(e) => upd("firstName", e.target.value)} />
+        </Field>
+        <Field label="Cognome">
+          <Input value={c.lastName} onChange={(e) => upd("lastName", e.target.value)} />
+        </Field>
+        <Field label="Data di nascita">
+          <Input
+            type="date"
+            value={c.birthDate}
+            onChange={(e) => upd("birthDate", e.target.value)}
+          />
+        </Field>
         <Field label="Età">
           <div className="rounded-md border border-input bg-secondary px-3 py-2 text-sm font-semibold">
             {age > 0 ? `${age} anni` : "—"}
           </div>
         </Field>
-        <Field label="Codice fiscale" full><Input value={c.fiscalCode} onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())} /></Field>
-        <Field label="Scuola frequentata"><Input value={c.school} onChange={(e) => upd("school", e.target.value)} /></Field>
-        <Field label="Classe"><Input value={c.grade} onChange={(e) => upd("grade", e.target.value)} /></Field>
+        <Field label="Codice fiscale" full>
+          <Input
+            value={c.fiscalCode}
+            onChange={(e) => upd("fiscalCode", e.target.value.toUpperCase())}
+          />
+        </Field>
+        <Field label="Scuola frequentata">
+          <Input value={c.school} onChange={(e) => upd("school", e.target.value)} />
+        </Field>
+        <Field label="Classe">
+          <Input value={c.grade} onChange={(e) => upd("grade", e.target.value)} />
+        </Field>
         <Field label="Allergie o intolleranze" full>
-          <Textarea value={c.allergies} onChange={(e) => upd("allergies", e.target.value)} placeholder="Es. lattosio, nichel, polline..." />
+          <Textarea
+            value={c.allergies}
+            onChange={(e) => upd("allergies", e.target.value)}
+            placeholder="Es. lattosio, nichel, polline..."
+          />
         </Field>
         <Field label="Note mediche importanti" full>
-          <Textarea value={c.medicalNotes} onChange={(e) => upd("medicalNotes", e.target.value)} placeholder="Terapie in corso, farmaci, condizioni rilevanti..." />
+          <Textarea
+            value={c.medicalNotes}
+            onChange={(e) => upd("medicalNotes", e.target.value)}
+            placeholder="Terapie in corso, farmaci, condizioni rilevanti..."
+          />
         </Field>
         <Field label="Bisogni specifici o attenzioni particolari" full>
-          <Textarea value={c.specialNeeds} onChange={(e) => upd("specialNeeds", e.target.value)} placeholder="Tutto quello che dobbiamo sapere per accoglierlo al meglio." />
+          <Textarea
+            value={c.specialNeeds}
+            onChange={(e) => upd("specialNeeds", e.target.value)}
+            placeholder="Tutto quello che dobbiamo sapere per accoglierlo al meglio."
+          />
         </Field>
       </div>
     </div>
   );
 }
 
-function StepSession({ state, setState, location }: { state: WizardState; setState: SetState; location: Location }) {
+function StepSession({
+  state,
+  setState,
+  location,
+}: {
+  state: WizardState;
+  setState: SetState;
+  location: Location;
+}) {
   const sess = state.session;
   const toggleWeek = (id: string, label: string) => {
     const isSel = sess.weekIds.includes(id);
-    const ids   = isSel ? sess.weekIds.filter((x) => x !== id) : [...sess.weekIds, id];
+    const ids = isSel ? sess.weekIds.filter((x) => x !== id) : [...sess.weekIds, id];
     const labels = isSel ? sess.weekLabels.filter((x) => x !== label) : [...sess.weekLabels, label];
     setState((s) => ({ ...s, session: { ...s.session, weekIds: ids, weekLabels: labels } }));
   };
@@ -298,12 +470,18 @@ function StepSession({ state, setState, location }: { state: WizardState; setSta
     const isSel = sess.extras.includes(id);
     setState((s) => ({
       ...s,
-      session: { ...s.session, extras: isSel ? s.session.extras.filter((x) => x !== id) : [...s.session.extras, id] },
+      session: {
+        ...s.session,
+        extras: isSel ? s.session.extras.filter((x) => x !== id) : [...s.session.extras, id],
+      },
     }));
   };
   return (
     <div>
-      <SectionTitle title="Scegli settimane e servizi" subtitle="La sede è già selezionata: completa con settimane, orario e servizi extra." />
+      <SectionTitle
+        title="Scegli settimane e servizi"
+        subtitle="La sede è già selezionata: completa con settimane, orario e servizi extra."
+      />
 
       <div className="rounded-2xl bg-gradient-royal text-primary-foreground p-5 mb-6 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-white/20 grid place-items-center">
@@ -321,8 +499,15 @@ function StepSession({ state, setState, location }: { state: WizardState; setSta
         {location.weeks.map((w) => {
           const checked = sess.weekIds.includes(w.id);
           return (
-            <label key={w.id} className={`flex items-start gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${checked ? "bg-primary/10 border-primary" : "bg-white border-border hover:bg-secondary"}`}>
-              <Checkbox checked={checked} onCheckedChange={() => toggleWeek(w.id, w.label)} className="mt-0.5" />
+            <label
+              key={w.id}
+              className={`flex items-start gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${checked ? "bg-primary/10 border-primary" : "bg-white border-border hover:bg-secondary"}`}
+            >
+              <Checkbox
+                checked={checked}
+                onCheckedChange={() => toggleWeek(w.id, w.label)}
+                className="mt-0.5"
+              />
               <div className="flex-1">
                 <div className="font-display font-bold">Sett. {w.number}</div>
                 <div className="text-sm text-muted-foreground">{w.label}</div>
@@ -340,7 +525,10 @@ function StepSession({ state, setState, location }: { state: WizardState; setSta
         {location.timeSlots.map((t) => {
           const active = sess.timeSlot === t;
           return (
-            <label key={t} className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${active ? "bg-primary/10 border-primary" : "bg-white border-border hover:bg-secondary"}`}>
+            <label
+              key={t}
+              className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${active ? "bg-primary/10 border-primary" : "bg-white border-border hover:bg-secondary"}`}
+            >
               <input
                 type="radio"
                 name="timeSlot"
@@ -359,12 +547,17 @@ function StepSession({ state, setState, location }: { state: WizardState; setSta
         {location.extraServices.map((s) => {
           const checked = sess.extras.includes(s.id);
           return (
-            <label key={s.id} className={`flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${checked ? "bg-magic/10 border-magic" : "bg-white border-border hover:bg-secondary"}`}>
+            <label
+              key={s.id}
+              className={`flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${checked ? "bg-magic/10 border-magic" : "bg-white border-border hover:bg-secondary"}`}
+            >
               <div className="flex items-center gap-3">
                 <Checkbox checked={checked} onCheckedChange={() => toggleExtra(s.id)} />
                 <span className="font-semibold">{s.label}</span>
               </div>
-              <span className="font-pixel bg-flame/10 text-flame border border-flame/30 rounded-lg px-2 py-0.5">+ € {s.price}</span>
+              <span className="font-pixel bg-flame/10 text-flame border border-flame/30 rounded-lg px-2 py-0.5">
+                + € {s.price}
+              </span>
             </label>
           );
         })}
@@ -374,16 +567,27 @@ function StepSession({ state, setState, location }: { state: WizardState; setSta
 }
 
 function StepDelegates({ state, setState }: { state: WizardState; setState: SetState }) {
-  const add = () => setState((s) => ({ ...s, delegates: [...s.delegates, { firstName: "", lastName: "", phone: "", document: "" }] }));
-  const remove = (i: number) => setState((s) => ({ ...s, delegates: s.delegates.filter((_, idx) => idx !== i) }));
+  const add = () =>
+    setState((s) => ({
+      ...s,
+      delegates: [...s.delegates, { firstName: "", lastName: "", phone: "", document: "" }],
+    }));
+  const remove = (i: number) =>
+    setState((s) => ({ ...s, delegates: s.delegates.filter((_, idx) => idx !== i) }));
   const upd = (i: number, k: keyof PickupDelegate, v: string) =>
-    setState((s) => ({ ...s, delegates: s.delegates.map((d, idx) => (idx === i ? { ...d, [k]: v } : d)) }));
+    setState((s) => ({
+      ...s,
+      delegates: s.delegates.map((d, idx) => (idx === i ? { ...d, [k]: v } : d)),
+    }));
   const updConsent = (k: keyof ConsentsData, v: boolean) =>
     setState((s) => ({ ...s, consents: { ...s.consents, [k]: v } }));
 
   return (
     <div>
-      <SectionTitle title="Deleghe e autorizzazioni" subtitle="Aggiungi le persone autorizzate al ritiro e accetta le autorizzazioni necessarie." />
+      <SectionTitle
+        title="Deleghe e autorizzazioni"
+        subtitle="Aggiungi le persone autorizzate al ritiro e accetta le autorizzazioni necessarie."
+      />
 
       <div className="space-y-3">
         {state.delegates.length === 0 && (
@@ -395,41 +599,91 @@ function StepDelegates({ state, setState }: { state: WizardState; setState: SetS
           <div key={i} className="rounded-xl border border-border p-4 bg-secondary/30">
             <div className="flex items-center justify-between mb-3">
               <div className="font-display font-bold">Delegato #{i + 1}</div>
-              <button onClick={() => remove(i)} className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold">
+              <button
+                onClick={() => remove(i)}
+                className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold"
+              >
                 <Trash2 className="w-4 h-4" /> Rimuovi
               </button>
             </div>
             <div className="grid md:grid-cols-2 gap-3">
-              <Field label="Nome"><Input value={d.firstName} onChange={(e) => upd(i, "firstName", e.target.value)} /></Field>
-              <Field label="Cognome"><Input value={d.lastName} onChange={(e) => upd(i, "lastName", e.target.value)} /></Field>
-              <Field label="Telefono"><Input value={d.phone} onChange={(e) => upd(i, "phone", e.target.value)} /></Field>
-              <Field label="Documento (tipo + numero)"><Input value={d.document} onChange={(e) => upd(i, "document", e.target.value)} placeholder="es. CI AX1234567" /></Field>
+              <Field label="Nome">
+                <Input value={d.firstName} onChange={(e) => upd(i, "firstName", e.target.value)} />
+              </Field>
+              <Field label="Cognome">
+                <Input value={d.lastName} onChange={(e) => upd(i, "lastName", e.target.value)} />
+              </Field>
+              <Field label="Telefono">
+                <Input value={d.phone} onChange={(e) => upd(i, "phone", e.target.value)} />
+              </Field>
+              <Field label="Documento (tipo + numero)">
+                <Input
+                  value={d.document}
+                  onChange={(e) => upd(i, "document", e.target.value)}
+                  placeholder="es. CI AX1234567"
+                />
+              </Field>
             </div>
           </div>
         ))}
       </div>
-      <button onClick={add} className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 font-display font-bold border border-dashed border-primary text-primary hover:bg-primary/10 transition-colors">
+      <button
+        onClick={add}
+        className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 font-display font-bold border border-dashed border-primary text-primary hover:bg-primary/10 transition-colors"
+      >
         <Plus className="w-4 h-4" /> Aggiungi delegato
       </button>
 
       <div className="mt-8">
         <h3 className="font-display text-lg font-bold mb-3">Consensi</h3>
         <div className="space-y-2">
-          <ConsentRow label="Autorizzo il trattamento dei dati personali (obbligatorio)" checked={state.consents.dataProcessing} onChange={(v) => updConsent("dataProcessing", v)} />
-          <ConsentRow label="Ho preso visione della privacy policy (obbligatorio)" checked={state.consents.privacy} onChange={(v) => updConsent("privacy", v)} />
-          <ConsentRow label="Accetto il regolamento del centro estivo (obbligatorio)" checked={state.consents.rules} onChange={(v) => updConsent("rules", v)} />
-          <ConsentRow label="Autorizzo le uscite e le gite previste dal programma" checked={state.consents.outings} onChange={(v) => updConsent("outings", v)} />
-          <ConsentRow label="Autorizzo l'uso di foto e video per i canali Sportivissimo" checked={state.consents.photos} onChange={(v) => updConsent("photos", v)} />
+          <ConsentRow
+            label="Autorizzo il trattamento dei dati personali (obbligatorio)"
+            checked={state.consents.dataProcessing}
+            onChange={(v) => updConsent("dataProcessing", v)}
+          />
+          <ConsentRow
+            label="Ho preso visione della privacy policy (obbligatorio)"
+            checked={state.consents.privacy}
+            onChange={(v) => updConsent("privacy", v)}
+          />
+          <ConsentRow
+            label="Accetto il regolamento del centro estivo (obbligatorio)"
+            checked={state.consents.rules}
+            onChange={(v) => updConsent("rules", v)}
+          />
+          <ConsentRow
+            label="Autorizzo le uscite e le gite previste dal programma"
+            checked={state.consents.outings}
+            onChange={(v) => updConsent("outings", v)}
+          />
+          <ConsentRow
+            label="Autorizzo l'uso di foto e video per i canali Sportivissimo"
+            checked={state.consents.photos}
+            onChange={(v) => updConsent("photos", v)}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function ConsentRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+function ConsentRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <label className="flex items-start gap-3 rounded-xl border border-border bg-white p-3 cursor-pointer hover:bg-secondary transition-colors">
-      <Checkbox checked={checked} onCheckedChange={(v) => onChange(Boolean(v))} className="mt-0.5" />
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(v) => onChange(Boolean(v))}
+        className="mt-0.5"
+      />
       <span className="text-sm font-semibold">{label}</span>
     </label>
   );
@@ -446,13 +700,19 @@ function StepDocuments({ state, setState }: { state: WizardState; setState: SetS
 
   return (
     <div>
-      <SectionTitle title="Carica i documenti" subtitle="Puoi caricarli ora o aggiungerli più tardi dall'area genitori." />
+      <SectionTitle
+        title="Carica i documenti"
+        subtitle="Puoi caricarli ora o aggiungerli più tardi dall'area genitori."
+      />
 
       <div className="grid md:grid-cols-2 gap-3">
         {DOC_TYPES.map((type) => {
           const existing = state.documents.find((d) => d.type === type);
           return (
-            <label key={type} className="rounded-xl border border-dashed border-border bg-white p-4 cursor-pointer hover:bg-secondary transition-colors block">
+            <label
+              key={type}
+              className="rounded-xl border border-dashed border-border bg-white p-4 cursor-pointer hover:bg-secondary transition-colors block"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-magic text-magic-foreground grid place-items-center">
                   <Upload className="w-5 h-5" />
@@ -460,10 +720,16 @@ function StepDocuments({ state, setState }: { state: WizardState; setState: SetS
                 <div className="flex-1">
                   <div className="font-display font-bold">{type}</div>
                   <div className="text-xs text-muted-foreground">
-                    {existing ? `${existing.fileName} · ${(existing.size / 1024).toFixed(0)} KB` : "PDF, JPG o PNG"}
+                    {existing
+                      ? `${existing.fileName} · ${(existing.size / 1024).toFixed(0)} KB`
+                      : "PDF, JPG o PNG"}
                   </div>
                 </div>
-                {existing && <span className="font-pixel bg-grass/10 text-grass border border-grass/30 rounded-lg px-2 py-0.5">caricato</span>}
+                {existing && (
+                  <span className="font-pixel bg-grass/10 text-grass border border-grass/30 rounded-lg px-2 py-0.5">
+                    caricato
+                  </span>
+                )}
               </div>
               <input
                 type="file"
@@ -481,12 +747,18 @@ function StepDocuments({ state, setState }: { state: WizardState; setState: SetS
           <h3 className="font-display text-lg font-bold mb-2">File caricati</h3>
           <ul className="space-y-2">
             {state.documents.map((d, i) => (
-              <li key={i} className="flex items-center justify-between rounded-xl border border-border bg-secondary/50 p-3">
+              <li
+                key={i}
+                className="flex items-center justify-between rounded-xl border border-border bg-secondary/50 p-3"
+              >
                 <span className="inline-flex items-center gap-2 text-sm font-semibold">
                   <FileText className="w-4 h-4 text-magic" />
                   <span className="text-muted-foreground">{d.type}:</span> {d.fileName}
                 </span>
-                <button onClick={() => remove(i)} className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold">
+                <button
+                  onClick={() => remove(i)}
+                  className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold"
+                >
                   <Trash2 className="w-4 h-4" /> Rimuovi
                 </button>
               </li>
@@ -510,47 +782,79 @@ function StepSummary({ state, location }: { state: WizardState; location: Locati
 
   return (
     <div>
-      <SectionTitle title="Riepilogo iscrizione" subtitle="Controlla i dati prima di inviare l'iscrizione." />
+      <SectionTitle
+        title="Riepilogo iscrizione"
+        subtitle="Controlla i dati prima di inviare l'iscrizione."
+      />
       <div className="grid md:grid-cols-2 gap-4">
         <SummaryCard title="Sede & settimane">
           <SummaryRow label="Sede" value={location.name} />
           <SummaryRow label="Settimane" value={state.session.weekLabels.join(", ") || "—"} />
           <SummaryRow label="Orario" value={state.session.timeSlot || "—"} />
-          <SummaryRow label="Servizi extra" value={state.session.extras.map((id) => location.extraServices.find((x) => x.id === id)?.label).filter(Boolean).join(", ") || "Nessuno"} />
+          <SummaryRow
+            label="Servizi extra"
+            value={
+              state.session.extras
+                .map((id) => location.extraServices.find((x) => x.id === id)?.label)
+                .filter(Boolean)
+                .join(", ") || "Nessuno"
+            }
+          />
         </SummaryCard>
         <SummaryCard title="Stima totale">
           <div className="font-display text-4xl font-bold text-grass">€ {total}</div>
-          <p className="text-xs text-muted-foreground mt-1">Calcolo indicativo: {state.session.weekIds.length} settimana/e × € {location.pricePerWeek} + servizi extra. Verrà confermato dallo staff.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Calcolo indicativo: {state.session.weekIds.length} settimana/e × €{" "}
+            {location.pricePerWeek} + servizi extra. Verrà confermato dallo staff.
+          </p>
         </SummaryCard>
         <SummaryCard title="Genitore / Tutore">
-          <SummaryRow label="Nome" value={`${state.guardian.firstName} ${state.guardian.lastName}`} />
+          <SummaryRow
+            label="Nome"
+            value={`${state.guardian.firstName} ${state.guardian.lastName}`}
+          />
           <SummaryRow label="Email" value={state.guardian.email} />
           <SummaryRow label="Telefono" value={state.guardian.phone} />
-          <SummaryRow label="Indirizzo" value={`${state.guardian.address}, ${state.guardian.zip} ${state.guardian.city} (${state.guardian.province})`} />
+          <SummaryRow
+            label="Indirizzo"
+            value={`${state.guardian.address}, ${state.guardian.zip} ${state.guardian.city} (${state.guardian.province})`}
+          />
         </SummaryCard>
         <SummaryCard title="Bambino / a">
           <SummaryRow label="Nome" value={`${state.child.firstName} ${state.child.lastName}`} />
-          <SummaryRow label="Età" value={calcAge(state.child.birthDate) > 0 ? `${calcAge(state.child.birthDate)} anni` : "—"} />
+          <SummaryRow
+            label="Età"
+            value={
+              calcAge(state.child.birthDate) > 0 ? `${calcAge(state.child.birthDate)} anni` : "—"
+            }
+          />
           <SummaryRow label="Scuola" value={`${state.child.school} · ${state.child.grade}`} />
           <SummaryRow label="Allergie" value={state.child.allergies || "—"} />
         </SummaryCard>
         <SummaryCard title="Deleghe">
-          {state.delegates.length === 0
-            ? <div className="text-sm text-muted-foreground">Nessun delegato.</div>
-            : state.delegates.map((d, i) => (
-                <div key={i} className="text-sm">
-                  <span className="font-semibold">{d.firstName} {d.lastName}</span> · {d.phone}
-                </div>
-              ))}
+          {state.delegates.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nessun delegato.</div>
+          ) : (
+            state.delegates.map((d, i) => (
+              <div key={i} className="text-sm">
+                <span className="font-semibold">
+                  {d.firstName} {d.lastName}
+                </span>{" "}
+                · {d.phone}
+              </div>
+            ))
+          )}
         </SummaryCard>
         <SummaryCard title="Documenti">
-          {state.documents.length === 0
-            ? <div className="text-sm text-muted-foreground">Nessun documento caricato.</div>
-            : state.documents.map((d, i) => (
-                <div key={i} className="text-sm font-semibold">
-                  <span className="text-muted-foreground">{d.type}:</span> {d.fileName}
-                </div>
-              ))}
+          {state.documents.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nessun documento caricato.</div>
+          ) : (
+            state.documents.map((d, i) => (
+              <div key={i} className="text-sm font-semibold">
+                <span className="text-muted-foreground">{d.type}:</span> {d.fileName}
+              </div>
+            ))
+          )}
         </SummaryCard>
       </div>
     </div>
@@ -576,7 +880,15 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 /* ----------------------------- success screen ----------------------------- */
 
-function SuccessScreen({ id, location, onParents }: { id: string; location: Location; onParents: () => void }) {
+function SuccessScreen({
+  id,
+  location,
+  onParents,
+}: {
+  id: string;
+  location: Location;
+  onParents: () => void;
+}) {
   return (
     <div className="rounded-2xl bg-gradient-hero text-white p-10 text-center shadow-pop relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -584,12 +896,14 @@ function SuccessScreen({ id, location, onParents }: { id: string; location: Loca
           <span
             key={i}
             className="absolute text-2xl animate-float"
-            style={{
-              left: `${(i * 73) % 100}%`,
-              top: `${(i * 41) % 90}%`,
-              animationDelay: `${i * 0.2}s`,
-              ['--r' as any]: `${(i * 25) % 360}deg`,
-            }}
+            style={
+              {
+                left: `${(i * 73) % 100}%`,
+                top: `${(i * 41) % 90}%`,
+                animationDelay: `${i * 0.2}s`,
+                "--r": `${(i * 25) % 360}deg`,
+              } as CSSProperties
+            }
           >
             {["🎉", "⭐", "🏆", "🎈"][i % 4]}
           </span>
@@ -601,14 +915,21 @@ function SuccessScreen({ id, location, onParents }: { id: string; location: Loca
         </div>
         <h1 className="font-display text-4xl md:text-5xl font-bold">Iscrizione inviata!</h1>
         <p className="text-white/85 mt-3 max-w-xl mx-auto">
-          La squadra Sportivissimo riceverà tutto per <span className="font-bold">{location.name}</span> e ti
-          ricontatterà presto. Nel frattempo puoi tenere d'occhio lo stato dalla tua area genitori.
+          La squadra Sportivissimo riceverà tutto per{" "}
+          <span className="font-bold">{location.name}</span> e ti ricontatterà presto. Nel frattempo
+          puoi tenere d'occhio lo stato dalla tua area genitori.
         </p>
         <div className="flex flex-wrap gap-3 justify-center mt-6">
-          <button onClick={onParents} className="inline-flex items-center gap-2 bg-gradient-flame text-flame-foreground rounded-xl px-6 py-3.5 font-display font-bold shadow-sticker hover:scale-105 transition-transform">
+          <button
+            onClick={onParents}
+            className="inline-flex items-center gap-2 bg-gradient-flame text-flame-foreground rounded-xl px-6 py-3.5 font-display font-bold shadow-sticker hover:scale-105 transition-transform"
+          >
             <PartyPopper className="w-4 h-4" /> Vai alla mia area
           </button>
-          <Link to="/centri-estivi" className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white rounded-xl px-6 py-3.5 font-display font-bold hover:bg-white/20 transition-colors">
+          <Link
+            to="/centri-estivi"
+            className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white rounded-xl px-6 py-3.5 font-display font-bold hover:bg-white/20 transition-colors"
+          >
             Torna alle sedi
           </Link>
         </div>

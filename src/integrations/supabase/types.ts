@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          checked_in_at: string | null
+          checked_out_at: string | null
+          created_at: string
+          day: string
+          enrollment_id: string
+          id: string
+          recorded_by: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          created_at?: string
+          day: string
+          enrollment_id: string
+          id?: string
+          recorded_by: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          created_at?: string
+          day?: string
+          enrollment_id?: string
+          id?: string
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string

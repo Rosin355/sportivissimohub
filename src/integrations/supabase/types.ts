@@ -14,16 +14,365 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          checked_in_at: string | null
+          checked_out_at: string | null
+          created_at: string
+          day: string
+          enrollment_id: string
+          id: string
+          recorded_by: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          created_at?: string
+          day: string
+          enrollment_id: string
+          id?: string
+          recorded_by: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          created_at?: string
+          day?: string
+          enrollment_id?: string
+          id?: string
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          detail: Json | null
+          entity: string
+          entity_id: string
+          id: number
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          detail?: Json | null
+          entity: string
+          entity_id: string
+          id?: never
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          detail?: Json | null
+          entity?: string
+          entity_id?: string
+          id?: never
+        }
+        Relationships: []
+      }
+      children: {
+        Row: {
+          allergies: string
+          birth_date: string
+          created_at: string
+          first_name: string
+          fiscal_code: string
+          grade: string
+          id: string
+          last_name: string
+          medical_notes: string
+          parent_id: string
+          school: string
+          special_needs: string
+        }
+        Insert: {
+          allergies?: string
+          birth_date: string
+          created_at?: string
+          first_name: string
+          fiscal_code: string
+          grade?: string
+          id?: string
+          last_name: string
+          medical_notes?: string
+          parent_id: string
+          school?: string
+          special_needs?: string
+        }
+        Update: {
+          allergies?: string
+          birth_date?: string
+          created_at?: string
+          first_name?: string
+          fiscal_code?: string
+          grade?: string
+          id?: string
+          last_name?: string
+          medical_notes?: string
+          parent_id?: string
+          school?: string
+          special_needs?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "children_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrollment_documents: {
+        Row: {
+          doc_type: string
+          enrollment_id: string
+          file_name: string
+          id: string
+          rejection_reason: string | null
+          size_bytes: number
+          status: Database["public"]["Enums"]["document_status"]
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          doc_type: string
+          enrollment_id: string
+          file_name: string
+          id?: string
+          rejection_reason?: string | null
+          size_bytes: number
+          status?: Database["public"]["Enums"]["document_status"]
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          doc_type?: string
+          enrollment_id?: string
+          file_name?: string
+          id?: string
+          rejection_reason?: string | null
+          size_bytes?: number
+          status?: Database["public"]["Enums"]["document_status"]
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_documents_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrollments: {
+        Row: {
+          admin_notes: string
+          child_id: string
+          code: string
+          consent_data_processing: boolean
+          consent_outings: boolean
+          consent_photos: boolean
+          consent_privacy: boolean
+          consent_rules: boolean
+          created_at: string
+          extras: string[]
+          id: string
+          location_slug: string
+          parent_id: string
+          payment_status: string
+          status: Database["public"]["Enums"]["enrollment_status"]
+          time_slot: string
+          updated_at: string
+          week_ids: string[]
+        }
+        Insert: {
+          admin_notes?: string
+          child_id: string
+          code?: string
+          consent_data_processing?: boolean
+          consent_outings?: boolean
+          consent_photos?: boolean
+          consent_privacy?: boolean
+          consent_rules?: boolean
+          created_at?: string
+          extras?: string[]
+          id?: string
+          location_slug: string
+          parent_id: string
+          payment_status?: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          time_slot: string
+          updated_at?: string
+          week_ids: string[]
+        }
+        Update: {
+          admin_notes?: string
+          child_id?: string
+          code?: string
+          consent_data_processing?: boolean
+          consent_outings?: boolean
+          consent_photos?: boolean
+          consent_privacy?: boolean
+          consent_rules?: boolean
+          created_at?: string
+          extras?: string[]
+          id?: string
+          location_slug?: string
+          parent_id?: string
+          payment_status?: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          time_slot?: string
+          updated_at?: string
+          week_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pickup_delegates: {
+        Row: {
+          document: string
+          enrollment_id: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+        }
+        Insert: {
+          document?: string
+          enrollment_id: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+        }
+        Update: {
+          document?: string
+          enrollment_id?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pickup_delegates_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string
+          first_name: string
+          fiscal_code: string
+          id: string
+          last_name: string
+          phone: string
+          province: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          fiscal_code?: string
+          id: string
+          last_name?: string
+          phone?: string
+          province?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          fiscal_code?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          province?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "genitore" | "staff" | "admin"
+      document_status: "caricato" | "verificato" | "rifiutato"
+      enrollment_status:
+        | "nuova"
+        | "revisione"
+        | "documenti-mancanti"
+        | "attesa-pagamento"
+        | "confermata"
+        | "lista-attesa"
+        | "annullata"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +499,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["genitore", "staff", "admin"],
+      document_status: ["caricato", "verificato", "rifiutato"],
+      enrollment_status: [
+        "nuova",
+        "revisione",
+        "documenti-mancanti",
+        "attesa-pagamento",
+        "confermata",
+        "lista-attesa",
+        "annullata",
+      ],
+    },
   },
 } as const

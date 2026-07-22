@@ -275,6 +275,69 @@ export async function updateEnrollmentStatus(
   }
 }
 
+/* ---------- figli ---------- */
+
+export type ChildRecord = ChildData & { id: string };
+
+export async function getChildren(): Promise<ChildRecord[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("children")
+    .select(
+      "id, first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs",
+    )
+    .order("created_at", { ascending: true });
+  if (error) throw new Error("Impossibile caricare i figli registrati.");
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    firstName: c.first_name,
+    lastName: c.last_name,
+    birthDate: c.birth_date,
+    fiscalCode: c.fiscal_code,
+    age: calcAge(c.birth_date),
+    school: c.school,
+    grade: c.grade,
+    allergies: c.allergies,
+    medicalNotes: c.medical_notes,
+    specialNeeds: c.special_needs,
+  }));
+}
+
+export async function addChild(
+  input: Omit<ChildData, "age">,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = getSupabaseBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Devi accedere per aggiungere un figlio." };
+
+  const fiscalCode = input.fiscalCode.toUpperCase();
+  const { data: existing } = await supabase
+    .from("children")
+    .select("id")
+    .eq("fiscal_code", fiscalCode)
+    .maybeSingle();
+  if (existing) {
+    return { ok: false, error: "C'è già un figlio registrato con questo codice fiscale." };
+  }
+
+  const { error } = await supabase.from("children").insert({
+    parent_id: user.id,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    birth_date: input.birthDate,
+    fiscal_code: fiscalCode,
+    school: input.school,
+    grade: input.grade,
+    allergies: input.allergies,
+    medical_notes: input.medicalNotes,
+    special_needs: input.specialNeeds,
+  });
+  if (error) return { ok: false, error: "Salvataggio non riuscito. Riprova." };
+  return { ok: true };
+}
+
 /* ---------- draft (per-slug, resta in localStorage) ---------- */
 
 function isBrowser() {

@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { Location } from "@/data/locations";
 
 // Vincoli replicati anche nel bucket (file_size_limit e allowed_mime_types
 // nella migrazione M2): qui servono solo per dare un errore immediato.
@@ -20,6 +21,19 @@ function sanitize(name: string) {
 }
 
 export type UploadDocumentResult = { ok: true } | { ok: false; error: string };
+
+// I requiredDocuments delle sedi (etichette marketing in locations.ts) vengono
+// ricondotti ai doc_type canonici usati dal wizard e nel database.
+export function requiredDocTypeFor(label: string): string {
+  if (/genitore|identit/i.test(label)) return "Documento genitore";
+  if (/tessera sanitaria/i.test(label)) return "Tessera sanitaria bambino/a";
+  if (/certificato medico/i.test(label)) return "Certificato medico";
+  return label;
+}
+
+export function requiredDocTypesForLocation(loc: Location): string[] {
+  return [...new Set(loc.requiredDocuments.map(requiredDocTypeFor))];
+}
 
 // Upload nel bucket privato "documents" sotto {user_id}/{enrollment_id}/{doc_type}/
 // (le policy storage accettano solo il percorso del proprietario) + riga in

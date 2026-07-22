@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { translateAuthError } from "@/lib/supabase/auth";
+import { mapAuthError, type MappedAuthError } from "@/lib/auth/errors";
 import { KeyRound, MailCheck } from "lucide-react";
 
 export const Route = createFileRoute("/password-dimenticata")({
@@ -33,7 +33,7 @@ const schema = z.object({
 });
 
 function ForgotPasswordPage() {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MappedAuthError | null>(null);
   const [sent, setSent] = useState(false);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -42,15 +42,19 @@ function ForgotPasswordPage() {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     setError(null);
-    const supabase = getSupabaseBrowserClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/aggiorna-password`,
-    });
-    if (resetError) {
-      setError(translateAuthError(resetError.message));
-      return;
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: `${window.location.origin}/aggiorna-password`,
+      });
+      if (resetError) {
+        setError(mapAuthError(resetError));
+        return;
+      }
+      setSent(true);
+    } catch (e) {
+      setError(mapAuthError(e as Error));
     }
-    setSent(true);
   }
 
   return (
@@ -99,7 +103,7 @@ function ForgotPasswordPage() {
                 />
                 {error && (
                   <div className="bg-flame/10 border border-flame/30 text-flame rounded-xl px-4 py-3 text-sm font-semibold">
-                    {error}
+                    {error.message}
                   </div>
                 )}
                 <button

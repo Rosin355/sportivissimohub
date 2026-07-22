@@ -20,16 +20,36 @@ import {
   type EnrollmentStatus,
 } from "@/data/enrollments";
 import { LOCATIONS } from "@/data/locations";
-import { Users, FileWarning, CreditCard, ClipboardList, Eye, FileText } from "lucide-react";
+import {
+  Users,
+  FileWarning,
+  CreditCard,
+  ClipboardList,
+  Eye,
+  FileText,
+  Download,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { requireRole } from "@/lib/supabase/auth";
+import {
+  setDocumentStatus,
+  setPaymentStatus,
+  enrollmentsToCsv,
+  downloadCsv,
+} from "@/lib/enrollments/admin";
+import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
+import type { PaymentStatus } from "@/lib/supabase/types";
 
 export const Route = createFileRoute("/area-admin")({
-  beforeLoad: ({ context, location }) => {
-    requireRole(context.auth, "admin", location.href);
-  },
+  beforeLoad: ({ context, location }) => ({
+    auth: requireRole(context.auth, "admin", location.href),
+  }),
   head: () => ({ meta: [{ title: "Area Admin — Sportivissimo" }] }),
   component: AreaAdmin,
 });
+
+const PAYMENT_STATUSES: PaymentStatus[] = ["non-pagato", "acconto", "pagato"];
 
 const STATUSES: EnrollmentStatus[] = [
   "nuova",
@@ -45,7 +65,9 @@ function AreaAdmin() {
   const [list, setList] = useState<Enrollment[]>([]);
   const [filterStatus, setFilterStatus] = useState<EnrollmentStatus | "all">("all");
   const [filterLocation, setFilterLocation] = useState<string>("all");
-  const [selected, setSelected] = useState<Enrollment | null>(null);
+  // Selezione per id: dopo un refresh la Sheet mostra i dati aggiornati.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = list.find((e) => e.id === selectedId) ?? null;
 
   const refresh = useCallback(() => {
     getEnrollments()
@@ -90,7 +112,9 @@ function AreaAdmin() {
               Control Room
             </span>
             <h1 className="font-display text-4xl font-bold">Dashboard Admin</h1>
-            <p className="text-sm text-muted-foreground mt-1">Stagione 2026 · 9 sedi attive</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Stagione {new Date().getFullYear()} · {LOCATIONS.length} sedi attive
+            </p>
           </div>
           <button
             onClick={refresh}
@@ -142,6 +166,21 @@ function AreaAdmin() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  if (filtered.length === 0) {
+                    toast.info("Nessuna iscrizione da esportare con questi filtri.");
+                    return;
+                  }
+                  downloadCsv(
+                    `iscrizioni-sportivissimo-${new Date().toISOString().slice(0, 10)}.csv`,
+                    enrollmentsToCsv(filtered),
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors"
+              >
+                <Download className="w-4 h-4" /> Esporta CSV
+              </button>
               <select
                 value={filterLocation}
                 onChange={(e) => setFilterLocation(e.target.value)}
@@ -201,7 +240,7 @@ function AreaAdmin() {
                     </td>
                     <td className="py-3 pr-3 text-right">
                       <button
-                        onClick={() => setSelected(e)}
+                        onClick={() => setSelectedId(e.id)}
                         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border border-border hover:bg-secondary"
                       >
                         <Eye className="w-3.5 h-3.5" /> Dettagli
@@ -221,9 +260,11 @@ function AreaAdmin() {
           </div>
         </div>
 
+        <WeeksOccupancy list={list} filterLocation={filterLocation} />
+
         <EnrollmentSheet
           enrollment={selected}
-          onClose={() => setSelected(null)}
+          onClose={() => setSelectedId(null)}
           onUpdate={refresh}
         />
       </main>
@@ -256,6 +297,66 @@ function KPI({
       <div className="p-3">
         <div className="font-bold">{label}</div>
         <div className="text-xs text-muted-foreground mt-0.5">{trend}</div>
+      </div>
+    </div>
+  );
+}
+
+// Iscrizioni confermate per settimana vs posti della sede (spots in locations.ts)
+function WeeksOccupancy({ list, filterLocation }: { list: Enrollment[]; filterLocation: string }) {
+  const locations =
+    filterLocation === "all" ? LOCATIONS : LOCATIONS.filter((l) => l.slug === filterLocation);
+  const confirmed = list.filter((e) => e.status === "confermata");
+
+  return (
+    <div className="mt-8 rounded-2xl border border-border bg-white shadow-pop p-5">
+      <h2 className="font-display text-2xl font-bold">Posti per settimana</h2>
+      <p className="text-sm text-muted-foreground mb-4">
+        Iscrizioni confermate rispetto ai posti disponibili
+        {filterLocation === "all" ? " · tutte le sedi" : ""}.
+      </p>
+      <div className="space-y-5">
+        {locations.map((loc) => (
+          <div key={loc.slug}>
+            <div className="font-display font-bold mb-2">{loc.name}</div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              {loc.weeks.map((w) => {
+                const count = confirmed.filter(
+                  (e) => e.session.locationSlug === loc.slug && e.session.weekIds.includes(w.id),
+                ).length;
+                const full = count >= w.spots;
+                const nearlyFull = !full && count >= Math.ceil(w.spots * 0.8);
+                return (
+                  <div
+                    key={w.id}
+                    className={`rounded-xl border p-3 ${
+                      full
+                        ? "bg-flame/10 border-flame/40"
+                        : nearlyFull
+                          ? "bg-sun/15 border-sun/40"
+                          : "bg-white border-border"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-display font-bold text-sm">Sett. {w.number}</span>
+                      <span
+                        className={`font-pixel rounded-lg border px-2 py-0.5 ${
+                          full
+                            ? "bg-flame/15 text-flame border-flame/30"
+                            : "bg-grass/10 text-grass border-grass/30"
+                        }`}
+                      >
+                        {count}/{w.spots}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{w.label}</div>
+                    {full && <div className="text-xs font-bold text-flame mt-1">Completa</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -302,6 +403,40 @@ function EnrollmentSheet({
                 className="rounded-xl border border-border bg-white px-3 py-1.5 text-sm font-semibold"
               >
                 {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </Section>
+
+          <Section title="Pagamento">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span
+                className={`font-pixel rounded-lg border px-2 py-0.5 ${
+                  enrollment.paymentStatus === "pagato"
+                    ? "bg-grass/15 text-grass border-grass/30"
+                    : enrollment.paymentStatus === "acconto"
+                      ? "bg-sun/20 text-sun-foreground border-sun/40"
+                      : "bg-flame/15 text-flame border-flame/30"
+                }`}
+              >
+                {enrollment.paymentStatus}
+              </span>
+              <select
+                value={enrollment.paymentStatus}
+                onChange={(e) => {
+                  setPaymentStatus(enrollment.id, e.target.value as PaymentStatus)
+                    .then(() => {
+                      toast.success("Stato pagamento aggiornato.");
+                      onUpdate();
+                    })
+                    .catch((err: Error) => toast.error(err.message));
+                }}
+                className="rounded-xl border border-border bg-white px-3 py-1.5 text-sm font-semibold"
+              >
+                {PAYMENT_STATUSES.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -363,16 +498,11 @@ function EnrollmentSheet({
             {enrollment.documents.length === 0 ? (
               <div className="text-sm text-muted-foreground">Nessun documento.</div>
             ) : (
-              enrollment.documents.map((d, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <FileText className="w-4 h-4 text-magic" />
-                  <span className="text-muted-foreground">{d.type}:</span>
-                  <span className="font-semibold">{d.fileName}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({(d.size / 1024).toFixed(0)} KB)
-                  </span>
-                </div>
-              ))
+              <div className="space-y-3">
+                {enrollment.documents.map((d) => (
+                  <AdminDocumentRow key={d.id ?? d.type} doc={d} onUpdate={onUpdate} />
+                ))}
+              </div>
             )}
           </Section>
 
@@ -400,6 +530,137 @@ function EnrollmentSheet({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+const DOC_STATUS_CHIP: Record<string, string> = {
+  caricato: "bg-sky/15 text-sky border-sky/30",
+  verificato: "bg-grass/15 text-grass border-grass/30",
+  rifiutato: "bg-flame/15 text-flame border-flame/30",
+};
+
+function AdminDocumentRow({
+  doc,
+  onUpdate,
+}: {
+  doc: Enrollment["documents"][number];
+  onUpdate: () => void;
+}) {
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function download() {
+    if (!doc.id) return;
+    const res = await getDocumentDownloadUrl({ data: { documentId: doc.id } });
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    window.open(res.url, "_blank", "noopener");
+  }
+
+  async function verify() {
+    if (!doc.id) return;
+    setBusy(true);
+    try {
+      await setDocumentStatus(doc.id, "verificato");
+      toast.success(`${doc.type} verificato.`);
+      onUpdate();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reject() {
+    if (!doc.id) return;
+    if (!reason.trim()) {
+      toast.error("Indica la motivazione del rifiuto.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await setDocumentStatus(doc.id, "rifiutato", reason.trim());
+      toast.success(`${doc.type} rifiutato.`);
+      setRejecting(false);
+      setReason("");
+      onUpdate();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-white p-3">
+      <div className="flex items-center gap-2 text-sm flex-wrap">
+        <FileText className="w-4 h-4 text-magic shrink-0" />
+        <span className="text-muted-foreground">{doc.type}:</span>
+        <button onClick={download} className="font-semibold underline hover:text-primary">
+          {doc.fileName}
+        </button>
+        <span className="text-xs text-muted-foreground">({(doc.size / 1024).toFixed(0)} KB)</span>
+        {doc.status && (
+          <span
+            className={`font-pixel rounded-lg border px-2 py-0.5 ml-auto ${DOC_STATUS_CHIP[doc.status]}`}
+          >
+            {doc.status}
+          </span>
+        )}
+      </div>
+      {doc.status === "rifiutato" && doc.rejectionReason && (
+        <div className="text-xs font-semibold text-flame mt-1">Motivo: {doc.rejectionReason}</div>
+      )}
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        {doc.status !== "verificato" && (
+          <button
+            onClick={verify}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold border border-grass/40 text-grass hover:bg-grass/10 transition-colors disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Verifica
+          </button>
+        )}
+        {doc.status !== "rifiutato" && !rejecting && (
+          <button
+            onClick={() => setRejecting(true)}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold border border-flame/40 text-flame hover:bg-flame/10 transition-colors disabled:opacity-50"
+          >
+            <XCircle className="w-3.5 h-3.5" /> Rifiuta
+          </button>
+        )}
+      </div>
+      {rejecting && (
+        <div className="mt-2 flex items-center gap-2">
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Motivazione del rifiuto"
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm"
+          />
+          <button
+            onClick={reject}
+            disabled={busy}
+            className="rounded-lg px-3 py-1.5 text-xs font-bold bg-gradient-flame text-flame-foreground disabled:opacity-50"
+          >
+            Conferma
+          </button>
+          <button
+            onClick={() => {
+              setRejecting(false);
+              setReason("");
+            }}
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-border"
+          >
+            Annulla
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

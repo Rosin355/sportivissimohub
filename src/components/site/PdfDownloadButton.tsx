@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FileDown } from "lucide-react";
 import { generateEnrollmentPdf } from "@/lib/enrollments/pdf-fns";
+import type { PdfTemplateKey } from "@/lib/pdf-templates/catalog";
 
 // Scarica un modulo PDF precompilato (generato on-demand server-side).
 export function PdfDownloadButton({
@@ -10,7 +11,7 @@ export function PdfDownloadButton({
   label,
 }: {
   enrollmentId: string;
-  template: "tesseramento-acsi" | "iscrizione";
+  template: PdfTemplateKey;
   label: string;
 }) {
   const [busy, setBusy] = useState(false);

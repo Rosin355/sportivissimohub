@@ -1,27 +1,26 @@
 import type { Enrollment } from "@/data/enrollments";
 import { buildAcsiMembershipPdf } from "./acsi-membership";
 import { buildCampEnrollmentPdf } from "./camp-enrollment";
+import { buildAcsiMinorOriginalPdf, buildGalzignanoOriginalPdf } from "./original-forms";
+import { PDF_TEMPLATE_INFO, type PdfTemplateKey } from "./catalog";
+
+export { PDF_TEMPLATE_KEYS, PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "./catalog";
+export type { PdfTemplateKey } from "./catalog";
 
 // Registro dei moduli PDF: ogni documento è una funzione (dati tipizzati → PDF).
-// Per aggiungere un modulo basta una nuova entry.
-export type PdfTemplateKey = "tesseramento-acsi" | "iscrizione";
-
+// Due famiglie: PDF puliti generati da zero (layout.ts) e overlay sui moduli
+// cartacei originali (overlay/). I metadati (etichette, nomi file,
+// disponibilità per sede) stanno in catalog.ts, importabile dal client.
 export const PDF_TEMPLATES: Record<
   PdfTemplateKey,
-  {
-    label: string;
-    fileName: (e: Enrollment) => string;
-    build: (e: Enrollment) => Promise<Uint8Array>;
-  }
+  { build: (e: Enrollment) => Promise<Uint8Array> }
 > = {
-  "tesseramento-acsi": {
-    label: "Modulo tesseramento ACSI",
-    fileName: (e) => `tesseramento-acsi-${e.code}.pdf`,
-    build: buildAcsiMembershipPdf,
-  },
-  iscrizione: {
-    label: "Modulo iscrizione centro estivo",
-    fileName: (e) => `iscrizione-${e.code}.pdf`,
-    build: buildCampEnrollmentPdf,
-  },
+  "tesseramento-acsi": { build: buildAcsiMembershipPdf },
+  iscrizione: { build: buildCampEnrollmentPdf },
+  "tesseramento-acsi-originale": { build: buildAcsiMinorOriginalPdf },
+  "iscrizione-originale": { build: buildGalzignanoOriginalPdf },
 };
+
+export function pdfFileName(key: PdfTemplateKey, e: Enrollment): string {
+  return PDF_TEMPLATE_INFO[key].fileName(e.code);
+}

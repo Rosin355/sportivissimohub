@@ -8,7 +8,7 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 - **Backend:** Supabase via **Lovable Cloud** — Auth (sessione nei cookie per SSR), Postgres con RLS su ogni tabella, Storage privato (bucket `documents`), migrazioni in `supabase/migrations/`.
 - **Deploy:** Cloudflare Workers gestito da Lovable. Push su `main` → Lovable aggiorna la preview → publish manuale per andare live.
 - **Email:** Lovable Emails (sistema gestito nativo: auth email + app email dal dominio dell'associazione). NON usiamo Resend.
-- **PDF:** `pdf-lib` — generazione on-demand server-side, due modalità: PDF puliti generati da zero e overlay su moduli cartacei originali (template in `assets/pdf-templates/` + mappe coordinate).
+- **PDF:** `pdf-lib` — generazione on-demand server-side, due modalità: PDF puliti generati da zero (`src/lib/pdf-templates/layout.ts`) e overlay su moduli cartacei originali (template in `assets/pdf-templates/` incorporati nel bundle server via `?inline`, mappe coordinate in `src/lib/pdf-templates/overlay/`, calibrazione con `node scripts/pdf-calibrate.ts`). Metadati dei moduli in `catalog.ts` (client-safe), builder in `index.ts`.
 - **CF italiano:** validazione nativa completa (struttura, omocodia, check digit) in `src/lib/enrollments/fiscal-code.ts`; calcolo con `codice-fiscale-js` (import dinamico).
 
 ## Flusso di lavoro (NON derogare)
@@ -33,10 +33,11 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 - L'anteprima embedded di Lovable blocca i cookie di auth (iframe): i test auth si fanno sul sito pubblicato o in scheda dedicata.
 - Le sedi sono ancora statiche in `src/data/locations.ts` (migrazione a DB prevista in M10). Solo Galzignano ha prezzi/settimane reali 2026; le altre 8 sedi hanno `placeholderPricing()` "DA CONFERMARE".
 - Le bozze del wizard vivono in localStorage per sede; i File selezionati non sopravvivono al reload (avviso già previsto).
-- CF sodalizio per i PDF in `src/lib/pdf-templates/config.ts` (verificare che non sia più `DA_INSERIRE`).
+- CF sodalizio per i PDF in `src/lib/pdf-templates/config.ts`: 91018400282 (dal modulo ACSI ufficiale).
+- I moduli cartacei originali sono digitalizzati solo per Galzignano (`ORIGINAL_FORM_SLUGS` in `catalog.ts`); la pagina ACSI del tesseramento minore è uguale per tutte le sedi.
 
 ## Documenti di riferimento
 
 - `PIANO_LAVORI.md` — stato lavori, task completati, backlog e specifica M10. **Fonte di verità operativa.**
 - `SPORTIVISSIMO_PRD.md` — requisiti di design e contenuti delle pagine pubbliche (nota: descrive il redesign UI; lo stato reale del backend è in PIANO_LAVORI.md).
-- `MILESTONE_9.md` — specifica storica della M9 (completata).
+- `MILESTONE_9.md` — specifica storica della M9 (completata; non presente nel repo).

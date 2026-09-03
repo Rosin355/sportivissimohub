@@ -68,3 +68,33 @@ export function isValidFiscalCode(raw: string): boolean {
   if (cf.length !== 16 || !FISCAL_CODE_REGEX.test(cf)) return false;
   return cf[15] === fiscalCodeCheckChar(cf.slice(0, 15));
 }
+
+// Sesso codificato nel CF: giorno di nascita (posizioni 10-11) + 40 per le
+// donne. Le cifre possono essere sostituite da lettere in caso di omocodia.
+const OMOCODIA_DIGITS: Record<string, string> = {
+  L: "0",
+  M: "1",
+  N: "2",
+  P: "3",
+  Q: "4",
+  R: "5",
+  S: "6",
+  T: "7",
+  U: "8",
+  V: "9",
+};
+
+export function sexFromFiscalCode(raw: string): "M" | "F" | null {
+  const cf = raw.trim().toUpperCase();
+  if (cf.length !== 16 || !FISCAL_CODE_REGEX.test(cf)) return null;
+  const day = parseInt(
+    cf
+      .slice(9, 11)
+      .split("")
+      .map((ch) => OMOCODIA_DIGITS[ch] ?? ch)
+      .join(""),
+    10,
+  );
+  if (Number.isNaN(day)) return null;
+  return day > 40 ? "F" : "M";
+}

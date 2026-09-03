@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { ENROLLMENT_SELECT, mapEnrollmentRow, type EnrollmentJoinedRow } from "@/data/enrollments";
-import { PDF_TEMPLATES } from "@/lib/pdf-templates";
+import { PDF_TEMPLATES, pdfFileName } from "@/lib/pdf-templates";
+import { PDF_TEMPLATE_INFO, PDF_TEMPLATE_KEYS } from "@/lib/pdf-templates/catalog";
 
 export type GeneratePdfResult =
   | { ok: true; fileName: string; base64: string }
@@ -25,7 +26,7 @@ export const generateEnrollmentPdf = createServerFn({ method: "POST" })
     z
       .object({
         enrollmentId: z.string().uuid(),
-        template: z.enum(["tesseramento-acsi", "iscrizione"]),
+        template: z.enum(PDF_TEMPLATE_KEYS),
       })
       .parse(input),
   )
@@ -45,11 +46,19 @@ export const generateEnrollmentPdf = createServerFn({ method: "POST" })
       return { ok: false, error: "Iscrizione non trovata o non accessibile." };
     }
 
+    if (!PDF_TEMPLATE_INFO[data.template].availableFor(row.location_slug)) {
+      return { ok: false, error: "Questo modulo non è disponibile per la sede dell'iscrizione." };
+    }
+
     const template = PDF_TEMPLATES[data.template];
     try {
       const enrollment = mapEnrollmentRow(row);
       const bytes = await template.build(enrollment);
-      return { ok: true, fileName: template.fileName(enrollment), base64: toBase64(bytes) };
+      return {
+        ok: true,
+        fileName: pdfFileName(data.template, enrollment),
+        base64: toBase64(bytes),
+      };
     } catch (e) {
       console.error("Errore generazione PDF:", e);
       return { ok: false, error: "Generazione del PDF non riuscita. Riprova." };

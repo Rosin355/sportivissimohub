@@ -41,6 +41,7 @@ import {
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
 import { estimateForEnrollment } from "@/lib/enrollments/pricing";
 import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
+import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/catalog";
 import type { PaymentStatus } from "@/lib/supabase/types";
 
 export const Route = createFileRoute("/area-admin")({
@@ -573,16 +574,14 @@ function EnrollmentSheet({
 
           <Section title="Moduli PDF precompilati">
             <div className="flex flex-wrap gap-2">
-              <PdfDownloadButton
-                enrollmentId={enrollment.id}
-                template="tesseramento-acsi"
-                label="Modulo tesseramento ACSI"
-              />
-              <PdfDownloadButton
-                enrollmentId={enrollment.id}
-                template="iscrizione"
-                label="Modulo iscrizione"
-              />
+              {pdfTemplatesForLocation(enrollment.session.locationSlug).map((key) => (
+                <PdfDownloadButton
+                  key={key}
+                  enrollmentId={enrollment.id}
+                  template={key}
+                  label={PDF_TEMPLATE_INFO[key].label}
+                />
+              ))}
             </div>
           </Section>
 

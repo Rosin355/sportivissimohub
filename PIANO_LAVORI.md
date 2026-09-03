@@ -18,10 +18,13 @@ Fonte di verità operativa. Claude Code: prima di ogni sessione, confronta quest
 - [x] **M9.1** — Dati estesi (commit 1aed251): sesso e luogo di nascita, minori senza CF italiano (toggle + dati documento estero, CF nullable con check), secondo genitore (jsonb), residenza, tessera base/super-integrativa, figlio_ordine, tre consensi ACSI; prezzi reali Galzignano 2026 con struttura `pricing`; validazione CF completa con check digit + pulsante Calcola; costo stimato live nel wizard; CSV con 12 nuove colonne. Migrazione `20260722150000_m9_dati_estesi.sql` (applicata su Lovable).
 - [x] **M9.2** — PDF puliti precompilati (commit 92d11e9): layer `src/lib/pdf-templates/` con PdfBuilder e registro; modulo tesseramento ACSI minore e modulo iscrizione; server function `generateEnrollmentPdf` on-demand con autorizzazione via RLS; pulsanti in area genitori e admin.
 - [x] **Rifinitura auth** (commit 42e0c22, eseguita da Lovable): `PasswordInput` con occhio mostra/nascondi su password e conferma; checklist requisiti live in `src/lib/auth/password.ts` (8+ caratteri, maiuscola, minuscola, numero) — da tenere allineata alla policy in Cloud → Users & Auth; barra robustezza a 3 livelli; `src/lib/auth/errors.ts` con mappatura in italiano (credenziali errate, email non confermata, email già registrata, password in breach, requisiti password, rate limit, rete, sessione mancante); `auth-attacher.ts` usa il singleton `getSupabaseBrowserClient` (niente più GoTrueClient doppio). Verificata a codice il 2026-09-03.
+- [x] **M9.3 — Overlay sui moduli originali** (2026-09-03): template `assets/pdf-templates/galzignano-2026.pdf` (4 pagine: regolamento, note allergie, modulo iscrizione, modulo ACSI minore) incorporato nel bundle server via `?inline`; motore `src/lib/pdf-templates/overlay/engine.ts` (testo con adattamento/a capo su righe, spunte, whiteout, rimozione annotazioni); mappa coordinate `overlay/galzignano-2026.ts`; catalogo client-safe `catalog.ts` con disponibilità per sede; due varianti nel registro: `iscrizione-originale` (solo sedi con modulo digitalizzato, oggi Galzignano) e `tesseramento-acsi-originale` (pagina ACSI, tutte le sedi). Script di calibrazione `node scripts/pdf-calibrate.ts` (griglia + campi evidenziati + dati di prova). Calibrazione visiva fatta sul render a 4x: resta consigliata una stampa di prova. Le caselle Sì/No mediche di p.2 vengono spuntate solo con informazione positiva (allergie), mai dedotte.
+- [x] **CF del sodalizio** in `pdf-templates/config.ts`: 91018400282, preso dal modulo ACSI ufficiale (p. 4 del template Galzignano).
 
 ## IN CORSO / DA VERIFICARE A INIZIO SESSIONE
 
-- [ ] **M9.3 — Overlay sui moduli originali**: prompt già definito (template `assets/pdf-templates/galzignano-2026.pdf`, mappa coordinate per pagina, script di calibrazione con griglia, varianti "su modulo originale" nel registro). Verificare da `git log` se già eseguita; se sì, resta la **calibrazione visiva finale** confrontando il PDF generato col modulo cartaceo.
+- Nessun task in corso. Prossimo: M10.1 (schema sedi da confermare prima della migrazione).
+- Da verificare a mano su Lovable: la policy password in Cloud → Users & Auth deve coincidere con `src/lib/auth/password.ts` (8+ caratteri, maiuscola, minuscola, numero).
 
 ## BACKLOG — M10 (prossima milestone grossa, perimetro confermato)
 
@@ -36,7 +39,7 @@ Obiettivo: l'admin gestisce le sedi in autonomia, senza interventi sul codice.
 
 - [ ] Privacy policy e cookie policy reali (dati di minori: prerequisito legale, non rifinitura) + pagina informativa trattamento dati linkata nel wizard.
 - [ ] Prezzi/settimane reali delle altre 8 sedi (dall'associazione) — finché mancano, valutare di nasconderle o marcarle "iscrizioni in apertura".
-- [ ] CF del sodalizio in `pdf-templates/config.ts` se ancora `DA_INSERIRE`.
+- [x] CF del sodalizio in `pdf-templates/config.ts` (91018400282, dal modulo ACSI ufficiale).
 - [ ] Verifica backup database (piano Supabase/Lovable Cloud) prima dei dati reali.
 - [ ] Giro completo dei test end-to-end (piano in chat: 8 test, con test RLS a due account).
 

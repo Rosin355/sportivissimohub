@@ -1,8 +1,9 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { sanitizePdfText as sanitize } from "./text";
 
 // Impaginatore minimale per moduli A4: titoli, sezioni, righe etichetta/valore,
 // caselle di consenso e righe firma. I font Standard usano WinAnsi: il testo
-// viene ripulito dai caratteri non supportati.
+// viene ripulito dai caratteri non supportati (vedi text.ts).
 
 const A4 = { width: 595.28, height: 841.89 };
 const MARGIN = 48;
@@ -10,19 +11,6 @@ const INK = rgb(0.13, 0.16, 0.23);
 const MUTED = rgb(0.42, 0.45, 0.5);
 const LINE = rgb(0.8, 0.82, 0.86);
 const ACCENT = rgb(0.97, 0.45, 0.09);
-
-function sanitize(text: string): string {
-  return (
-    text
-      .replace(/[‘’]/g, "'")
-      .replace(/[“”]/g, '"')
-      .replace(/–/g, "-")
-      .replace(/—/g, "-")
-      .replace(/\u00a0/g, " ")
-      // qualunque altro carattere fuori da Latin-1 diventa "?" (niente crash WinAnsi)
-      .replace(/[^\x20-\x7E¡-ÿ€]/g, "?")
-  );
-}
 
 export const BLANK = "____________________";
 

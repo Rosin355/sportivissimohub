@@ -145,7 +145,11 @@ function PasswordChecklist({ value }: { value: string }) {
         return (
           <li
             key={r.id}
-            className={ok ? "flex items-center gap-2 text-grass" : "flex items-center gap-2 text-muted-foreground"}
+            className={
+              ok
+                ? "flex items-center gap-2 text-grass"
+                : "flex items-center gap-2 text-muted-foreground"
+            }
           >
             {ok ? <Check className="w-4 h-4" /> : <Circle className="w-3 h-3" />}
             <span>{r.label}</span>
@@ -160,18 +164,9 @@ function StrengthBar({ value }: { value: string }) {
   const s = passwordStrength(value);
   if (s.tone === "empty") return null;
   const filled = s.score;
-  const toneClass =
-    s.tone === "strong"
-      ? "bg-grass"
-      : s.tone === "medium"
-        ? "bg-sun"
-        : "bg-flame";
+  const toneClass = s.tone === "strong" ? "bg-grass" : s.tone === "medium" ? "bg-sun" : "bg-flame";
   const toneText =
-    s.tone === "strong"
-      ? "text-grass"
-      : s.tone === "medium"
-        ? "text-sun-foreground"
-        : "text-flame";
+    s.tone === "strong" ? "text-grass" : s.tone === "medium" ? "text-sun-foreground" : "text-flame";
   return (
     <div className="mt-2">
       <div className="flex gap-1" aria-hidden="true">

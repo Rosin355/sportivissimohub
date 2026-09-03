@@ -17,7 +17,11 @@ export function passwordMeetsRequirements(v: string): boolean {
   return passwordRequirements.every((r) => r.test(v));
 }
 
-export type PasswordStrength = { score: 0 | 1 | 2 | 3; label: string; tone: "weak" | "medium" | "strong" | "empty" };
+export type PasswordStrength = {
+  score: 0 | 1 | 2 | 3;
+  label: string;
+  tone: "weak" | "medium" | "strong" | "empty";
+};
 
 // Indicatore informativo (non bloccante): lunghezza + varietà di categorie.
 export function passwordStrength(v: string): PasswordStrength {

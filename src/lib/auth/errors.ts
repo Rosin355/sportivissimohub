@@ -18,12 +18,9 @@ export type MappedAuthError = { kind: AuthErrorKind; message: string };
 
 const MESSAGES: Record<AuthErrorKind, string> = {
   invalid_credentials: "Email o password non corretti.",
-  email_not_confirmed:
-    "Conferma la tua email prima di accedere: controlla la casella di posta.",
-  email_exists:
-    "Questa email è già registrata. Prova ad accedere o recupera la password.",
-  weak_password:
-    "Questa password è comparsa in violazioni di dati note, scegline un'altra.",
+  email_not_confirmed: "Conferma la tua email prima di accedere: controlla la casella di posta.",
+  email_exists: "Questa email è già registrata. Prova ad accedere o recupera la password.",
+  weak_password: "Questa password è comparsa in violazioni di dati note, scegline un'altra.",
   password_requirements: "La password non rispetta i requisiti indicati.",
   rate_limit: "Troppi tentativi, attendi qualche minuto.",
   network: "Problema di connessione: controlla la rete e riprova.",

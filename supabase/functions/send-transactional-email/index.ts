@@ -31,7 +31,8 @@ const STATUS_LABELS: Record<string, string> = {
   annullata: "Annullata",
 };
 
-function locationName(slug: string): string {
+// Il nome della sede arriva dalla tabella locations; fallback allo slug.
+function fallbackLocationName(slug: string): string {
   return slug
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -53,10 +54,11 @@ function layout(title: string, body: string): string {
 function buildEmail(
   payload: WebhookPayload,
   firstName: string,
+  locationName: string,
 ): { subject: string; html: string } | null {
   const rec = payload.record;
   if (!rec) return null;
-  const sede = locationName(rec.location_slug);
+  const sede = locationName;
   const saluto = firstName ? `Ciao ${firstName},` : "Ciao,";
 
   if (payload.type === "INSERT") {
@@ -129,7 +131,15 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: "no parent email" });
     }
 
-    const message = buildEmail(payload, profile.first_name ?? "");
+    // Nome sede dalla tabella locations (fallback allo slug formattato).
+    const { data: location } = await supabase
+      .from("locations")
+      .select("name")
+      .eq("slug", payload.record.location_slug)
+      .maybeSingle();
+    const sedeNome = location?.name ?? fallbackLocationName(payload.record.location_slug);
+
+    const message = buildEmail(payload, profile.first_name ?? "", sedeNome);
     if (!message) return Response.json({ skipped: true, reason: "no template for event" });
 
     const from = Deno.env.get("EMAIL_FROM") ?? "Sportivissimo <onboarding@resend.dev>";

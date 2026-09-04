@@ -1,4 +1,4 @@
-import { getLocationBySlug, type Location, type LocationPricing } from "@/data/locations";
+import type { Location, LocationPricing } from "@/data/locations";
 import type { Enrollment } from "@/data/enrollments";
 import type { TesseraTipo } from "@/lib/supabase/types";
 
@@ -62,9 +62,12 @@ export function extrasCostFor(loc: Location, extras: string[], weeksCount: numbe
   }, 0);
 }
 
-// Stima del costo di un'iscrizione già salvata (usata da area admin e PDF).
-export function estimateForEnrollment(e: Enrollment): CostEstimate | null {
-  const loc = getLocationBySlug(e.session.locationSlug);
+// Stima del costo di un'iscrizione già salvata (usata da area admin, CSV e
+// PDF). La sede la passa il chiamante: le sedi vivono nel DB.
+export function estimateForEnrollment(
+  e: Enrollment,
+  loc: Location | null | undefined,
+): CostEstimate | null {
   if (!loc) return null;
   return computeEstimate({
     pricing: loc.pricing,

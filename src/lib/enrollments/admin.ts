@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Json, PaymentStatus } from "@/lib/supabase/types";
 import type { Enrollment } from "@/data/enrollments";
+import type { Location } from "@/data/locations";
 import { estimateForEnrollment } from "./pricing";
 
 // Operazioni riservate all'admin: le RLS bloccano chiunque altro. Ogni azione
@@ -62,7 +63,10 @@ function csvEscape(value: string): string {
   return `"${value.replaceAll('"', '""')}"`;
 }
 
-export function enrollmentsToCsv(list: Enrollment[]): string {
+export function enrollmentsToCsv(
+  list: Enrollment[],
+  locationOf: (slug: string) => Location | undefined,
+): string {
   const headers = [
     "Codice",
     "Stato",
@@ -96,7 +100,7 @@ export function enrollmentsToCsv(list: Enrollment[]): string {
     "Data iscrizione",
   ];
   const rows = list.map((e) => {
-    const estimate = estimateForEnrollment(e);
+    const estimate = estimateForEnrollment(e, locationOf(e.session.locationSlug));
     return [
       e.code,
       e.status,

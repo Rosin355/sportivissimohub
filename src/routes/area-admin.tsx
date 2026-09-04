@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { EnrollmentStatusBadge } from "@/components/site/EnrollmentStatusBadge";
@@ -19,7 +19,8 @@ import {
   type Enrollment,
   type EnrollmentStatus,
 } from "@/data/enrollments";
-import { LOCATIONS } from "@/data/locations";
+import type { Location } from "@/data/locations";
+import { listLocations } from "@/lib/locations/server-fns";
 import {
   Users,
   FileWarning,
@@ -30,6 +31,7 @@ import {
   Download,
   CheckCircle2,
   XCircle,
+  MapPin,
 } from "lucide-react";
 import { requireRole } from "@/lib/supabase/auth";
 import {
@@ -48,6 +50,8 @@ export const Route = createFileRoute("/area-admin")({
   beforeLoad: ({ context, location }) => ({
     auth: requireRole(context.auth, "admin", location.href),
   }),
+  // Tutte le sedi (anche le bozze: l'admin le vede via RLS).
+  loader: () => listLocations(),
   head: () => ({ meta: [{ title: "Area Admin — Sportivissimo" }] }),
   component: AreaAdmin,
 });
@@ -65,6 +69,8 @@ const STATUSES: EnrollmentStatus[] = [
 ];
 
 function AreaAdmin() {
+  const locations: Location[] = Route.useLoaderData();
+  const locationOf = (slug: string) => locations.find((l) => l.slug === slug);
   const [list, setList] = useState<Enrollment[]>([]);
   const [filterStatus, setFilterStatus] = useState<EnrollmentStatus | "all">("all");
   const [filterLocation, setFilterLocation] = useState<string>("all");
@@ -116,15 +122,27 @@ function AreaAdmin() {
             </span>
             <h1 className="font-display text-4xl font-bold">Dashboard Admin</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Stagione {new Date().getFullYear()} · {LOCATIONS.length} sedi attive
+              Stagione {new Date().getFullYear()} ·{" "}
+              {locations.filter((l) => l.status === "pubblicata").length} sedi pubblicate
+              {locations.some((l) => l.status === "bozza")
+                ? ` · ${locations.filter((l) => l.status === "bozza").length} in bozza`
+                : ""}
             </p>
           </div>
-          <button
-            onClick={refresh}
-            className="inline-flex items-center gap-2 bg-gradient-magic text-magic-foreground rounded-xl px-5 py-3 font-display font-bold shadow-sticker hover:scale-[1.02] transition-transform"
-          >
-            Aggiorna lista
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/area-admin/sedi"
+              className="inline-flex items-center gap-2 bg-white border border-border text-foreground rounded-xl px-5 py-3 font-display font-bold hover:bg-secondary transition-colors"
+            >
+              <MapPin className="w-4 h-4" /> Gestisci sedi
+            </Link>
+            <button
+              onClick={refresh}
+              className="inline-flex items-center gap-2 bg-gradient-magic text-magic-foreground rounded-xl px-5 py-3 font-display font-bold shadow-sticker hover:scale-[1.02] transition-transform"
+            >
+              Aggiorna lista
+            </button>
+          </div>
         </div>
 
         {/* KPI grid */}
@@ -177,7 +195,7 @@ function AreaAdmin() {
                   }
                   downloadCsv(
                     `iscrizioni-sportivissimo-${new Date().toISOString().slice(0, 10)}.csv`,
-                    enrollmentsToCsv(filtered),
+                    enrollmentsToCsv(filtered, locationOf),
                   );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors"
@@ -190,9 +208,10 @@ function AreaAdmin() {
                 className="rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold"
               >
                 <option value="all">Tutte le sedi</option>
-                {LOCATIONS.map((l) => (
+                {locations.map((l) => (
                   <option key={l.slug} value={l.slug}>
                     {l.name}
+                    {l.status === "bozza" ? " (bozza)" : ""}
                   </option>
                 ))}
               </select>
@@ -263,10 +282,11 @@ function AreaAdmin() {
           </div>
         </div>
 
-        <WeeksOccupancy list={list} filterLocation={filterLocation} />
+        <WeeksOccupancy list={list} locations={locations} filterLocation={filterLocation} />
 
         <EnrollmentSheet
           enrollment={selected}
+          location={selected ? (locationOf(selected.session.locationSlug) ?? null) : null}
           onClose={() => setSelectedId(null)}
           onUpdate={refresh}
         />
@@ -305,10 +325,17 @@ function KPI({
   );
 }
 
-// Iscrizioni confermate per settimana vs posti della sede (spots in locations.ts)
-function WeeksOccupancy({ list, filterLocation }: { list: Enrollment[]; filterLocation: string }) {
-  const locations =
-    filterLocation === "all" ? LOCATIONS : LOCATIONS.filter((l) => l.slug === filterLocation);
+// Iscrizioni confermate per settimana vs posti della sede (location_weeks.spots)
+function WeeksOccupancy({
+  list,
+  locations: all,
+  filterLocation,
+}: {
+  list: Enrollment[];
+  locations: Location[];
+  filterLocation: string;
+}) {
+  const locations = filterLocation === "all" ? all : all.filter((l) => l.slug === filterLocation);
   const confirmed = list.filter((e) => e.status === "confermata");
 
   return (
@@ -367,10 +394,12 @@ function WeeksOccupancy({ list, filterLocation }: { list: Enrollment[]; filterLo
 
 function EnrollmentSheet({
   enrollment,
+  location,
   onClose,
   onUpdate,
 }: {
   enrollment: Enrollment | null;
+  location: Location | null;
   onClose: () => void;
   onUpdate: () => void;
 }) {
@@ -380,7 +409,7 @@ function EnrollmentSheet({
   }, [enrollment]);
   if (!enrollment) return null;
 
-  const estimate = estimateForEnrollment(enrollment);
+  const estimate = estimateForEnrollment(enrollment, location);
 
   function setStatus(s: EnrollmentStatus) {
     updateEnrollmentStatus(enrollment!.id, s, notes)

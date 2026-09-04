@@ -1,4 +1,5 @@
 import type { Enrollment } from "@/data/enrollments";
+import type { Location } from "@/data/locations";
 import { buildAcsiMembershipPdf } from "./acsi-membership";
 import { buildCampEnrollmentPdf } from "./camp-enrollment";
 import { buildAcsiMinorOriginalPdf, buildGalzignanoOriginalPdf } from "./original-forms";
@@ -11,9 +12,12 @@ export type { PdfTemplateKey } from "./catalog";
 // Due famiglie: PDF puliti generati da zero (layout.ts) e overlay sui moduli
 // cartacei originali (overlay/). I metadati (etichette, nomi file,
 // disponibilità per sede) stanno in catalog.ts, importabile dal client.
+// Contesto passato ai builder: la sede dell'iscrizione (dal DB).
+export type PdfBuildContext = { location: Location | null };
+
 export const PDF_TEMPLATES: Record<
   PdfTemplateKey,
-  { build: (e: Enrollment) => Promise<Uint8Array> }
+  { build: (e: Enrollment, ctx: PdfBuildContext) => Promise<Uint8Array> }
 > = {
   "tesseramento-acsi": { build: buildAcsiMembershipPdf },
   iscrizione: { build: buildCampEnrollmentPdf },

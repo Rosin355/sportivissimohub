@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { getLocationBySlug } from "@/data/locations";
+import type { Location } from "@/data/locations";
+import { fetchLocations, indexLocations } from "@/lib/locations/queries";
 import type {
   ChildSex,
   DocumentStatus,
@@ -193,8 +194,9 @@ function calcAge(birthDate: string): number {
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)));
 }
 
-export function mapEnrollmentRow(row: EnrollmentJoinedRow): Enrollment {
-  const loc = getLocationBySlug(row.location_slug);
+// La sede serve per nome e etichette delle settimane: chi chiama la passa
+// (indice per slug caricato una volta), così il mapping resta sincrono.
+export function mapEnrollmentRow(row: EnrollmentJoinedRow, loc: Location | undefined): Enrollment {
   const weekLabels = row.week_ids
     .map((id) => loc?.weeks.find((w) => w.id === id)?.label)
     .filter((l): l is string => Boolean(l));
@@ -281,13 +283,16 @@ export function mapEnrollmentRow(row: EnrollmentJoinedRow): Enrollment {
 // iscrizioni, admin e staff tutte.
 export async function getEnrollments(): Promise<Enrollment[]> {
   const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from("enrollments")
-    .select(ENROLLMENT_SELECT)
-    .order("created_at", { ascending: false })
-    .returns<EnrollmentJoinedRow[]>();
+  const [{ data, error }, locations] = await Promise.all([
+    supabase
+      .from("enrollments")
+      .select(ENROLLMENT_SELECT)
+      .order("created_at", { ascending: false })
+      .returns<EnrollmentJoinedRow[]>(),
+    fetchLocations(supabase, { withOccupancy: false }).then(indexLocations),
+  ]);
   if (error) throw new Error("Impossibile caricare le iscrizioni.");
-  return (data ?? []).map(mapEnrollmentRow);
+  return (data ?? []).map((row) => mapEnrollmentRow(row, locations.get(row.location_slug)));
 }
 
 export async function getEnrollment(id: string): Promise<Enrollment | undefined> {
@@ -298,7 +303,9 @@ export async function getEnrollment(id: string): Promise<Enrollment | undefined>
     .eq("id", id)
     .maybeSingle<EnrollmentJoinedRow>();
   if (error) throw new Error("Impossibile caricare l'iscrizione.");
-  return data ? mapEnrollmentRow(data) : undefined;
+  if (!data) return undefined;
+  const [loc] = await fetchLocations(supabase, { slug: data.location_slug, withOccupancy: false });
+  return mapEnrollmentRow(data, loc);
 }
 
 // Solo admin (le RLS bloccano gli altri). Scrive anche nell'audit log.

@@ -20,7 +20,9 @@ import { Route as AreaAdminRouteImport } from './routes/area-admin'
 import { Route as AggiornaPasswordRouteImport } from './routes/aggiorna-password'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi_.$slug'
+import { Route as AreaAdminSediRouteImport } from './routes/area-admin_.sedi'
 import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi_.$slug_.iscrizione'
+import { Route as AreaAdminSediIdRouteImport } from './routes/area-admin_.sedi_.$id'
 
 const PasswordDimenticataRoute = PasswordDimenticataRouteImport.update({
   id: '/password-dimenticata',
@@ -77,12 +79,22 @@ const CentriEstiviSlugRoute = CentriEstiviSlugRouteImport.update({
   path: '/centri-estivi/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaAdminSediRoute = AreaAdminSediRouteImport.update({
+  id: '/area-admin_/sedi',
+  path: '/area-admin/sedi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CentriEstiviSlugIscrizioneRoute =
   CentriEstiviSlugIscrizioneRouteImport.update({
     id: '/centri-estivi_/$slug_/iscrizione',
     path: '/centri-estivi/$slug/iscrizione',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AreaAdminSediIdRoute = AreaAdminSediIdRouteImport.update({
+  id: '/area-admin_/sedi_/$id',
+  path: '/area-admin/sedi/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,7 +107,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
+  '/area-admin/sedi': typeof AreaAdminSediRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
+  '/area-admin/sedi/$id': typeof AreaAdminSediIdRoute
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesByTo {
@@ -109,7 +123,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
+  '/area-admin/sedi': typeof AreaAdminSediRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
+  '/area-admin/sedi/$id': typeof AreaAdminSediIdRoute
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRoutesById {
@@ -124,7 +140,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
+  '/area-admin_/sedi': typeof AreaAdminSediRoute
   '/centri-estivi_/$slug': typeof CentriEstiviSlugRoute
+  '/area-admin_/sedi_/$id': typeof AreaAdminSediIdRoute
   '/centri-estivi_/$slug_/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
 }
 export interface FileRouteTypes {
@@ -140,7 +158,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
+    | '/area-admin/sedi'
     | '/centri-estivi/$slug'
+    | '/area-admin/sedi/$id'
     | '/centri-estivi/$slug/iscrizione'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,7 +174,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
+    | '/area-admin/sedi'
     | '/centri-estivi/$slug'
+    | '/area-admin/sedi/$id'
     | '/centri-estivi/$slug/iscrizione'
   id:
     | '__root__'
@@ -168,7 +190,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
+    | '/area-admin_/sedi'
     | '/centri-estivi_/$slug'
+    | '/area-admin_/sedi_/$id'
     | '/centri-estivi_/$slug_/iscrizione'
   fileRoutesById: FileRoutesById
 }
@@ -183,7 +207,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NonAutorizzatoRoute: typeof NonAutorizzatoRoute
   PasswordDimenticataRoute: typeof PasswordDimenticataRoute
+  AreaAdminSediRoute: typeof AreaAdminSediRoute
   CentriEstiviSlugRoute: typeof CentriEstiviSlugRoute
+  AreaAdminSediIdRoute: typeof AreaAdminSediIdRoute
   CentriEstiviSlugIscrizioneRoute: typeof CentriEstiviSlugIscrizioneRoute
 }
 
@@ -266,11 +292,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CentriEstiviSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-admin_/sedi': {
+      id: '/area-admin_/sedi'
+      path: '/area-admin/sedi'
+      fullPath: '/area-admin/sedi'
+      preLoaderRoute: typeof AreaAdminSediRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/centri-estivi_/$slug_/iscrizione': {
       id: '/centri-estivi_/$slug_/iscrizione'
       path: '/centri-estivi/$slug/iscrizione'
       fullPath: '/centri-estivi/$slug/iscrizione'
       preLoaderRoute: typeof CentriEstiviSlugIscrizioneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-admin_/sedi_/$id': {
+      id: '/area-admin_/sedi_/$id'
+      path: '/area-admin/sedi/$id'
+      fullPath: '/area-admin/sedi/$id'
+      preLoaderRoute: typeof AreaAdminSediIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -287,9 +327,21 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NonAutorizzatoRoute: NonAutorizzatoRoute,
   PasswordDimenticataRoute: PasswordDimenticataRoute,
+  AreaAdminSediRoute: AreaAdminSediRoute,
   CentriEstiviSlugRoute: CentriEstiviSlugRoute,
+  AreaAdminSediIdRoute: AreaAdminSediIdRoute,
   CentriEstiviSlugIscrizioneRoute: CentriEstiviSlugIscrizioneRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

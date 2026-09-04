@@ -45,7 +45,7 @@ function ComeFunzionaPage() {
               color="royal"
               icon={MapPin}
               title="Scegli la sede"
-              description="Esplora le 9 sedi e seleziona settimana e fascia oraria."
+              description="Esplora le sedi e seleziona settimana e fascia oraria."
             />
             <LevelStep
               level={2}

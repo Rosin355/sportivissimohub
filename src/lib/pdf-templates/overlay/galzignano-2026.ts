@@ -1,5 +1,5 @@
 import type { Enrollment, GuardianData } from "../../../data/enrollments";
-import { getLocationBySlug } from "../../../data/locations.ts";
+import type { Location } from "../../../data/locations";
 import { sexFromFiscalCode } from "../../enrollments/fiscal-code.ts";
 import {
   check,
@@ -200,8 +200,12 @@ function isHalfDay(timeSlot: string): boolean {
 
 /* ---------- operazioni ---------- */
 
-// Pagine 2 e 3: note informative + modulo iscrizione del Comune.
-export function galzignanoEnrollmentOps(e: Enrollment): OverlayOp[] {
+// Pagine 2 e 3: note informative + modulo iscrizione del Comune. La sede
+// serve per tradurre i codici settimana nelle righe del modulo.
+export function galzignanoEnrollmentOps(
+  e: Enrollment,
+  loc: Pick<Location, "weeks"> | null,
+): OverlayOp[] {
   const ops: OverlayOp[] = [];
   const c = e.child;
   const childName = `${c.firstName} ${c.lastName}`.trim();
@@ -236,7 +240,6 @@ export function galzignanoEnrollmentOps(e: Enrollment): OverlayOp[] {
     text(P3.ritiro, e.delegates.map((d) => `${d.firstName} ${d.lastName} (${d.phone})`).join(", ")),
   );
 
-  const loc = getLocationBySlug(e.session.locationSlug);
   const half = isHalfDay(e.session.timeSlot);
   for (const id of e.session.weekIds) {
     const number = loc?.weeks.find((w) => w.id === id)?.number;

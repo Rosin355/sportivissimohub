@@ -2,9 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { LocationCard } from "@/components/site/LocationCard";
-import { LOCATIONS, locationCardSummary } from "@/data/locations";
+import { locationCardSummary, type Location } from "@/data/locations";
+import { listLocations } from "@/lib/locations/server-fns";
 
 export const Route = createFileRoute("/centri-estivi")({
+  // Solo sedi pubblicate (le RLS mostrerebbero le bozze all'admin).
+  loader: async () => (await listLocations()).filter((l) => l.status === "pubblicata"),
   head: () => ({
     meta: [
       { title: "Centri Estivi 2026 — Sportivissimo A.S.D." },
@@ -18,9 +21,8 @@ export const Route = createFileRoute("/centri-estivi")({
   component: CentriEstiviPage,
 });
 
-const locations = LOCATIONS.map(locationCardSummary);
-
 function CentriEstiviPage() {
+  const locations = (Route.useLoaderData() as Location[]).map(locationCardSummary);
   return (
     <div className="min-h-screen flex flex-col">
       <SiteNav />
@@ -35,7 +37,8 @@ function CentriEstiviPage() {
               Scegli la tua <span className="text-flame">sede</span>
             </h1>
             <p className="mt-3 max-w-2xl mx-auto text-muted-foreground">
-              9 sedi nel Veneto, attività ogni settimana, posti aggiornati in tempo reale.
+              {locations.length} {locations.length === 1 ? "sede" : "sedi"} nel Veneto, attività
+              ogni settimana, posti aggiornati in tempo reale.
             </p>
           </div>
         </section>

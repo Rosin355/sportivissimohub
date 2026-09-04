@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { MapPin, AlertTriangle, UserCheck, UserX, Users, Phone, HeartPulse } from "lucide-react";
-import { LOCATIONS, getLocationBySlug } from "@/data/locations";
+import type { Location } from "@/data/locations";
+import { listLocations } from "@/lib/locations/server-fns";
 import { requireRole } from "@/lib/supabase/auth";
 import {
   getConfirmedChildren,
@@ -19,13 +20,16 @@ export const Route = createFileRoute("/area-staff")({
   beforeLoad: ({ context, location }) => ({
     auth: requireRole(context.auth, "staff", location.href),
   }),
+  // Sedi pubblicate (RLS): lo staff sceglie la sede del giorno.
+  loader: () => listLocations(),
   head: () => ({ meta: [{ title: "Area Staff — Sportivissimo" }] }),
   component: AreaStaff,
 });
 
 function AreaStaff() {
-  const [locationSlug, setLocationSlug] = useState(LOCATIONS[0]?.slug ?? "");
-  const loc = getLocationBySlug(locationSlug);
+  const locations: Location[] = Route.useLoaderData();
+  const [locationSlug, setLocationSlug] = useState(locations[0]?.slug ?? "");
+  const loc = locations.find((l) => l.slug === locationSlug);
   const [weekId, setWeekId] = useState(() => (loc ? currentWeekId(loc) : ""));
   const [children, setChildren] = useState<StaffChild[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +38,7 @@ function AreaStaff() {
   // Cambiando sede si riparte dalla settimana corrente di quella sede.
   function changeLocation(slug: string) {
     setLocationSlug(slug);
-    const nextLoc = getLocationBySlug(slug);
+    const nextLoc = locations.find((l) => l.slug === slug);
     setWeekId(nextLoc ? currentWeekId(nextLoc) : "");
   }
 
@@ -92,7 +96,7 @@ function AreaStaff() {
                 onChange={(e) => changeLocation(e.target.value)}
                 className="w-full bg-white/15 border border-white/25 text-white font-display text-lg font-bold rounded-xl px-3 py-1.5 [&>option]:text-foreground"
               >
-                {LOCATIONS.map((l) => (
+                {locations.map((l) => (
                   <option key={l.slug} value={l.slug}>
                     {l.name}
                   </option>

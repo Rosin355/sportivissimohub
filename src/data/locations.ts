@@ -1,13 +1,24 @@
-export type ActivityBadge = {
-  label: string;
-  color: "sun" | "grass" | "magic" | "flame" | "royal";
-};
+import type { LocationStatus, LocationType } from "@/lib/supabase/types";
+import type { LocationInput } from "@/lib/locations/validation";
+import { getSupabaseEnv } from "@/lib/supabase/client";
+
+// Modello delle sedi (M10.1: vivono nella tabella `locations` + figlie
+// `location_weeks` e `location_extras`). Qui stanno i tipi usati da pagine,
+// wizard, PDF e admin, e il mapping riga DB -> Location. Le query sono in
+// src/lib/locations/queries.ts, le server function in server-fns.ts.
+
+export type Theme = "sun" | "grass" | "magic" | "flame" | "royal";
+
+export type ActivityBadge = { label: string; color: Theme };
 
 export type CampWeek = {
-  id: string;
+  id: string; // codice stabile usato in enrollments.week_ids (es. "w1")
   number: number;
   label: string; // "24 - 28 giugno"
-  spots: number;
+  startDate: string | null; // ISO yyyy-mm-dd
+  endDate: string | null;
+  spots: number; // capienza
+  confirmed: number; // iscrizioni confermate (calcolato, mai memorizzato)
 };
 
 export type DayBlock = {
@@ -15,12 +26,12 @@ export type DayBlock = {
   title: string;
   description: string;
   icon: "sun" | "ball" | "lunch" | "art" | "team" | "hug";
-  color: "sun" | "grass" | "magic" | "flame" | "royal";
+  color: Theme;
 };
 
 export type LocationFaq = { q: string; a: string };
 
-// Tariffe reali per settimana e quote tessera (regolamento 2026).
+// Tariffe per settimana e quote tessera (struttura del regolamento 2026).
 export type LocationPricing = {
   residentFullDay: number;
   residentHalfDay: number;
@@ -33,8 +44,13 @@ export type LocationPricing = {
   lateFee: number; // mora iscrizione fuori termine
 };
 
+export type LocationExtra = { id: string; label: string; price: number };
+
 export type Location = {
+  id: string;
   slug: string;
+  type: LocationType;
+  status: LocationStatus;
   name: string;
   comune: string;
   address: string;
@@ -44,391 +60,295 @@ export type Location = {
   tagline: string;
   description: string;
   pricing: LocationPricing;
-  totalSpots: number;
-  bookedSpots: number;
   badges: ActivityBadge[];
   weeks: CampWeek[];
   timeSlots: string[];
   dayPlan: DayBlock[];
   activities: string[];
   includedServices: string[];
-  extraServices: { id: string; label: string; price: number }[];
+  extraServices: LocationExtra[];
   requiredDocuments: string[];
   contacts: { phone: string; email: string; manager: string };
   faq: LocationFaq[];
-  theme: "sun" | "grass" | "magic" | "flame" | "royal";
+  theme: Theme;
+  logoPath: string | null;
+  logoUrl: string | null;
+  adminNotes: string;
+  sortOrder: number;
 };
 
-const defaultWeeks: CampWeek[] = [
-  { id: "w1", number: 1, label: "10 - 14 giugno", spots: 12 },
-  { id: "w2", number: 2, label: "17 - 21 giugno", spots: 10 },
-  { id: "w3", number: 3, label: "24 - 28 giugno", spots: 8 },
-  { id: "w4", number: 4, label: "1 - 5 luglio", spots: 14 },
-  { id: "w5", number: 5, label: "8 - 12 luglio", spots: 9 },
-  { id: "w6", number: 6, label: "15 - 19 luglio", spots: 11 },
-  { id: "w7", number: 7, label: "22 - 26 luglio", spots: 7 },
-  { id: "w8", number: 8, label: "29 lug - 2 ago", spots: 6 },
-];
+/* ---------- riga DB -> Location ---------- */
 
-const defaultDayPlan: DayBlock[] = [
-  {
-    time: "07:30 - 09:00",
-    title: "Buongiorno e accoglienza",
-    description: "Anticipo facoltativo, giochi liberi e merenda di benvenuto.",
-    icon: "sun",
-    color: "sun",
-  },
-  {
-    time: "09:00 - 12:30",
-    title: "Sport & avventura",
-    description: "Attività sportive a rotazione: calcio, pallavolo, atletica.",
-    icon: "ball",
-    color: "grass",
-  },
-  {
-    time: "12:30 - 14:00",
-    title: "Pranzo in compagnia",
-    description: "Mensa con menù controllato e momento di relax.",
-    icon: "lunch",
-    color: "flame",
-  },
-  {
-    time: "14:00 - 16:00",
-    title: "Laboratori creativi",
-    description: "Arte, musica, costruzioni e mini-esperimenti.",
-    icon: "art",
-    color: "magic",
-  },
-  {
-    time: "16:00 - 17:30",
-    title: "Giochi di squadra",
-    description: "Tornei, cacce al tesoro e sfide a squadre.",
-    icon: "team",
-    color: "royal",
-  },
-  {
-    time: "17:30 - 18:30",
-    title: "Saluti e posticipo",
-    description: "Ritiro bambini, posticipo facoltativo fino alle 18:30.",
-    icon: "hug",
-    color: "sun",
-  },
-];
+export type LocationRow = {
+  id: string;
+  slug: string;
+  type: LocationType;
+  status: LocationStatus;
+  name: string;
+  comune: string;
+  address: string;
+  age_label: string;
+  age_min: number;
+  age_max: number;
+  tagline: string;
+  description: string;
+  theme: string;
+  contact_phone: string;
+  contact_email: string;
+  contact_manager: string;
+  logo_path: string | null;
+  pricing: unknown;
+  time_slots: string[];
+  activities: string[];
+  included_services: string[];
+  required_documents: string[];
+  badges: unknown;
+  day_plan: unknown;
+  faq: unknown;
+  admin_notes: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  location_weeks: Array<{
+    id: string;
+    code: string;
+    number: number;
+    label: string;
+    start_date: string | null;
+    end_date: string | null;
+    spots: number;
+  }>;
+  location_extras: Array<{
+    id: string;
+    code: string;
+    label: string;
+    price: number | string;
+    sort_order: number;
+  }>;
+};
 
-const defaultDocs = [
-  "Documento d'identità del genitore",
-  "Tessera sanitaria del bambino/a",
-  "Certificato medico di sana e robusta costituzione",
-  "Modulo deleghe firmato",
-];
+// Chiave `${slug}:${weekCode}` -> iscrizioni confermate.
+export type Occupancy = Map<string, number>;
 
-const defaultExtras = [
-  { id: "anticipo", label: "Anticipo (dalle 7:30)", price: 15 },
-  { id: "posticipo", label: "Posticipo (fino 18:30)", price: 15 },
-  { id: "mensa", label: "Mensa settimanale", price: 35 },
-  { id: "gite", label: "Uscita / gita", price: 20 },
-];
+const THEMES: Theme[] = ["sun", "grass", "magic", "flame", "royal"];
+const DAY_ICONS: DayBlock["icon"][] = ["sun", "ball", "lunch", "art", "team", "hug"];
 
-const defaultIncluded = [
-  "Tutte le attività sportive",
-  "Materiali per i laboratori",
-  "Merenda di metà mattina",
-  "Staff qualificato e assicurato",
-  "Maglietta Sportivissimo",
-];
+function asTheme(v: unknown, fallback: Theme = "royal"): Theme {
+  return THEMES.includes(v as Theme) ? (v as Theme) : fallback;
+}
 
-// Prezzi placeholder per le sedi senza regolamento confermato: struttura reale,
-// valori derivati dal vecchio prezzo unico. DA CONFERMARE CON L'ASSOCIAZIONE.
-function placeholderPricing(fullDay: number): LocationPricing {
+function num(v: unknown, fallback = 0): number {
+  const n = typeof v === "string" ? Number(v) : v;
+  return typeof n === "number" && Number.isFinite(n) ? n : fallback;
+}
+
+function str(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+export function emptyPricing(): LocationPricing {
   return {
-    residentFullDay: fullDay,
-    residentHalfDay: Math.max(fullDay - 35, 25),
-    nonResidentFullDay: fullDay + 20,
-    nonResidentHalfDay: Math.max(fullDay - 15, 40),
-    siblingDiscountFullDay: 10,
-    siblingDiscountHalfDay: 5,
-    membershipBase: 10,
-    membershipSuperIntegrativa: 30,
-    lateFee: 15,
+    residentFullDay: 0,
+    residentHalfDay: 0,
+    nonResidentFullDay: 0,
+    nonResidentHalfDay: 0,
+    siblingDiscountFullDay: 0,
+    siblingDiscountHalfDay: 0,
+    membershipBase: 0,
+    membershipSuperIntegrativa: 0,
+    lateFee: 0,
   };
 }
 
-// Galzignano Terme 2026: 9 settimane dall'8 giugno al 7 agosto.
-const galzignanoWeeks: CampWeek[] = [
-  { id: "w1", number: 1, label: "8 - 12 giugno", spots: 12 },
-  { id: "w2", number: 2, label: "15 - 19 giugno", spots: 12 },
-  { id: "w3", number: 3, label: "22 - 26 giugno", spots: 12 },
-  { id: "w4", number: 4, label: "29 giu - 3 lug", spots: 12 },
-  { id: "w5", number: 5, label: "6 - 10 luglio", spots: 12 },
-  { id: "w6", number: 6, label: "13 - 17 luglio", spots: 12 },
-  { id: "w7", number: 7, label: "20 - 24 luglio", spots: 12 },
-  { id: "w8", number: 8, label: "27 - 31 luglio", spots: 12 },
-  { id: "w9", number: 9, label: "3 - 7 agosto", spots: 12 },
-];
+function parsePricing(v: unknown): LocationPricing {
+  const base = emptyPricing();
+  if (!isRecord(v)) return base;
+  for (const key of Object.keys(base) as (keyof LocationPricing)[]) base[key] = num(v[key]);
+  return base;
+}
 
-function base(partial: Partial<Location> & Pick<Location, "slug" | "name" | "comune">): Location {
+function parseBadges(v: unknown): ActivityBadge[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter(isRecord)
+    .map((b) => ({ label: str(b.label), color: asTheme(b.color) }))
+    .filter((b) => b.label);
+}
+
+function parseDayPlan(v: unknown): DayBlock[] {
+  if (!Array.isArray(v)) return [];
+  return v.filter(isRecord).map((d) => ({
+    time: str(d.time),
+    title: str(d.title),
+    description: str(d.description),
+    icon: DAY_ICONS.includes(d.icon as DayBlock["icon"]) ? (d.icon as DayBlock["icon"]) : "sun",
+    color: asTheme(d.color),
+  }));
+}
+
+function parseFaq(v: unknown): LocationFaq[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter(isRecord)
+    .map((f) => ({ q: str(f.q), a: str(f.a) }))
+    .filter((f) => f.q);
+}
+
+// URL pubblico del logo nel bucket "location-logos".
+export function locationLogoUrl(path: string | null): string | null {
+  if (!path) return null;
+  const env = getSupabaseEnv();
+  if (!env) return null;
+  return `${env.url}/storage/v1/object/public/location-logos/${path}`;
+}
+
+export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location {
+  const weeks: CampWeek[] = [...row.location_weeks]
+    .sort((a, b) => a.number - b.number)
+    .map((w) => ({
+      id: w.code,
+      number: w.number,
+      label: w.label,
+      startDate: w.start_date,
+      endDate: w.end_date,
+      spots: w.spots,
+      confirmed: occupancy.get(`${row.slug}:${w.code}`) ?? 0,
+    }));
+  const extraServices: LocationExtra[] = [...row.location_extras]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((e) => ({ id: e.code, label: e.label, price: num(e.price) }));
   return {
-    address: "Via dello Sport 1",
-    age: "6-13 anni",
-    ageMin: 6,
-    ageMax: 13,
-    tagline: "Una settimana di sport, amici e avventure!",
-    description:
-      "Una sede pensata per far divertire i bambini con sport, laboratori e tantissimi nuovi amici. Lo staff Sportivissimo accompagna ogni piccolo atleta in una giornata piena di energia.",
-    pricing: placeholderPricing(120),
-    totalSpots: 60,
-    bookedSpots: 46,
-    badges: [
-      { label: "Sport", color: "flame" },
-      { label: "Natura", color: "grass" },
-      { label: "Giochi di squadra", color: "magic" },
-    ],
-    weeks: defaultWeeks,
-    timeSlots: ["08:30 - 17:00 (tempo pieno)", "08:30 - 13:00 (mezza giornata)"],
-    dayPlan: defaultDayPlan,
-    activities: [
-      "Calcio",
-      "Pallavolo",
-      "Atletica",
-      "Laboratori creativi",
-      "Cacce al tesoro",
-      "Giochi d'acqua",
-    ],
-    includedServices: defaultIncluded,
-    extraServices: defaultExtras,
-    requiredDocuments: defaultDocs,
-    contacts: {
-      phone: "+39 049 0000000",
-      email: "info@sportivissimo.it",
-      manager: "Lo staff Sportivissimo",
-    },
-    faq: [
-      {
-        q: "Posso iscrivere più di una settimana?",
-        a: "Sì, basta selezionare tutte le settimane desiderate nel modulo di iscrizione.",
-      },
-      {
-        q: "Il pranzo è incluso?",
-        a: "Il pranzo è un servizio extra opzionale: puoi attivarlo durante l'iscrizione.",
-      },
-      {
-        q: "Posso ritirare prima mio figlio?",
-        a: "Certo. Puoi indicarlo allo staff anche la mattina stessa.",
-      },
-      {
-        q: "Cosa serve per partecipare?",
-        a: "Servono solo abbigliamento sportivo, cappellino, borraccia e tanta voglia di divertirsi!",
-      },
-    ],
-    theme: "royal",
-    ...partial,
+    id: row.id,
+    slug: row.slug,
+    type: row.type,
+    status: row.status,
+    name: row.name,
+    comune: row.comune,
+    address: row.address,
+    age: row.age_label || `${row.age_min}-${row.age_max} anni`,
+    ageMin: row.age_min,
+    ageMax: row.age_max,
+    tagline: row.tagline,
+    description: row.description,
+    pricing: parsePricing(row.pricing),
+    badges: parseBadges(row.badges),
+    weeks,
+    timeSlots: row.time_slots ?? [],
+    dayPlan: parseDayPlan(row.day_plan),
+    activities: row.activities ?? [],
+    includedServices: row.included_services ?? [],
+    extraServices,
+    requiredDocuments: row.required_documents ?? [],
+    contacts: { phone: row.contact_phone, email: row.contact_email, manager: row.contact_manager },
+    faq: parseFaq(row.faq),
+    theme: asTheme(row.theme),
+    logoPath: row.logo_path,
+    logoUrl: locationLogoUrl(row.logo_path),
+    adminNotes: row.admin_notes,
+    sortOrder: row.sort_order,
   };
 }
 
-export const LOCATIONS: Location[] = [
-  base({
-    slug: "galzignano-terme",
-    name: "Galzignano Terme",
-    comune: "Galzignano Terme (PD)",
-    address: "Via Roma 12 — Galzignano Terme",
-    age: "6-13 anni",
-    ageMin: 6,
-    ageMax: 13,
-    tagline: "Centro estivo immerso nel verde dei Colli Euganei.",
-    // Valori reali dal regolamento 2026
-    pricing: {
-      residentFullDay: 75,
-      residentHalfDay: 40,
-      nonResidentFullDay: 95,
-      nonResidentHalfDay: 55,
-      siblingDiscountFullDay: 10,
-      siblingDiscountHalfDay: 5,
-      membershipBase: 10,
-      membershipSuperIntegrativa: 30,
-      lateFee: 15,
-    },
-    weeks: galzignanoWeeks,
-    timeSlots: ["07:45 - 16:00 (giornata intera)", "07:45 - 12:30 (mezza giornata)"],
-    totalSpots: 60,
-    bookedSpots: 46,
-    badges: [
-      { label: "Sport", color: "flame" },
-      { label: "Piscina", color: "royal" },
-      { label: "Natura", color: "grass" },
-    ],
-    activities: ["Calcio", "Pallavolo", "Piscina", "Mini golf", "Laboratori", "Escursioni"],
-    theme: "grass",
-  }),
-  base({
-    slug: "castegnero-champions-camp",
-    name: "Castegnero Champions Camp",
-    comune: "Castegnero (VI)",
-    address: "Via dello Stadio 4 — Castegnero",
-    age: "8-14 anni",
-    ageMin: 8,
-    ageMax: 14,
-    tagline: "Il camp per i veri campioni del pallone.",
-    pricing: placeholderPricing(150), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 50,
-    bookedSpots: 28,
-    badges: [
-      { label: "Calcio", color: "grass" },
-      { label: "Squadra", color: "magic" },
-      { label: "Tornei", color: "flame" },
-    ],
-    activities: [
-      "Allenamenti calcio",
-      "Tecnica individuale",
-      "Mini tornei",
-      "Video analisi",
-      "Fair play",
-    ],
-    theme: "flame",
-  }),
-  base({
-    slug: "san-pietro-viminario",
-    name: "S. Pietro Viminario",
-    comune: "San Pietro Viminario (PD)",
-    address: "Piazza della Pace 2 — S. Pietro Viminario",
-    age: "5-11 anni",
-    ageMin: 5,
-    ageMax: 11,
-    tagline: "Tanti laboratori creativi per piccoli artisti.",
-    pricing: placeholderPricing(115), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 45,
-    bookedSpots: 36,
-    badges: [
-      { label: "Creatività", color: "magic" },
-      { label: "Giochi", color: "sun" },
-      { label: "Inglese", color: "royal" },
-    ],
-    activities: ["Pittura", "Musica", "Mini inglese", "Giochi all'aperto", "Costruzioni"],
-    theme: "magic",
-  }),
-  base({
-    slug: "vo-euganeo",
-    name: "Vo' Euganeo",
-    comune: "Vo' (PD)",
-    address: "Via dei Colli 7 — Vo' Euganeo",
-    age: "6-12 anni",
-    ageMin: 6,
-    ageMax: 12,
-    tagline: "Avventure nel cuore dei Colli Euganei.",
-    pricing: placeholderPricing(120), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 40,
-    bookedSpots: 22,
-    badges: [
-      { label: "Natura", color: "grass" },
-      { label: "Avventura", color: "flame" },
-      { label: "Trekking", color: "sun" },
-    ],
-    activities: [
-      "Trekking",
-      "Orienteering",
-      "Giochi nel bosco",
-      "Sport di squadra",
-      "Laboratori natura",
-    ],
-    theme: "grass",
-  }),
-  base({
-    slug: "asigliano-veneto",
-    name: "Asigliano Veneto",
-    comune: "Asigliano Veneto (VI)",
-    address: "Via della Scuola 5 — Asigliano Veneto",
-    age: "5-11 anni",
-    ageMin: 5,
-    ageMax: 11,
-    pricing: placeholderPricing(110), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 35,
-    bookedSpots: 23,
-    badges: [
-      { label: "Sport", color: "flame" },
-      { label: "Creatività", color: "magic" },
-    ],
-    activities: ["Multisport", "Laboratori", "Giochi a squadre"],
-    theme: "sun",
-  }),
-  base({
-    slug: "sossano",
-    name: "Sossano",
-    comune: "Sossano (VI)",
-    address: "Via dello Sport 3 — Sossano",
-    pricing: placeholderPricing(125), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 40,
-    bookedSpots: 33,
-    badges: [
-      { label: "Piscina", color: "royal" },
-      { label: "Giochi di squadra", color: "sun" },
-    ],
-    activities: ["Piscina", "Calcio", "Pallavolo", "Laboratori"],
-    theme: "royal",
-  }),
-  base({
-    slug: "orgiano",
-    name: "Orgiano",
-    comune: "Orgiano (VI)",
-    address: "Via Marconi 9 — Orgiano",
-    age: "5-12 anni",
-    ageMin: 5,
-    ageMax: 12,
-    pricing: placeholderPricing(115), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 38,
-    bookedSpots: 22,
-    badges: [
-      { label: "Sport", color: "flame" },
-      { label: "Natura", color: "grass" },
-    ],
-    activities: ["Multisport", "Escursioni", "Laboratori"],
-    theme: "grass",
-  }),
-  base({
-    slug: "noventa-vicentina",
-    name: "Noventa Vicentina",
-    comune: "Noventa Vicentina (VI)",
-    address: "Via Roma 22 — Noventa Vicentina",
-    pricing: placeholderPricing(135), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 55,
-    bookedSpots: 35,
-    badges: [
-      { label: "Multisport", color: "magic" },
-      { label: "Piscina", color: "royal" },
-    ],
-    activities: ["Multisport", "Piscina", "Tornei", "Laboratori"],
-    theme: "magic",
-  }),
-  base({
-    slug: "bastia-frassanelle",
-    name: "Bastia / Frassanelle",
-    comune: "Rovolon (PD)",
-    address: "Via Frassanelle 1 — Rovolon",
-    age: "7-14 anni",
-    ageMin: 7,
-    ageMax: 14,
-    pricing: placeholderPricing(140), // DA CONFERMARE CON L'ASSOCIAZIONE
-    totalSpots: 45,
-    bookedSpots: 34,
-    badges: [
-      { label: "Avventura", color: "flame" },
-      { label: "Natura", color: "grass" },
-    ],
-    activities: ["Trekking", "Mountain bike", "Tiro con l'arco", "Cacce al tesoro"],
-    theme: "flame",
-  }),
-];
+/* ---------- disponibilità (sempre calcolata dalle iscrizioni confermate) ---------- */
 
-export function getLocationBySlug(slug: string): Location | undefined {
-  return LOCATIONS.find((l) => l.slug === slug);
+export function weekAvailable(w: CampWeek): number {
+  return Math.max(w.spots - w.confirmed, 0);
+}
+
+export function locationCapacity(loc: Location) {
+  const capacity = loc.weeks.reduce((acc, w) => acc + w.spots, 0);
+  const booked = loc.weeks.reduce((acc, w) => acc + Math.min(w.confirmed, w.spots), 0);
+  const available = Math.max(capacity - booked, 0);
+  const pct = capacity > 0 ? Math.round((booked / capacity) * 100) : 0;
+  return { capacity, booked, available, pct };
 }
 
 export function locationCardSummary(loc: Location) {
+  const cap = locationCapacity(loc);
   return {
     name: loc.name,
     slug: loc.slug,
     age: loc.age,
     weeks: loc.weeks.length,
-    spots: Math.max(loc.totalSpots - loc.bookedSpots, 0),
-    total: loc.totalSpots,
+    spots: cap.available,
+    total: cap.capacity,
     tags: loc.badges.slice(0, 3),
+    logoUrl: loc.logoUrl,
+  };
+}
+
+/* ---------- editor admin ---------- */
+
+export function locationToInput(loc: Location): LocationInput {
+  return {
+    id: loc.id,
+    slug: loc.slug,
+    type: loc.type,
+    status: loc.status,
+    name: loc.name,
+    comune: loc.comune,
+    address: loc.address,
+    ageLabel: loc.age,
+    ageMin: loc.ageMin,
+    ageMax: loc.ageMax,
+    tagline: loc.tagline,
+    description: loc.description,
+    theme: loc.theme,
+    contacts: { ...loc.contacts },
+    pricing: { ...loc.pricing },
+    timeSlots: [...loc.timeSlots],
+    activities: [...loc.activities],
+    includedServices: [...loc.includedServices],
+    requiredDocuments: [...loc.requiredDocuments],
+    badges: loc.badges.map((b) => ({ ...b })),
+    weeks: loc.weeks.map((w) => ({
+      code: w.id,
+      number: w.number,
+      label: w.label,
+      startDate: w.startDate ?? "",
+      endDate: w.endDate ?? "",
+      spots: w.spots,
+    })),
+    extraServices: loc.extraServices.map((e) => ({ ...e })),
+    dayPlan: loc.dayPlan.map((d) => ({ ...d })),
+    faq: loc.faq.map((f) => ({ ...f })),
+    logoPath: loc.logoPath,
+    adminNotes: loc.adminNotes,
+    sortOrder: loc.sortOrder,
+  };
+}
+
+export function newLocationInput(): LocationInput {
+  return {
+    slug: "",
+    type: "centro_estivo",
+    status: "bozza",
+    name: "",
+    comune: "",
+    address: "",
+    ageLabel: "",
+    ageMin: 6,
+    ageMax: 13,
+    tagline: "",
+    description: "",
+    theme: "royal",
+    contacts: { phone: "", email: "", manager: "" },
+    pricing: emptyPricing(),
+    timeSlots: [],
+    activities: [],
+    includedServices: [],
+    requiredDocuments: [],
+    badges: [],
+    weeks: [],
+    extraServices: [],
+    dayPlan: [],
+    faq: [],
+    logoPath: null,
+    adminNotes: "",
+    sortOrder: 0,
   };
 }

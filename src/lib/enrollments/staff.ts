@@ -43,13 +43,23 @@ export function parseWeekRange(label: string, year: number): { start: Date; end:
   return { start, end };
 }
 
+function weekDates(w: Location["weeks"][number], year: number): { start: Date; end: Date } | null {
+  if (w.startDate && w.endDate) {
+    const start = new Date(`${w.startDate}T00:00:00`);
+    const end = new Date(`${w.endDate}T23:59:59`);
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) return { start, end };
+  }
+  return parseWeekRange(w.label, year);
+}
+
 // Settimana che contiene oggi; altrimenti la prossima in arrivo; altrimenti
-// l'ultima disponibile.
+// l'ultima disponibile. Usa le date reali della settimana (M10.1) e ripiega
+// sull'etichetta per le sedi senza date.
 export function currentWeekId(loc: Location, today: Date = new Date()): string {
   const year = today.getFullYear();
   let upcoming: { id: string; start: Date } | null = null;
   for (const w of loc.weeks) {
-    const range = parseWeekRange(w.label, year);
+    const range = weekDates(w, year);
     if (!range) continue;
     if (today >= range.start && today <= range.end) return w.id;
     if (range.start > today && (!upcoming || range.start < upcoming.start)) {

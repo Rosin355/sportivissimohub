@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getLocationBySlug } from "@/data/locations";
+import { fetchLocationBySlug } from "@/lib/locations/queries";
 import { enrollmentSubmissionSchema, type EnrollmentSubmission } from "./validation";
 
 export type SubmitEnrollmentResult =
@@ -22,7 +22,8 @@ export const submitEnrollment = createServerFn({ method: "POST" })
       return { ok: false, error: "Devi accedere per inviare l'iscrizione." };
     }
 
-    const loc = getLocationBySlug(data.session.locationSlug);
+    // Le RLS restituiscono solo sedi pubblicate (l'admin vede anche le bozze).
+    const loc = await fetchLocationBySlug(supabase, data.session.locationSlug);
     if (!loc) return { ok: false, error: "Sede non valida." };
 
     const validWeeks = new Set(loc.weeks.map((w) => w.id));

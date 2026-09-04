@@ -9,6 +9,7 @@ export type Location = {
   spots: number;
   total: number;
   tags: { label: string; color: "sun" | "grass" | "magic" | "flame" | "royal" }[];
+  logoUrl?: string | null;
 };
 
 const tagStyle: Record<string, string> = {
@@ -20,7 +21,7 @@ const tagStyle: Record<string, string> = {
 };
 
 export function LocationCard({ loc }: { loc: Location }) {
-  const pct = Math.round(((loc.total - loc.spots) / loc.total) * 100);
+  const pct = loc.total > 0 ? Math.round(((loc.total - loc.spots) / loc.total) * 100) : 0;
   const isHot = pct >= 80;
   return (
     <Link
@@ -30,8 +31,12 @@ export function LocationCard({ loc }: { loc: Location }) {
     >
       {/* Gradient header */}
       <div className="bg-gradient-royal p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-white/20 grid place-items-center shrink-0">
-          <MapPin className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-xl bg-white/20 grid place-items-center shrink-0 overflow-hidden">
+          {loc.logoUrl ? (
+            <img src={loc.logoUrl} alt="" className="w-9 h-9 object-contain bg-white rounded-lg" />
+          ) : (
+            <MapPin className="w-5 h-5 text-white" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-display text-lg font-bold leading-tight text-white truncate">

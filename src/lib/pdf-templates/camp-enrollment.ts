@@ -2,11 +2,15 @@ import type { Enrollment } from "@/data/enrollments";
 import { estimateForEnrollment } from "@/lib/enrollments/pricing";
 import { PdfBuilder, BLANK } from "./layout";
 import { ASSOCIAZIONE } from "./config";
+import type { PdfBuildContext } from "./index";
 
 // Modulo di iscrizione al centro estivo, precompilato con i dati del wizard.
-export async function buildCampEnrollmentPdf(e: Enrollment): Promise<Uint8Array> {
+export async function buildCampEnrollmentPdf(
+  e: Enrollment,
+  ctx: PdfBuildContext,
+): Promise<Uint8Array> {
   const pdf = await PdfBuilder.create();
-  const estimate = estimateForEnrollment(e);
+  const estimate = estimateForEnrollment(e, ctx.location);
 
   pdf.header(
     `Modulo di iscrizione — Centro estivo ${e.session.locationName}`,

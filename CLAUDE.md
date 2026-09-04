@@ -31,7 +31,7 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 ## Vincoli operativi noti
 
 - L'anteprima embedded di Lovable blocca i cookie di auth (iframe): i test auth si fanno sul sito pubblicato o in scheda dedicata.
-- Le sedi sono ancora statiche in `src/data/locations.ts` (migrazione a DB prevista in M10). Solo Galzignano ha prezzi/settimane reali 2026; le altre 8 sedi hanno `placeholderPricing()` "DA CONFERMARE".
+- Le sedi vivono nel DB (`locations`, `location_weeks`, `location_extras`, M10.1): `src/data/locations.ts` contiene solo tipi e mapping, le query stanno in `src/lib/locations/`. L'admin le gestisce da `/area-admin/sedi`. Solo Galzignano ha prezzi/settimane reali 2026; le altre 8 sedi hanno valori placeholder segnalati in `admin_notes`. La disponibilità non è memorizzata: viene dalla funzione `location_week_occupancy()` (iscrizioni confermate per settimana).
 - Le bozze del wizard vivono in localStorage per sede; i File selezionati non sopravvivono al reload (avviso già previsto).
 - CF sodalizio per i PDF in `src/lib/pdf-templates/config.ts`: 91018400282 (dal modulo ACSI ufficiale).
 - I moduli cartacei originali sono digitalizzati solo per Galzignano (`ORIGINAL_FORM_SLUGS` in `catalog.ts`); la pagina ACSI del tesseramento minore è uguale per tutte le sedi.

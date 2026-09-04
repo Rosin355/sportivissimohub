@@ -2,11 +2,12 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { EnrollmentWizard } from "@/components/site/EnrollmentWizard";
-import { getLocationBySlug, type Location } from "@/data/locations";
+import type { Location } from "@/data/locations";
+import { getLocation } from "@/lib/locations/server-fns";
 
 export const Route = createFileRoute("/centri-estivi_/$slug_/iscrizione")({
-  head: ({ params }) => {
-    const loc = getLocationBySlug(params.slug);
+  head: ({ loaderData }) => {
+    const loc = loaderData as Location | undefined;
     const title = loc
       ? `Iscrivi tuo figlio · ${loc.name} — Sportivissimo`
       : "Iscrizione — Sportivissimo";
@@ -17,8 +18,8 @@ export const Route = createFileRoute("/centri-estivi_/$slug_/iscrizione")({
       ],
     };
   },
-  loader: ({ params }) => {
-    const loc = getLocationBySlug(params.slug);
+  loader: async ({ params }) => {
+    const loc = await getLocation({ data: { slug: params.slug } });
     if (!loc) throw notFound();
     return loc;
   },

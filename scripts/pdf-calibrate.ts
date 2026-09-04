@@ -102,9 +102,22 @@ const sample: Enrollment = {
   documents: [],
 };
 
+// Settimane della sede (nel DB dalla M10.1): qui bastano codici e numeri.
+const sampleLocation = {
+  weeks: Array.from({ length: 9 }, (_, i) => ({
+    id: `w${i + 1}`,
+    number: i + 1,
+    label: "",
+    startDate: null,
+    endDate: null,
+    spots: 12,
+    confirmed: 0,
+  })),
+};
+
 const ops = flags.has("--acsi")
   ? acsiMinorOps(sample)
-  : [...galzignanoEnrollmentOps(sample), ...acsiMinorOps(sample)];
+  : [...galzignanoEnrollmentOps(sample, sampleLocation), ...acsiMinorOps(sample)];
 
 const bytes = await renderOverlay(template, ops, {
   keepPages: flags.has("--acsi") ? [GALZIGNANO_2026.acsiPage] : undefined,

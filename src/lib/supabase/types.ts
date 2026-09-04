@@ -22,6 +22,10 @@ export type ChildSex = "M" | "F";
 
 export type TesseraTipo = "base" | "super_integrativa";
 
+export type LocationType = "centro_estivo" | "doposcuola" | "corso" | "progetto_scuola";
+
+export type LocationStatus = "bozza" | "pubblicata";
+
 export type Database = {
   public: {
     Tables: {
@@ -408,12 +412,188 @@ export type Database = {
           },
         ];
       };
+      locations: {
+        Row: {
+          id: string;
+          slug: string;
+          type: LocationType;
+          status: LocationStatus;
+          name: string;
+          comune: string;
+          address: string;
+          age_label: string;
+          age_min: number;
+          age_max: number;
+          tagline: string;
+          description: string;
+          theme: string;
+          contact_phone: string;
+          contact_email: string;
+          contact_manager: string;
+          logo_path: string | null;
+          pricing: Json;
+          time_slots: string[];
+          activities: string[];
+          included_services: string[];
+          required_documents: string[];
+          badges: Json;
+          day_plan: Json;
+          faq: Json;
+          admin_notes: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          type?: LocationType;
+          status?: LocationStatus;
+          name: string;
+          comune?: string;
+          address?: string;
+          age_label?: string;
+          age_min?: number;
+          age_max?: number;
+          tagline?: string;
+          description?: string;
+          theme?: string;
+          contact_phone?: string;
+          contact_email?: string;
+          contact_manager?: string;
+          logo_path?: string | null;
+          pricing?: Json;
+          time_slots?: string[];
+          activities?: string[];
+          included_services?: string[];
+          required_documents?: string[];
+          badges?: Json;
+          day_plan?: Json;
+          faq?: Json;
+          admin_notes?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          type?: LocationType;
+          status?: LocationStatus;
+          name?: string;
+          comune?: string;
+          address?: string;
+          age_label?: string;
+          age_min?: number;
+          age_max?: number;
+          tagline?: string;
+          description?: string;
+          theme?: string;
+          contact_phone?: string;
+          contact_email?: string;
+          contact_manager?: string;
+          logo_path?: string | null;
+          pricing?: Json;
+          time_slots?: string[];
+          activities?: string[];
+          included_services?: string[];
+          required_documents?: string[];
+          badges?: Json;
+          day_plan?: Json;
+          faq?: Json;
+          admin_notes?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      location_weeks: {
+        Row: {
+          id: string;
+          location_id: string;
+          code: string;
+          number: number;
+          label: string;
+          start_date: string | null;
+          end_date: string | null;
+          spots: number;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          code: string;
+          number: number;
+          label: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          spots?: number;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          code?: string;
+          number?: number;
+          label?: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          spots?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "location_weeks_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      location_extras: {
+        Row: {
+          id: string;
+          location_id: string;
+          code: string;
+          label: string;
+          price: number;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          code: string;
+          label: string;
+          price?: number;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          code?: string;
+          label?: string;
+          price?: number;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "location_extras_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       has_role: {
         Args: { _user_id: string; _role: AppRole };
         Returns: boolean;
+      };
+      location_week_occupancy: {
+        Args: Record<string, never>;
+        Returns: { location_slug: string; week_code: string; confirmed: number }[];
       };
     };
     Enums: {
@@ -422,6 +602,8 @@ export type Database = {
       document_status: DocumentStatus;
       child_sex: ChildSex;
       tessera_tipo: TesseraTipo;
+      location_type: LocationType;
+      location_status: LocationStatus;
     };
     CompositeTypes: Record<string, never>;
   };

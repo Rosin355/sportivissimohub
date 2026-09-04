@@ -47,7 +47,8 @@ import {
   type ChildRecord,
   type DocumentMeta,
 } from "@/data/enrollments";
-import { getLocationBySlug } from "@/data/locations";
+import type { Location } from "@/data/locations";
+import { listLocations } from "@/lib/locations/server-fns";
 import { requireRole } from "@/lib/supabase/auth";
 import {
   uploadEnrollmentDocument,
@@ -71,8 +72,12 @@ function AreaGenitori() {
   const { auth } = Route.useRouteContext();
   const [list, setList] = useState<Enrollment[]>([]);
   const [children, setChildren] = useState<ChildRecord[]>([]);
+  const [locations, setLocations] = useState<Map<string, Location>>(new Map());
 
   const refresh = useCallback(() => {
+    listLocations()
+      .then((ls) => setLocations(new Map(ls.map((l) => [l.slug, l]))))
+      .catch(() => toast.error("Impossibile caricare le sedi."));
     getEnrollments()
       .then(setList)
       .catch(() => toast.error("Impossibile caricare le iscrizioni."));
@@ -87,7 +92,7 @@ function AreaGenitori() {
   // Documenti richiesti dalla sede vs caricati (i rifiutati non contano).
   const docTotals = list.reduce(
     (acc, e) => {
-      const loc = getLocationBySlug(e.session.locationSlug);
+      const loc = locations.get(e.session.locationSlug);
       const required = loc ? requiredDocTypesForLocation(loc) : [];
       const ok = required.filter((type) =>
         e.documents.some((d) => d.type === type && d.status !== "rifiutato"),
@@ -172,7 +177,13 @@ function AreaGenitori() {
               </div>
             )}
             {list.map((e) => (
-              <EnrollmentCard key={e.id} enrollment={e} userId={auth.user.id} onChange={refresh} />
+              <EnrollmentCard
+                key={e.id}
+                enrollment={e}
+                location={locations.get(e.session.locationSlug)}
+                userId={auth.user.id}
+                onChange={refresh}
+              />
             ))}
           </div>
 
@@ -216,14 +227,15 @@ function StatCard({
 
 function EnrollmentCard({
   enrollment,
+  location: loc,
   userId,
   onChange,
 }: {
   enrollment: Enrollment;
+  location: Location | undefined;
   userId: string;
   onChange: () => void;
 }) {
-  const loc = getLocationBySlug(enrollment.session.locationSlug);
   const required = loc ? requiredDocTypesForLocation(loc) : [];
   const okCount = required.filter((type) =>
     enrollment.documents.some((d) => d.type === type && d.status !== "rifiutato"),

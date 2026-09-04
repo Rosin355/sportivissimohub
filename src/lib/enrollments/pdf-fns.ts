@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { ENROLLMENT_SELECT, mapEnrollmentRow, type EnrollmentJoinedRow } from "@/data/enrollments";
 import { PDF_TEMPLATES, pdfFileName } from "@/lib/pdf-templates";
 import { PDF_TEMPLATE_INFO, PDF_TEMPLATE_KEYS } from "@/lib/pdf-templates/catalog";
+import { fetchLocationBySlug } from "@/lib/locations/queries";
 
 export type GeneratePdfResult =
   | { ok: true; fileName: string; base64: string }
@@ -52,8 +53,9 @@ export const generateEnrollmentPdf = createServerFn({ method: "POST" })
 
     const template = PDF_TEMPLATES[data.template];
     try {
-      const enrollment = mapEnrollmentRow(row);
-      const bytes = await template.build(enrollment);
+      const location = await fetchLocationBySlug(supabase, row.location_slug);
+      const enrollment = mapEnrollmentRow(row, location ?? undefined);
+      const bytes = await template.build(enrollment, { location });
       return {
         ok: true,
         fileName: pdfFileName(data.template, enrollment),

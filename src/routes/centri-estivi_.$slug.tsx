@@ -3,7 +3,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { LevelStep } from "@/components/site/LevelStep";
-import { getLocationBySlug, type Location } from "@/data/locations";
+import { locationCapacity, weekAvailable, type Location } from "@/data/locations";
+import { getLocation } from "@/lib/locations/server-fns";
 import {
   MapPin,
   Calendar,
@@ -32,8 +33,8 @@ import {
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/centri-estivi_/$slug")({
-  head: ({ params }) => {
-    const loc = getLocationBySlug(params.slug);
+  head: ({ loaderData }) => {
+    const loc = loaderData as Location | undefined;
     const title = loc
       ? `${loc.name} — Centro Estivo Sportivissimo`
       : "Centro estivo — Sportivissimo";
@@ -47,8 +48,8 @@ export const Route = createFileRoute("/centri-estivi_/$slug")({
       ],
     };
   },
-  loader: ({ params }) => {
-    const loc = getLocationBySlug(params.slug);
+  loader: async ({ params }) => {
+    const loc = await getLocation({ data: { slug: params.slug } });
     if (!loc) throw notFound();
     return loc;
   },
@@ -106,8 +107,8 @@ const iconForDayBlock = {
 
 function LocationDetailPage() {
   const loc = Route.useLoaderData() as Location;
-  const available = Math.max(loc.totalSpots - loc.bookedSpots, 0);
-  const pct = Math.round((loc.bookedSpots / loc.totalSpots) * 100);
+  // Disponibilità calcolata dalle iscrizioni confermate per settimana.
+  const { available, capacity, pct } = locationCapacity(loc);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -129,9 +130,21 @@ function LocationDetailPage() {
             </Link>
             <div className="grid md:grid-cols-[1fr_auto] gap-6 items-end">
               <div>
+                {loc.logoUrl && (
+                  <img
+                    src={loc.logoUrl}
+                    alt={`Logo ${loc.comune}`}
+                    className="h-16 w-auto mb-3 bg-white rounded-xl p-1.5 shadow-card"
+                  />
+                )}
                 <span className="inline-flex items-center bg-primary/10 border border-primary/20 rounded-xl px-3 py-1 font-pixel text-primary mb-3">
                   Centro Estivo 2026
                 </span>
+                {loc.status === "bozza" && (
+                  <span className="inline-flex items-center bg-sun/20 border border-sun/40 rounded-xl px-3 py-1 font-pixel text-sun-foreground mb-3 ml-2">
+                    Bozza: visibile solo all'admin
+                  </span>
+                )}
                 <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-foreground">
                   {loc.name}
                 </h1>
@@ -159,7 +172,7 @@ function LocationDetailPage() {
                 <div className="font-pixel text-muted-foreground mb-1">Posti disponibili</div>
                 <div className="font-display text-4xl font-bold text-grass">
                   {available}
-                  <span className="text-muted-foreground text-lg font-bold">/{loc.totalSpots}</span>
+                  <span className="text-muted-foreground text-lg font-bold">/{capacity}</span>
                 </div>
                 <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
                   <div
@@ -269,9 +282,9 @@ function LocationDetailPage() {
                       Sett. {w.number} · {w.label}
                     </span>
                     <span
-                      className={`font-pixel rounded-lg px-2 py-0.5 border ${w.spots <= 5 ? "bg-flame/10 text-flame border-flame/30" : "bg-grass/10 text-grass border-grass/30"}`}
+                      className={`font-pixel rounded-lg px-2 py-0.5 border ${weekAvailable(w) <= 5 ? "bg-flame/10 text-flame border-flame/30" : "bg-grass/10 text-grass border-grass/30"}`}
                     >
-                      {w.spots} posti
+                      {weekAvailable(w)} posti liberi
                     </span>
                   </li>
                 ))}

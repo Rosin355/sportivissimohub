@@ -54,10 +54,11 @@ function layout(title: string, body: string): string {
 function buildEmail(
   payload: WebhookPayload,
   firstName: string,
+  locationName: string,
 ): { subject: string; html: string } | null {
   const rec = payload.record;
   if (!rec) return null;
-  const sede = locationName(rec.location_slug);
+  const sede = locationName;
   const saluto = firstName ? `Ciao ${firstName},` : "Ciao,";
 
   if (payload.type === "INSERT") {

@@ -1,6 +1,5 @@
 import type { LocationStatus, LocationType } from "@/lib/supabase/types";
 import type { LocationInput } from "@/lib/locations/validation";
-import { getSupabaseEnv } from "@/lib/supabase/client";
 
 // Modello delle sedi (M10.1: vivono nella tabella `locations` + figlie
 // `location_weeks` e `location_extras`). Qui stanno i tipi usati da pagine,
@@ -72,6 +71,8 @@ export type Location = {
   faq: LocationFaq[];
   theme: Theme;
   logoPath: string | null;
+  // URL firmato (bucket privato): lo valorizzano solo i loader server-side
+  // tramite fetchLocations({ signLogos: true }); altrove resta null.
   logoUrl: string | null;
   adminNotes: string;
   sortOrder: number;
@@ -198,14 +199,6 @@ function parseFaq(v: unknown): LocationFaq[] {
     .filter((f) => f.q);
 }
 
-// URL pubblico del logo nel bucket "location-logos".
-export function locationLogoUrl(path: string | null): string | null {
-  if (!path) return null;
-  const env = getSupabaseEnv();
-  if (!env) return null;
-  return `${env.url}/storage/v1/object/public/location-logos/${path}`;
-}
-
 export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location {
   const weeks: CampWeek[] = [...row.location_weeks]
     .sort((a, b) => a.number - b.number)
@@ -247,7 +240,7 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
     faq: parseFaq(row.faq),
     theme: asTheme(row.theme),
     logoPath: row.logo_path,
-    logoUrl: locationLogoUrl(row.logo_path),
+    logoUrl: null,
     adminNotes: row.admin_notes,
     sortOrder: row.sort_order,
   };

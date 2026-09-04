@@ -16,6 +16,28 @@ export const LOCATION_SELECT = `
 
 type Client = SupabaseClient<Database>;
 
+// Loghi: bucket PRIVATO (Lovable Cloud non consente bucket pubblici), quindi
+// URL firmati. 24 h: i loader li rigenerano a ogni caricamento della pagina.
+export const LOGO_BUCKET = "location-logos";
+const LOGO_URL_TTL_SECONDS = 60 * 60 * 24;
+
+async function signLogos(supabase: Client, list: Location[]): Promise<Location[]> {
+  const paths = [...new Set(list.map((l) => l.logoPath).filter((p): p is string => Boolean(p)))];
+  if (paths.length === 0) return list;
+  const { data, error } = await supabase.storage
+    .from(LOGO_BUCKET)
+    .createSignedUrls(paths, LOGO_URL_TTL_SECONDS);
+  if (error || !data) {
+    console.error("Firma URL loghi sedi:", error?.message);
+    return list;
+  }
+  const byPath = new Map<string, string>();
+  for (const item of data) {
+    if (item.path && item.signedUrl && !item.error) byPath.set(item.path, item.signedUrl);
+  }
+  return list.map((l) => (l.logoPath ? { ...l, logoUrl: byPath.get(l.logoPath) ?? null } : l));
+}
+
 async function fetchOccupancy(supabase: Client): Promise<Occupancy> {
   const { data, error } = await supabase.rpc("location_week_occupancy");
   if (error) {
@@ -27,9 +49,15 @@ async function fetchOccupancy(supabase: Client): Promise<Occupancy> {
   return map;
 }
 
+export type FetchLocationsOptions = {
+  slug?: string;
+  withOccupancy?: boolean; // default true
+  signLogos?: boolean; // default false: solo i loader server-side firmano gli URL
+};
+
 export async function fetchLocations(
   supabase: Client,
-  opts: { slug?: string; withOccupancy?: boolean } = {},
+  opts: FetchLocationsOptions = {},
 ): Promise<Location[]> {
   let query = supabase
     .from("locations")
@@ -44,14 +72,16 @@ export async function fetchLocations(
       : fetchOccupancy(supabase),
   ]);
   if (error) throw new Error("Impossibile caricare le sedi.");
-  return (data ?? []).map((row) => mapLocationRow(row, occupancy));
+  const list = (data ?? []).map((row) => mapLocationRow(row, occupancy));
+  return opts.signLogos ? signLogos(supabase, list) : list;
 }
 
 export async function fetchLocationBySlug(
   supabase: Client,
   slug: string,
+  opts: Omit<FetchLocationsOptions, "slug"> = {},
 ): Promise<Location | null> {
-  const [loc] = await fetchLocations(supabase, { slug });
+  const [loc] = await fetchLocations(supabase, { slug, ...opts });
   return loc ?? null;
 }
 

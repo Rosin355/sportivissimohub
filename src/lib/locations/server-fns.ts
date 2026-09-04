@@ -6,16 +6,17 @@ import { fetchLocationBySlug, fetchLocations } from "./queries";
 import { locationInputSchema, type LocationInput } from "./validation";
 
 // Lettura sedi per loader SSR e client: le RLS mostrano le pubblicate a tutti
-// e le bozze solo all'admin (sessione nei cookie).
+// e le bozze solo all'admin (sessione nei cookie). Gli URL dei loghi vengono
+// firmati qui, server-side (bucket privato).
 export const listLocations = createServerFn({ method: "GET" }).handler(
-  async (): Promise<Location[]> => fetchLocations(getSupabaseServerClient()),
+  async (): Promise<Location[]> => fetchLocations(getSupabaseServerClient(), { signLogos: true }),
 );
 
 export const getLocation = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1) }).parse(input))
   .handler(
     async ({ data }): Promise<Location | null> =>
-      fetchLocationBySlug(getSupabaseServerClient(), data.slug),
+      fetchLocationBySlug(getSupabaseServerClient(), data.slug, { signLogos: true }),
   );
 
 export type SaveLocationResult = { ok: true; id: string } | { ok: false; error: string };

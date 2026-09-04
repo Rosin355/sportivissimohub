@@ -1,9 +1,10 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
-// Logo del comune: bucket pubblico "location-logos", percorso {location_id}/…
-// Upload consentito solo all'admin dalle policy storage.
+import { LOGO_BUCKET } from "./queries";
 
-export const LOGO_BUCKET = "location-logos";
+// Logo del comune: bucket PRIVATO "location-logos" (Lovable Cloud blocca i
+// bucket pubblici), percorso {location_id}/… Upload solo admin (policy
+// storage); la lettura passa sempre da URL firmati.
 export const LOGO_ALLOWED_MIME = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
 export const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 
@@ -26,6 +27,14 @@ export async function uploadLocationLogo(
     .upload(path, file, { contentType: file.type, upsert: false });
   if (error) return { ok: false, error: "Caricamento del logo non riuscito. Riprova." };
   return { ok: true, path };
+}
+
+// Anteprima nell'editor subito dopo l'upload (l'admin ha la select sul bucket).
+export async function signLogoUrl(path: string, ttlSeconds = 3600): Promise<string | null> {
+  const { data, error } = await getSupabaseBrowserClient()
+    .storage.from(LOGO_BUCKET)
+    .createSignedUrl(path, ttlSeconds);
+  return error || !data ? null : data.signedUrl;
 }
 
 export async function removeLocationLogo(path: string): Promise<void> {

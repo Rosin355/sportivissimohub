@@ -16,12 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/supabase/auth";
 import { listLocations, saveLocation } from "@/lib/locations/server-fns";
-import {
-  locationLogoUrl,
-  locationToInput,
-  newLocationInput,
-  type Location,
-} from "@/data/locations";
+import { locationToInput, newLocationInput, type Location } from "@/data/locations";
 import {
   DAY_ICONS,
   DAY_ICON_LABELS,
@@ -33,7 +28,7 @@ import {
   locationInputSchema,
   type LocationInput,
 } from "@/lib/locations/validation";
-import { removeLocationLogo, uploadLocationLogo } from "@/lib/locations/logo";
+import { removeLocationLogo, signLogoUrl, uploadLocationLogo } from "@/lib/locations/logo";
 import { ArrowLeft, Plus, Trash2, Save, Upload, ExternalLink } from "lucide-react";
 
 // Editor sede (admin): crea/modifica, bozza/pubblica, settimane, extra,
@@ -108,6 +103,8 @@ function LocationEditor({ initial }: { initial: Location | null }) {
   const faq = useFieldArray({ control, name: "faq" });
   const logoPath = watch("logoPath");
   const [logoBusy, setLogoBusy] = useState(false);
+  // Anteprima: URL firmato dal loader (bucket privato) o firmato dopo l'upload.
+  const [logoPreview, setLogoPreview] = useState<string | null>(initial?.logoUrl ?? null);
 
   async function onSubmit(values: LocationInput) {
     const res = await saveLocation({ data: values });
@@ -134,6 +131,7 @@ function LocationEditor({ initial }: { initial: Location | null }) {
       }
       const previous = logoPath;
       setValue("logoPath", res.path, { shouldDirty: true });
+      setLogoPreview(await signLogoUrl(res.path));
       if (previous && previous !== res.path) await removeLocationLogo(previous);
       toast.success("Logo caricato: salva la sede per confermarlo.");
     } finally {
@@ -144,6 +142,7 @@ function LocationEditor({ initial }: { initial: Location | null }) {
   async function onLogoRemove() {
     if (logoPath) await removeLocationLogo(logoPath);
     setValue("logoPath", null, { shouldDirty: true });
+    setLogoPreview(null);
     toast.info("Logo rimosso: salva la sede per confermare.");
   }
 
@@ -272,12 +271,12 @@ function LocationEditor({ initial }: { initial: Location | null }) {
           <Section title="Logo del comune">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="w-24 h-24 rounded-xl border border-border bg-secondary grid place-items-center overflow-hidden">
-                {logoPath ? (
-                  <img
-                    src={locationLogoUrl(logoPath) ?? ""}
-                    alt="Logo"
-                    className="w-full h-full object-contain p-1"
-                  />
+                {logoPath && logoPreview ? (
+                  <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
+                ) : logoPath ? (
+                  <span className="text-xs text-muted-foreground text-center px-2">
+                    Anteprima non disponibile
+                  </span>
                 ) : (
                   <span className="text-xs text-muted-foreground">Nessun logo</span>
                 )}

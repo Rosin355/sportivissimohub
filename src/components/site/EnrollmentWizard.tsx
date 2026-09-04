@@ -30,7 +30,13 @@ import {
 } from "@/lib/enrollments/draft-files";
 import { getEnrollments } from "@/data/enrollments";
 import { toast } from "sonner";
-import { publicLocationDocuments, type Location } from "@/data/locations";
+import { activeCustomFields, publicLocationDocuments, type Location } from "@/data/locations";
+import {
+  answersForDisplay,
+  customAnswersSchema,
+  type CustomAnswers,
+} from "@/lib/enrollments/custom-fields";
+import type { LocationCustomField } from "@/data/locations";
 import { LocationDocumentsList } from "@/components/site/LocationDocumentsList";
 import { WizardProgress } from "@/components/site/WizardProgress";
 import { Input } from "@/components/ui/input";
@@ -48,7 +54,31 @@ import {
   MapPin,
 } from "lucide-react";
 
-const STEP_LABELS = ["Genitore", "Bambino", "Sede", "Deleghe", "Documenti", "Riepilogo"];
+// Step del wizard: "custom" (Informazioni richieste dalla sede) compare solo
+// se la sede ha campi personalizzati attivi, senza buchi nella numerazione.
+type StepKey = "guardian" | "child" | "session" | "delegates" | "custom" | "documents" | "summary";
+
+const STEP_TITLES: Record<StepKey, string> = {
+  guardian: "Genitore",
+  child: "Bambino",
+  session: "Sede",
+  delegates: "Deleghe",
+  custom: "Info sede",
+  documents: "Documenti",
+  summary: "Riepilogo",
+};
+
+function stepKeysFor(loc: Location): StepKey[] {
+  return [
+    "guardian",
+    "child",
+    "session",
+    "delegates",
+    ...(activeCustomFields(loc).length > 0 ? (["custom"] as StepKey[]) : []),
+    "documents",
+    "summary",
+  ];
+}
 
 type WizardState = {
   guardian: GuardianData;
@@ -58,6 +88,8 @@ type WizardState = {
   delegates: PickupDelegate[];
   consents: ConsentsData;
   documents: DocumentMeta[];
+  // Risposte ai campi personalizzati della sede (chiave = code del campo).
+  customAnswers: CustomAnswers;
 };
 
 const emptyGuardian: GuardianData = {
@@ -156,6 +188,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
     delegates: [],
     consents: emptyConsents,
     documents: [],
+    customAnswers: {},
   }));
 
   // Figli già iscritti nella stagione (per stimare lo sconto fratelli).
@@ -225,6 +258,8 @@ export function EnrollmentWizard({ location }: { location: Location }) {
         delegates: draft.delegates ?? prev.delegates,
         consents: { ...prev.consents, ...draft.consents },
         documents: draft.documents ?? prev.documents,
+        // Le bozze precedenti alla M10.3 non hanno customAnswers.
+        customAnswers: { ...prev.customAnswers, ...(draft.customAnswers ?? {}) },
       }));
     }
     loadDraftFiles(location.slug).then((files) => {
@@ -240,10 +275,14 @@ export function EnrollmentWizard({ location }: { location: Location }) {
     writeDraft(location.slug, state);
   }, [state, location.slug]);
 
-  const total = STEP_LABELS.length;
+  const stepKeys = useMemo(() => stepKeysFor(location), [location]);
+  const total = stepKeys.length;
+  const stepKey: StepKey = stepKeys[Math.min(step, total) - 1];
+  const stepLabels = stepKeys.map((k) => STEP_TITLES[k]);
+  const customFields = useMemo(() => activeCustomFields(location), [location]);
 
   function next() {
-    const err = validateStep(step, state, location);
+    const err = validateStep(stepKey, state, location);
     if (err) {
       setError(err);
       return;
@@ -259,7 +298,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
   }
 
   async function submit() {
-    const err = validateStep(6, state, location);
+    const err = validateStep("summary", state, location);
     if (err) {
       setError(err);
       return;
@@ -273,6 +312,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
       session: state.session,
       delegates: state.delegates,
       consents: state.consents,
+      customAnswers: state.customAnswers,
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Controlla i dati inseriti.");
@@ -346,12 +386,12 @@ export function EnrollmentWizard({ location }: { location: Location }) {
 
   return (
     <div className="space-y-6">
-      <WizardProgress current={step} total={total} labels={STEP_LABELS} />
+      <WizardProgress current={step} total={total} labels={stepLabels} />
 
       <div className="rounded-2xl bg-white border border-border shadow-pop p-6 md:p-8">
-        {step === 1 && <StepGuardian state={state} setState={setState} />}
-        {step === 2 && <StepChild state={state} setState={setState} />}
-        {step === 3 && (
+        {stepKey === "guardian" && <StepGuardian state={state} setState={setState} />}
+        {stepKey === "child" && <StepChild state={state} setState={setState} />}
+        {stepKey === "session" && (
           <StepSession
             state={state}
             setState={setState}
@@ -359,8 +399,11 @@ export function EnrollmentWizard({ location }: { location: Location }) {
             figlioOrdine={figlioOrdine}
           />
         )}
-        {step === 4 && <StepDelegates state={state} setState={setState} />}
-        {step === 5 && (
+        {stepKey === "delegates" && <StepDelegates state={state} setState={setState} />}
+        {stepKey === "custom" && (
+          <StepCustomFields state={state} setState={setState} fields={customFields} />
+        )}
+        {stepKey === "documents" && (
           <StepDocuments
             state={state}
             setState={setState}
@@ -372,7 +415,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
             onFilesChange={() => setFilesVersion((v) => v + 1)}
           />
         )}
-        {step === 6 && (
+        {stepKey === "summary" && (
           <StepSummary
             state={state}
             location={location}
@@ -435,8 +478,8 @@ export function EnrollmentWizard({ location }: { location: Location }) {
 
 /* ----------------------------- validation ----------------------------- */
 
-function validateStep(step: number, s: WizardState, loc: Location): string | null {
-  if (step === 1) {
+function validateStep(step: StepKey, s: WizardState, loc: Location): string | null {
+  if (step === "guardian") {
     const g = s.guardian;
     if (!g.firstName || !g.lastName) return "Inserisci nome e cognome del genitore.";
     if (!/^\S+@\S+\.\S+$/.test(g.email)) return "Inserisci un'email valida.";
@@ -454,7 +497,7 @@ function validateStep(step: number, s: WizardState, loc: Location): string | nul
         return "Completa l'indirizzo del secondo genitore.";
     }
   }
-  if (step === 2) {
+  if (step === "child") {
     const c = s.child;
     if (!c.firstName || !c.lastName) return "Inserisci nome e cognome del bambino.";
     if (!c.birthDate) return "Inserisci la data di nascita.";
@@ -468,12 +511,12 @@ function validateStep(step: number, s: WizardState, loc: Location): string | nul
     }
     if (!c.school || !c.grade) return "Completa scuola e classe.";
   }
-  if (step === 3) {
+  if (step === "session") {
     if (s.session.weekIds.length === 0) return "Seleziona almeno una settimana.";
     if (!s.session.timeSlot) return "Scegli una fascia oraria.";
     void loc;
   }
-  if (step === 4) {
+  if (step === "delegates") {
     for (const d of s.delegates) {
       if (!d.firstName || !d.lastName || !d.phone)
         return "Completa i dati di tutti i delegati o eliminali.";
@@ -484,15 +527,118 @@ function validateStep(step: number, s: WizardState, loc: Location): string | nul
     if (!c.acsiDati24)
       return "Il consenso ACSI al trattamento dati per il tesseramento è obbligatorio.";
   }
-  if (step === 6) {
+  if (step === "custom") {
+    // Validazione dinamica dalle definizioni attive (rieseguita nel server).
+    const parsed = customAnswersSchema(activeCustomFields(loc)).safeParse(s.customAnswers);
+    if (!parsed.success) {
+      return parsed.error.issues[0]?.message ?? "Completa le informazioni richieste dalla sede.";
+    }
+  }
+  if (step === "summary") {
     return (
-      validateStep(1, s, loc) ||
-      validateStep(2, s, loc) ||
-      validateStep(3, s, loc) ||
-      validateStep(4, s, loc)
+      validateStep("guardian", s, loc) ||
+      validateStep("child", s, loc) ||
+      validateStep("session", s, loc) ||
+      validateStep("delegates", s, loc) ||
+      (activeCustomFields(loc).length > 0 ? validateStep("custom", s, loc) : null)
     );
   }
   return null;
+}
+
+/* ---------- step: informazioni richieste dalla sede ---------- */
+
+// Campi personalizzati della sede: solo informazioni raccolte, nessun
+// effetto su prezzi, posti o logica del wizard.
+function StepCustomFields({
+  state,
+  setState,
+  fields,
+}: {
+  state: WizardState;
+  setState: SetState;
+  fields: LocationCustomField[];
+}) {
+  const set = (code: string, value: string | boolean) =>
+    setState((s) => ({ ...s, customAnswers: { ...s.customAnswers, [code]: value } }));
+  return (
+    <div>
+      <SectionTitle
+        title="Informazioni richieste dalla sede"
+        subtitle="Qualche informazione in più che serve allo staff di questa sede."
+      />
+      <div className="grid md:grid-cols-2 gap-4">
+        {fields.map((f) => {
+          const value = state.customAnswers[f.code];
+          const label = f.required ? `${f.label} *` : f.label;
+          if (f.fieldType === "si_no") {
+            return (
+              <Field key={f.code} label={label}>
+                <div className="flex gap-2">
+                  {[
+                    ["Sì", true],
+                    ["No", false],
+                  ].map(([txt, v]) => (
+                    <button
+                      key={String(v)}
+                      type="button"
+                      onClick={() => set(f.code, v as boolean)}
+                      aria-pressed={value === v}
+                      className={`flex-1 rounded-xl border px-4 py-2 font-display font-bold transition-colors ${
+                        value === v
+                          ? "bg-gradient-royal text-primary-foreground border-transparent"
+                          : "bg-white border-border hover:bg-secondary"
+                      }`}
+                    >
+                      {txt as string}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            );
+          }
+          if (f.fieldType === "scelta") {
+            return (
+              <Field key={f.code} label={label}>
+                <select
+                  value={typeof value === "string" ? value : ""}
+                  onChange={(e) => set(f.code, e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Seleziona…</option>
+                  {f.options.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            );
+          }
+          if (f.fieldType === "data") {
+            return (
+              <Field key={f.code} label={label}>
+                <Input
+                  type="date"
+                  value={typeof value === "string" ? value : ""}
+                  onChange={(e) => set(f.code, e.target.value)}
+                />
+              </Field>
+            );
+          }
+          return (
+            <Field key={f.code} label={label} full>
+              <Input
+                value={typeof value === "string" ? value : ""}
+                maxLength={500}
+                onChange={(e) => set(f.code, e.target.value)}
+              />
+            </Field>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 /* ----------------------------- step components ----------------------------- */
@@ -1468,6 +1614,17 @@ function StepSummary({
             ))
           )}
         </SummaryCard>
+        {activeCustomFields(location).length > 0 && (
+          <SummaryCard title="Informazioni richieste dalla sede">
+            {answersForDisplay(activeCustomFields(location), state.customAnswers).length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nessuna risposta.</div>
+            ) : (
+              answersForDisplay(activeCustomFields(location), state.customAnswers).map((r) => (
+                <SummaryRow key={r.code} label={r.label} value={r.value} />
+              ))
+            )}
+          </SummaryCard>
+        )}
         <SummaryCard title="Documenti">
           {state.documents.length === 0 ? (
             <div className="text-sm text-muted-foreground">

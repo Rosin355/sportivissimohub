@@ -3,6 +3,7 @@ import { estimateForEnrollment } from "@/lib/enrollments/pricing";
 import { PdfBuilder, BLANK } from "./layout";
 import { ASSOCIAZIONE } from "./config";
 import type { PdfBuildContext } from "./index";
+import { customAnswerRows, writeCustomAnswersSection } from "./custom-answers";
 
 // Modulo di iscrizione al centro estivo, precompilato con i dati del wizard.
 export async function buildCampEnrollmentPdf(
@@ -95,6 +96,8 @@ export async function buildCampEnrollmentPdf(
     );
   }
   pdf.kv("Note", e.adminNotes ?? "");
+
+  writeCustomAnswersSection(pdf, customAnswerRows(e, ctx.location));
 
   pdf.spacer(6);
   pdf.paragraph(

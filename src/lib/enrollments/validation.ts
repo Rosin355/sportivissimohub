@@ -157,6 +157,9 @@ export const consentsSchema = z.object({
 
 // Payload completo del submit del wizard: rieseguita anche nella server function.
 export const enrollmentSubmissionSchema = z.object({
+  // Risposte ai campi personalizzati della sede: la schema per campo viene
+  // costruita dalle definizioni (custom-fields.ts) nel wizard e nel server.
+  customAnswers: z.record(z.union([z.string(), z.boolean()])).default({}),
   guardian: guardianSchema,
   secondaryGuardian: secondaryGuardianSchema.nullable(),
   child: childFullSchema,

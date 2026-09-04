@@ -3,6 +3,7 @@ import type { Json, PaymentStatus } from "@/lib/supabase/types";
 import type { Enrollment } from "@/data/enrollments";
 import type { Location } from "@/data/locations";
 import { estimateForEnrollment } from "./pricing";
+import { formatCustomAnswer } from "./custom-fields";
 
 // Operazioni riservate all'admin: le RLS bloccano chiunque altro. Ogni azione
 // scrive anche in audit_log (dati di minori: tracciabilità).
@@ -99,6 +100,19 @@ export function enrollmentsToCsv(
     "Consenso ACSI foto",
     "Data iscrizione",
   ];
+  // Campi personalizzati: una colonna per campo (anche disattivato, così le
+  // risposte già raccolte escono) delle sedi presenti nell'export; se le sedi
+  // sono più di una l'intestazione riporta anche la sede.
+  const slugs = [...new Set(list.map((e) => e.session.locationSlug))];
+  const customColumns = slugs.flatMap((slug) => {
+    const loc = locationOf(slug);
+    return (loc?.customFields ?? []).map((f) => ({
+      slug,
+      field: f,
+      header: slugs.length > 1 ? `${f.label} (${loc?.name ?? slug})` : f.label,
+    }));
+  });
+  headers.push(...customColumns.map((c) => c.header));
   const rows = list.map((e) => {
     const estimate = estimateForEnrollment(e, locationOf(e.session.locationSlug));
     return [
@@ -136,6 +150,11 @@ export function enrollmentsToCsv(
       e.consents.acsiDati25 ? "Sì" : "No",
       e.consents.acsiFotoMarketing ? "Sì" : "No",
       new Date(e.createdAt).toLocaleDateString("it-IT"),
+      ...customColumns.map((c) =>
+        c.slug === e.session.locationSlug && c.field.code in e.customAnswers
+          ? formatCustomAnswer(c.field, e.customAnswers[c.field.code])
+          : "",
+      ),
     ]
       .map(csvEscape)
       .join(";");

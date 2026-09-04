@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchLocationBySlug } from "@/lib/locations/queries";
+import { activeCustomFields } from "@/data/locations";
+import { validateCustomAnswers } from "./custom-fields";
 import { enrollmentSubmissionSchema, type EnrollmentSubmission } from "./validation";
 
 export type SubmitEnrollmentResult =
@@ -37,6 +39,11 @@ export const submitEnrollment = createServerFn({ method: "POST" })
     if (!data.session.extras.every((id) => validExtras.has(id))) {
       return { ok: false, error: "Uno o più servizi extra non sono validi." };
     }
+
+    // Campi personalizzati: rivalidati qui dalle definizioni attive della
+    // sede (obbligatorietà, opzioni, date). Non toccano prezzi o logica.
+    const answers = validateCustomAnswers(activeCustomFields(loc), data.customAnswers);
+    if (!answers.ok) return { ok: false, error: answers.error };
 
     // Il wizard è la fonte più aggiornata dei dati anagrafici del genitore.
     const { error: profileError } = await supabase
@@ -146,6 +153,7 @@ export const submitEnrollment = createServerFn({ method: "POST" })
         consent_acsi_dati_24: data.consents.acsiDati24,
         consent_acsi_dati_25: data.consents.acsiDati25,
         consent_acsi_foto_marketing: data.consents.acsiFotoMarketing,
+        custom_answers: answers.answers,
       })
       .select("id, code")
       .single();

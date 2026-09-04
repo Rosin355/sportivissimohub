@@ -2,6 +2,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Location } from "@/data/locations";
 import { fetchLocations, indexLocations } from "@/lib/locations/queries";
 import { normalizeDocType } from "@/lib/enrollments/doc-types";
+import { parseCustomAnswers, type CustomAnswers } from "@/lib/enrollments/custom-fields";
 import type {
   ChildSex,
   DocumentStatus,
@@ -92,6 +93,8 @@ export type Enrollment = {
   status: EnrollmentStatus;
   paymentStatus: PaymentStatus;
   figlioOrdine: number;
+  // Risposte ai campi personalizzati della sede (chiave = code del campo).
+  customAnswers: CustomAnswers;
   guardian: GuardianData;
   secondaryGuardian: GuardianData | null;
   child: ChildData;
@@ -109,7 +112,7 @@ export const ENROLLMENT_SELECT = `
   consent_privacy, consent_photos, consent_outings, consent_rules, consent_data_processing,
   consent_acsi_dati_24, consent_acsi_dati_25, consent_acsi_foto_marketing,
   secondary_guardian, residente_nel_comune, tessera_tipo, figlio_ordine,
-  payment_status, admin_notes, created_at, parent_id,
+  payment_status, admin_notes, custom_answers, created_at, parent_id,
   profiles ( email, first_name, last_name, phone, fiscal_code, address, city, province, zip ),
   children ( first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs, sesso, comune_nascita, provincia_nascita, nazione_nascita, has_italian_cf, cittadinanza, nazione_residenza, tipo_documento, numero_documento ),
   pickup_delegates ( id, first_name, last_name, phone, document ),
@@ -138,6 +141,7 @@ export type EnrollmentJoinedRow = {
   figlio_ordine: number;
   payment_status: PaymentStatus;
   admin_notes: string;
+  custom_answers: unknown;
   created_at: string;
   parent_id: string;
   profiles: {
@@ -208,6 +212,7 @@ export function mapEnrollmentRow(row: EnrollmentJoinedRow, loc: Location | undef
     status: row.status,
     paymentStatus: row.payment_status,
     figlioOrdine: row.figlio_ordine ?? 1,
+    customAnswers: parseCustomAnswers(row.custom_answers),
     secondaryGuardian: row.secondary_guardian,
     guardian: {
       firstName: row.profiles?.first_name ?? "",

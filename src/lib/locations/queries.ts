@@ -12,7 +12,8 @@ export const LOCATION_SELECT = `
   badges, day_plan, faq, admin_notes, sort_order, created_at, updated_at,
   location_weeks ( id, code, number, label, start_date, end_date, spots ),
   location_extras ( id, code, label, price, sort_order ),
-  location_documents ( id, location_id, category, title, file_name, size_bytes, mime_type, is_public, sort_order, created_at )
+  location_documents ( id, location_id, category, title, file_name, size_bytes, mime_type, is_public, sort_order, created_at ),
+  location_custom_fields ( id, location_id, code, label, field_type, options, required, sort_order, active )
 `;
 
 type Client = SupabaseClient<Database>;

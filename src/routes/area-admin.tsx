@@ -46,6 +46,7 @@ import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/catalog";
 import type { PaymentStatus } from "@/lib/supabase/types";
 import { docTypeLabel } from "@/lib/enrollments/doc-types";
+import { answersForDisplay } from "@/lib/enrollments/custom-fields";
 
 export const Route = createFileRoute("/area-admin")({
   beforeLoad: ({ context, location }) => ({
@@ -561,6 +562,16 @@ function EnrollmentSheet({
             <KV k="Figlio n." v={String(enrollment.figlioOrdine)} />
             {estimate && <KV k="Costo stimato" v={`€ ${estimate.total}`} />}
           </Section>
+
+          {answersForDisplay(location?.customFields ?? [], enrollment.customAnswers).length > 0 && (
+            <Section title="Informazioni richieste dalla sede">
+              {answersForDisplay(location?.customFields ?? [], enrollment.customAnswers).map(
+                (r) => (
+                  <KV key={r.code} k={r.label} v={r.value} />
+                ),
+              )}
+            </Section>
+          )}
 
           <Section title="Consensi">
             <KV k="Privacy" v={enrollment.consents.privacy ? "Sì" : "No"} />

@@ -58,6 +58,7 @@ import {
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
 import { childSchema } from "@/lib/enrollments/validation";
 import { docTypeLabel } from "@/lib/enrollments/doc-types";
+import { answersForDisplay } from "@/lib/enrollments/custom-fields";
 import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/catalog";
 
@@ -254,6 +255,15 @@ function EnrollmentCard({
           <div className="text-sm text-muted-foreground">
             {enrollment.session.locationName} · {enrollment.session.weekLabels.join(", ") || "—"}
           </div>
+          {answersForDisplay(loc?.customFields ?? [], enrollment.customAnswers).length > 0 && (
+            <div className="mt-1 text-xs text-muted-foreground">
+              {answersForDisplay(loc?.customFields ?? [], enrollment.customAnswers).map((r) => (
+                <div key={r.code}>
+                  <span className="font-semibold text-foreground">{r.label}:</span> {r.value}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="font-pixel text-xs text-muted-foreground mt-0.5">{enrollment.code}</div>
         </div>
         <EnrollmentStatusBadge status={enrollment.status} />

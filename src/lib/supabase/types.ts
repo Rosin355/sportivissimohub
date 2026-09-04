@@ -32,6 +32,8 @@ export type LocationDocumentCategory =
   | "informativa"
   | "template_overlay";
 
+export type CustomFieldType = "testo" | "si_no" | "scelta" | "data";
+
 export type Database = {
   public: {
     Tables: {
@@ -197,6 +199,7 @@ export type Database = {
           consent_acsi_dati_24: boolean;
           consent_acsi_dati_25: boolean;
           consent_acsi_foto_marketing: boolean;
+          custom_answers: Json;
           created_at: string;
           updated_at: string;
         };
@@ -224,6 +227,7 @@ export type Database = {
           consent_acsi_dati_24?: boolean;
           consent_acsi_dati_25?: boolean;
           consent_acsi_foto_marketing?: boolean;
+          custom_answers?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -251,6 +255,7 @@ export type Database = {
           consent_acsi_dati_24?: boolean;
           consent_acsi_dati_25?: boolean;
           consent_acsi_foto_marketing?: boolean;
+          custom_answers?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -640,6 +645,53 @@ export type Database = {
           },
         ];
       };
+      location_custom_fields: {
+        Row: {
+          id: string;
+          location_id: string;
+          code: string;
+          label: string;
+          field_type: CustomFieldType;
+          options: string[];
+          required: boolean;
+          sort_order: number;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          code: string;
+          label: string;
+          field_type: CustomFieldType;
+          options?: string[];
+          required?: boolean;
+          sort_order?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          code?: string;
+          label?: string;
+          field_type?: CustomFieldType;
+          options?: string[];
+          required?: boolean;
+          sort_order?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "location_custom_fields_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -661,6 +713,7 @@ export type Database = {
       location_type: LocationType;
       location_status: LocationStatus;
       location_document_category: LocationDocumentCategory;
+      custom_field_type: CustomFieldType;
     };
     CompositeTypes: Record<string, never>;
   };

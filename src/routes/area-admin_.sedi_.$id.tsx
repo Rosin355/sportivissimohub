@@ -31,6 +31,7 @@ import {
 import { removeLocationLogo, signLogoUrl, uploadLocationLogo } from "@/lib/locations/logo";
 import { REQUIRED_DOC_TYPE_OPTIONS, docTypeLabel } from "@/lib/enrollments/doc-types";
 import { LocationDocumentsAdmin } from "@/components/site/LocationDocumentsAdmin";
+import { LocationCustomFieldsAdmin } from "@/components/site/LocationCustomFieldsAdmin";
 import { ArrowLeft, Plus, Trash2, Save, Upload, ExternalLink } from "lucide-react";
 
 // Editor sede (admin): crea/modifica, bozza/pubblica, settimane, extra,
@@ -324,6 +325,19 @@ function LocationEditor({ initial }: { initial: Location | null }) {
             ) : (
               <p className="text-xs text-muted-foreground">
                 Salva la sede una prima volta per poter caricare documenti.
+              </p>
+            )}
+          </Section>
+
+          <Section
+            title="Campi personalizzati"
+            subtitle='Domande in più che il wizard fa ai genitori nello step "Informazioni richieste dalla sede". Il codice si genera alla creazione e non cambia; un campo con risposte si disattiva, non si elimina.'
+          >
+            {initial ? (
+              <LocationCustomFieldsAdmin location={initial} />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Salva la sede una prima volta per poter aggiungere campi.
               </p>
             )}
           </Section>

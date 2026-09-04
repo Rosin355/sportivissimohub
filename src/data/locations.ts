@@ -1,6 +1,7 @@
 import type { LocationDocumentCategory, LocationStatus, LocationType } from "@/lib/supabase/types";
 import type { LocationInput } from "@/lib/locations/validation";
 import { normalizeDocType } from "@/lib/enrollments/doc-types";
+import type { CustomFieldDef } from "@/lib/enrollments/custom-fields";
 
 // Modello delle sedi (M10.1: vivono nella tabella `locations` + figlie
 // `location_weeks` e `location_extras`). Qui stanno i tipi usati da pagine,
@@ -62,6 +63,15 @@ export type LocationDocument = {
   createdAt: string;
 };
 
+// Campo personalizzato della sede (M10.3). Non influenza prezzi, posti o
+// logica; disattivato resta in elenco per etichettare le risposte raccolte.
+export type LocationCustomField = CustomFieldDef & {
+  id: string;
+  locationId: string;
+  sortOrder: number;
+  active: boolean;
+};
+
 export const LOCATION_DOCUMENT_CATEGORIES: LocationDocumentCategory[] = [
   "regolamento",
   "modulo",
@@ -110,6 +120,9 @@ export type Location = {
   // Solo le righe visibili al chiamante (RLS): il pubblico vede i documenti
   // pubblici delle sedi pubblicate, l'admin tutti.
   documents: LocationDocument[];
+  // Campi personalizzati visibili al chiamante (RLS): pubblico solo attivi,
+  // admin/staff tutti (servono a etichettare le risposte dei campi disattivati).
+  customFields: LocationCustomField[];
 };
 
 /* ---------- riga DB -> Location ---------- */
@@ -159,6 +172,17 @@ export type LocationRow = {
     label: string;
     price: number | string;
     sort_order: number;
+  }>;
+  location_custom_fields?: Array<{
+    id: string;
+    location_id: string;
+    code: string;
+    label: string;
+    field_type: CustomFieldDef["fieldType"];
+    options: string[];
+    required: boolean;
+    sort_order: number;
+    active: boolean;
   }>;
   location_documents?: Array<{
     id: string;
@@ -271,6 +295,19 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
       sortOrder: d.sort_order,
       createdAt: d.created_at,
     }));
+  const customFields: LocationCustomField[] = [...(row.location_custom_fields ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((f) => ({
+      id: f.id,
+      locationId: f.location_id,
+      code: f.code,
+      label: f.label,
+      fieldType: f.field_type,
+      options: f.options ?? [],
+      required: f.required,
+      sortOrder: f.sort_order,
+      active: f.active,
+    }));
   const extraServices: LocationExtra[] = [...row.location_extras]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((e) => ({ id: e.code, label: e.label, price: num(e.price) }));
@@ -305,7 +342,13 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
     adminNotes: row.admin_notes,
     sortOrder: row.sort_order,
     documents,
+    customFields,
   };
+}
+
+// Campi da chiedere nel wizard: solo quelli attivi, in ordine.
+export function activeCustomFields(loc: Location): LocationCustomField[] {
+  return loc.customFields.filter((f) => f.active);
 }
 
 // Documenti mostrabili al pubblico (pagina sede, wizard): pubblici e mai i

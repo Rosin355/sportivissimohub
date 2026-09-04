@@ -7,9 +7,11 @@
 -- image/png, image/jpeg, image/webp, application/msword,
 -- application/vnd.openxmlformats-officedocument.wordprocessingml.document).
 -- Percorso dei file: {location_id}/{document_id}/{nome-file}.
--- Il pubblico NON accede mai al bucket: i download passano dalla server
--- function getLocationDocumentUrl, che firma l'URL solo se il documento è
--- pubblico, la sede è pubblicata e la categoria non è template_overlay.
+-- I download passano dalla server function getLocationDocumentUrl (primo
+-- filtro applicativo), che firma l'URL con la sessione del chiamante, anche
+-- anonima: a decidere davvero sono le policy storage qui sotto, che ammettono
+-- la lettura solo dei file con una riga corrispondente in location_documents
+-- pubblica, non template_overlay e di sede pubblicata. Nessuna service key.
 
 create type public.location_document_category as enum (
   'regolamento', 'modulo', 'informativa', 'template_overlay'
@@ -73,8 +75,36 @@ grant select on public.location_documents to anon, authenticated;
 grant insert, update, delete on public.location_documents to authenticated;
 
 -- ---------------------------------------------------------------------------
--- Storage: bucket privato "location-documents", accesso diretto solo admin.
+-- Storage: bucket privato "location-documents". Corrispondenza esatta tra
+-- location_documents.storage_path e storage.objects.name: entrambi sono
+-- "{location_id}/{document_id}/{nome-file}" SENZA prefisso bucket (l'upload
+-- usa lo stesso valore come chiave dell'oggetto). Le sottoquery girano con le
+-- RLS di location_documents del chiamante, coerenti con queste policy.
 -- ---------------------------------------------------------------------------
+create policy "documenti sede pubblici leggibili nello storage" on storage.objects
+  for select to anon, authenticated
+  using (
+    bucket_id = 'location-documents'
+    and exists (
+      select 1
+      from public.location_documents d
+      join public.locations l on l.id = d.location_id
+      where d.storage_path = objects.name
+        and d.is_public
+        and d.category <> 'template_overlay'
+        and l.status = 'pubblicata'
+    )
+  );
+create policy "staff legge i documenti sede non template nello storage" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'location-documents'
+    and public.has_role(auth.uid(), 'staff')
+    and exists (
+      select 1 from public.location_documents d
+      where d.storage_path = objects.name and d.category <> 'template_overlay'
+    )
+  );
 create policy "admin legge i documenti sede nello storage" on storage.objects
   for select to authenticated
   using (bucket_id = 'location-documents' and public.has_role(auth.uid(), 'admin'));

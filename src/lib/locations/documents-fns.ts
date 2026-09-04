@@ -10,8 +10,10 @@ import {
 } from "./documents";
 
 // Server function dei documenti sede. Le scritture si appoggiano alle RLS
-// (solo admin); il download è l'UNICO punto di controllo per l'accesso ai
-// file: il bucket è privato e le sue policy ammettono solo l'admin.
+// (solo admin); il download passa sempre da getLocationDocumentUrl, che
+// firma l'URL con la sessione del chiamante: le policy storage del bucket
+// privato ripetono le stesse condizioni (pubblico + sede pubblicata + non
+// template; staff sui non template; admin tutto). Nessuna service key.
 
 const CATEGORIES = ["regolamento", "modulo", "informativa", "template_overlay"] as const;
 
@@ -190,11 +192,11 @@ export const deleteLocationDocument = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Download: unico punto di controllo. Pubblico (anche anonimo) solo se il
+// Download: primo filtro applicativo. Pubblico (anche anonimo) solo se il
 // documento è pubblico, la sede è pubblicata e non è un template_overlay;
-// altrimenti admin, o staff in sola lettura (mai i template). La firma usa
-// il client con service role, confinato a questa funzione, perché il bucket
-// non è leggibile da anon/authenticated: l'autorizzazione è decisa qui.
+// altrimenti admin, o staff in sola lettura (mai i template). L'URL firmato
+// viene creato con la sessione corrente (anche anonima): se le policy storage
+// non ammettono la lettura, la firma fallisce.
 export const getLocationDocumentUrl = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }): Promise<Result<{ url: string; fileName: string }>> => {
@@ -224,20 +226,12 @@ export const getLocationDocumentUrl = createServerFn({ method: "GET" })
     const allowed = isAdmin || publicOk || (isStaff && doc.category !== "template_overlay");
     if (!allowed) return { ok: false, error: "Documento non accessibile." };
 
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: signed, error } = await supabaseAdmin.storage
-        .from(LOCATION_DOCS_BUCKET)
-        .createSignedUrl(doc.storage_path, 60, { download: doc.file_name });
-      if (error || !signed) {
-        return { ok: false, error: "Impossibile generare il link di download. Riprova." };
-      }
-      return { ok: true, url: signed.signedUrl, fileName: doc.file_name };
-    } catch (e) {
-      console.error("getLocationDocumentUrl:", e);
-      return {
-        ok: false,
-        error: "Download non disponibile: configurazione server mancante (service role).",
-      };
+    const { data: signed, error } = await supabase.storage
+      .from(LOCATION_DOCS_BUCKET)
+      .createSignedUrl(doc.storage_path, 60, { download: doc.file_name });
+    if (error || !signed) {
+      console.error("getLocationDocumentUrl:", error?.message);
+      return { ok: false, error: "Impossibile generare il link di download. Riprova." };
     }
+    return { ok: true, url: signed.signedUrl, fileName: doc.file_name };
   });

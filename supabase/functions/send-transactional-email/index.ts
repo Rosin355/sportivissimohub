@@ -31,7 +31,8 @@ const STATUS_LABELS: Record<string, string> = {
   annullata: "Annullata",
 };
 
-function locationName(slug: string): string {
+// Il nome della sede arriva dalla tabella locations; fallback allo slug.
+function fallbackLocationName(slug: string): string {
   return slug
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))

@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { LevelStep } from "@/components/site/LevelStep";
 import { locationCapacity, weekAvailable, type Location } from "@/data/locations";
 import { getLocation } from "@/lib/locations/server-fns";
+import { docTypeLabel } from "@/lib/enrollments/doc-types";
 import {
   MapPin,
   Calendar,
@@ -354,7 +355,7 @@ function LocationDetailPage() {
                   key={d}
                   className="flex items-center gap-2 text-sm font-semibold text-foreground"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-magic" /> {d}
+                  <span className="w-1.5 h-1.5 rounded-full bg-magic" /> {docTypeLabel(d)}
                 </li>
               ))}
             </ul>

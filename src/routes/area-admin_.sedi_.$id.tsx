@@ -29,6 +29,7 @@ import {
   type LocationInput,
 } from "@/lib/locations/validation";
 import { removeLocationLogo, signLogoUrl, uploadLocationLogo } from "@/lib/locations/logo";
+import { REQUIRED_DOC_TYPE_OPTIONS, docTypeLabel } from "@/lib/enrollments/doc-types";
 import { ArrowLeft, Plus, Trash2, Save, Upload, ExternalLink } from "lucide-react";
 
 // Editor sede (admin): crea/modifica, bozza/pubblica, settimane, extra,
@@ -445,12 +446,7 @@ function LocationEditor({ initial }: { initial: Location | null }) {
               />
               <LinesField control={control} name="activities" label="Attività principali" />
               <LinesField control={control} name="includedServices" label="Servizi inclusi" />
-              <LinesField
-                control={control}
-                name="requiredDocuments"
-                label="Documenti richiesti"
-                hint="Compaiono nella pagina pubblica e nel wizard (barra documenti dell'area genitori)."
-              />
+              <DocTypesField control={control} />
             </div>
           </Section>
 
@@ -696,7 +692,7 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-type LinesName = "timeSlots" | "activities" | "includedServices" | "requiredDocuments";
+type LinesName = "timeSlots" | "activities" | "includedServices";
 
 // Elenco "una voce per riga": nel form resta un array di stringhe.
 function LinesField({
@@ -733,3 +729,54 @@ function LinesField({
 
 // Evita l'errore "unused" per FieldErrors quando non serve altrove.
 export type LocationFormErrors = FieldErrors<LocationInput>;
+
+// Documenti richiesti: codici stabili dal catalogo condiviso (doc-types.ts),
+// così wizard e area genitori fanno il matching per codice. Eventuali codici
+// personalizzati già salvati restano visibili e rimovibili.
+function DocTypesField({ control }: { control: Control<LocationInput> }) {
+  return (
+    <Controller
+      control={control}
+      name="requiredDocuments"
+      render={({ field, fieldState }) => {
+        const selected = field.value ?? [];
+        const custom = selected.filter((c) => !REQUIRED_DOC_TYPE_OPTIONS.some((o) => o.code === c));
+        const toggle = (code: string, on: boolean) =>
+          field.onChange(on ? [...selected, code] : selected.filter((c) => c !== code));
+        return (
+          <Field
+            label="Documenti richiesti"
+            hint="Compaiono nella pagina pubblica, nello step Documenti del wizard e nella barra documenti dell'area genitori."
+            error={fieldState.error?.message}
+          >
+            <div className="space-y-2 rounded-xl border border-input p-3">
+              {REQUIRED_DOC_TYPE_OPTIONS.map((o) => (
+                <label key={o.code} className="flex items-center gap-2 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input"
+                    checked={selected.includes(o.code)}
+                    onChange={(e) => toggle(o.code, e.target.checked)}
+                  />
+                  {o.label}
+                </label>
+              ))}
+              {custom.map((code) => (
+                <label key={code} className="flex items-center gap-2 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input"
+                    checked
+                    onChange={() => toggle(code, false)}
+                  />
+                  {docTypeLabel(code)}
+                  <span className="text-xs text-muted-foreground">(personalizzato)</span>
+                </label>
+              ))}
+            </div>
+          </Field>
+        );
+      }}
+    />
+  );
+}

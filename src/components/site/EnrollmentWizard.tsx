@@ -14,9 +14,20 @@ import {
 } from "@/data/enrollments";
 import { submitEnrollment } from "@/lib/enrollments/server-fns";
 import { enrollmentSubmissionSchema } from "@/lib/enrollments/validation";
-import { isValidFiscalCode } from "@/lib/enrollments/fiscal-code";
+import { computeFiscalCode, isValidFiscalCode } from "@/lib/enrollments/fiscal-code";
 import { computeEstimate, extrasCostFor, isHalfDay } from "@/lib/enrollments/pricing";
-import { uploadEnrollmentDocument, validateDocumentFile } from "@/lib/enrollments/documents";
+import {
+  requiredDocTypesForLocation,
+  uploadEnrollmentDocument,
+  validateDocumentFile,
+} from "@/lib/enrollments/documents";
+import { OTHER_DOC_TYPE, docTypeLabel } from "@/lib/enrollments/doc-types";
+import {
+  clearDraftFiles,
+  deleteDraftFile,
+  loadDraftFiles,
+  saveDraftFile,
+} from "@/lib/enrollments/draft-files";
 import { getEnrollments } from "@/data/enrollments";
 import { toast } from "sonner";
 import type { Location } from "@/data/locations";
@@ -100,23 +111,32 @@ function calcAge(birth: string) {
   return Math.max(0, Math.floor(diff / (365.25 * 24 * 3600 * 1000)));
 }
 
-const DOC_TYPES = [
-  "Documento genitore",
-  "Tessera sanitaria bambino/a",
-  "Certificato medico",
-  "Altro",
-];
+// Esito dell'upload dei documenti al termine del wizard, mostrato nella
+// schermata finale: mai un fallimento silenzioso.
+export type DocsReport = {
+  uploaded: string[]; // codici doc caricati
+  failed: Array<{ type: string; error: string }>;
+  missing: string[]; // selezionati nella bozza ma senza file (da ricaricare)
+};
 
 export function EnrollmentWizard({ location }: { location: Location }) {
   const navigate = useNavigate();
   const { auth } = useRouteContext({ from: "__root__" });
   const [step, setStep] = useState(1);
-  const [submitted, setSubmitted] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<{ code: string; report: DocsReport } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // File reali selezionati nello StepDocuments, per doc_type. Non finiscono
-  // nella bozza localStorage: dopo un reload vanno riselezionati.
+  // File reali selezionati nello StepDocuments, per codice documento. La bozza
+  // in localStorage ha solo i metadati: i File stanno in IndexedDB
+  // (draft-files.ts) e vengono ricaricati qui sotto, così sopravvivono a
+  // reload e al giro di login/registrazione.
   const docFilesRef = useRef(new Map<string, File>());
+  const [filesVersion, setFilesVersion] = useState(0);
+  // Documenti chiesti dalla sede (codici stabili) + "altro".
+  const docTypes = useMemo(
+    () => [...new Set([...requiredDocTypesForLocation(location), OTHER_DOC_TYPE])],
+    [location],
+  );
 
   const [state, setState] = useState<WizardState>(() => ({
     guardian: emptyGuardian,
@@ -206,6 +226,11 @@ export function EnrollmentWizard({ location }: { location: Location }) {
         documents: draft.documents ?? prev.documents,
       }));
     }
+    loadDraftFiles(location.slug).then((files) => {
+      if (files.size === 0) return;
+      for (const [type, file] of files) docFilesRef.current.set(type, file);
+      setFilesVersion((v) => v + 1);
+    });
   }, [location.slug, location.name]);
 
   // persist draft on change
@@ -270,35 +295,35 @@ export function EnrollmentWizard({ location }: { location: Location }) {
       }
 
       // Upload dei documenti selezionati nel bucket privato, ora che esiste
-      // l'iscrizione. Un errore qui non blocca la conferma: si può ricaricare
-      // dall'area genitori.
-      const toUpload = state.documents.filter((d) => docFilesRef.current.has(d.type));
-      let failed = 0;
-      for (const doc of toUpload) {
+      // l'iscrizione. Un errore qui non blocca la conferma, ma viene sempre
+      // mostrato: nella schermata finale c'è il conto di cosa è stato caricato.
+      const report: DocsReport = { uploaded: [], failed: [], missing: [] };
+      for (const doc of state.documents) {
         const file = docFilesRef.current.get(doc.type);
-        if (!file) continue;
+        if (!file) {
+          report.missing.push(doc.type);
+          continue;
+        }
         const upload = await uploadEnrollmentDocument({
           userId: auth.user.id,
           enrollmentId: result.id,
           docType: doc.type,
           file,
         });
-        if (!upload.ok) {
-          failed++;
-          toast.error(`${doc.type}: ${upload.error}`);
-        }
+        if (upload.ok) report.uploaded.push(doc.type);
+        else report.failed.push({ type: doc.type, error: upload.error });
       }
-      if (toUpload.length > 0 && failed === 0) {
-        toast.success("Documenti caricati.");
-      } else if (failed > 0) {
-        toast.warning("Potrai ricaricare i documenti mancanti dall'area genitori.");
-      }
-      if (state.documents.length > toUpload.length) {
-        toast.info("Alcuni documenti della bozza vanno ricaricati dall'area genitori.");
+      for (const f of report.failed) toast.error(`${docTypeLabel(f.type)}: ${f.error}`);
+      if (report.missing.length > 0) {
+        toast.warning(
+          "Alcuni documenti della bozza non hanno più il file: ricaricali dall'area genitori.",
+        );
       }
 
       clearDraft(location.slug);
-      setSubmitted(result.code);
+      await clearDraftFiles(location.slug);
+      docFilesRef.current.clear();
+      setSubmitted({ code: result.code, report });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setError("Errore durante l'invio. Controlla la connessione e riprova.");
@@ -310,7 +335,8 @@ export function EnrollmentWizard({ location }: { location: Location }) {
   if (submitted) {
     return (
       <SuccessScreen
-        id={submitted}
+        id={submitted.code}
+        report={submitted.report}
         location={location}
         onParents={() => navigate({ to: "/area-genitori" })}
       />
@@ -334,10 +360,24 @@ export function EnrollmentWizard({ location }: { location: Location }) {
         )}
         {step === 4 && <StepDelegates state={state} setState={setState} />}
         {step === 5 && (
-          <StepDocuments state={state} setState={setState} files={docFilesRef.current} />
+          <StepDocuments
+            state={state}
+            setState={setState}
+            slug={location.slug}
+            docTypes={docTypes}
+            files={docFilesRef.current}
+            filesVersion={filesVersion}
+            onFilesChange={() => setFilesVersion((v) => v + 1)}
+          />
         )}
         {step === 6 && (
-          <StepSummary state={state} location={location} figlioOrdine={figlioOrdine} />
+          <StepSummary
+            state={state}
+            location={location}
+            figlioOrdine={figlioOrdine}
+            files={docFilesRef.current}
+            filesVersion={filesVersion}
+          />
         )}
 
         {step === total && !auth && (
@@ -607,33 +647,31 @@ function StepChild({ state, setState }: { state: WizardState; setState: SetState
   const age = calcAge(c.birthDate);
 
   // Genera il CF con codice-fiscale-js (mappa dei codici catastali dei comuni).
-  // Il valore resta modificabile e viene comunque rivalidato.
+  // Il valore resta modificabile e viene comunque rivalidato; se il comune non
+  // viene riconosciuto si può inserire il CF a mano.
   async function computeChildCf() {
-    if (!c.firstName || !c.lastName || !c.birthDate || !c.sesso || !c.comuneNascita) {
-      toast.error(
-        "Per calcolare il codice fiscale servono nome, cognome, data di nascita, sesso e comune di nascita.",
-      );
+    if (!c.sesso) {
+      toast.error("Per calcolare il codice fiscale indica anche il sesso del bambino.");
       return;
     }
-    try {
-      const { default: CodiceFiscale } = await import("codice-fiscale-js");
-      const d = new Date(c.birthDate);
-      const cf = CodiceFiscale.compute({
-        name: c.firstName,
-        surname: c.lastName,
-        gender: c.sesso,
-        day: d.getDate(),
-        month: d.getMonth() + 1,
-        year: d.getFullYear(),
-        birthplace: c.comuneNascita,
-        birthplaceProvincia: c.provinciaNascita || undefined,
-      });
-      upd("fiscalCode", cf.toUpperCase());
-    } catch {
-      toast.error(
-        "Comune di nascita non riconosciuto: controlla il nome (ed eventualmente la provincia) o inserisci il codice fiscale a mano.",
-      );
+    const res = await computeFiscalCode({
+      firstName: c.firstName,
+      lastName: c.lastName,
+      sex: c.sesso,
+      birthDate: c.birthDate,
+      comune: c.comuneNascita,
+      provincia: c.provinciaNascita,
+    });
+    if (!res.ok) {
+      toast.error(res.message);
+      return;
     }
+    upd("fiscalCode", res.fiscalCode);
+    // Se la provincia era scritta per esteso (o mancava) la porta alla sigla.
+    if (res.provincia && !/^[A-Za-z]{2}$/.test(c.provinciaNascita.trim())) {
+      upd("provinciaNascita", res.provincia);
+    }
+    toast.success("Codice fiscale calcolato: controllalo con la tessera sanitaria.");
   }
 
   return (
@@ -1171,11 +1209,19 @@ function ConsentRow({
 function StepDocuments({
   state,
   setState,
+  slug,
+  docTypes,
   files,
+  filesVersion: _filesVersion,
+  onFilesChange,
 }: {
   state: WizardState;
   setState: SetState;
+  slug: string;
+  docTypes: string[];
   files: Map<string, File>;
+  filesVersion: number; // forza il re-render quando i file vengono ricaricati
+  onFilesChange: () => void;
 }) {
   const addFromInput = (type: string, file: File | null) => {
     if (!file) return;
@@ -1185,25 +1231,42 @@ function StepDocuments({
       return;
     }
     files.set(type, file);
+    void saveDraftFile(slug, type, file);
     const meta: DocumentMeta = { type, fileName: file.name, size: file.size };
     setState((s) => ({ ...s, documents: [...s.documents.filter((d) => d.type !== type), meta] }));
+    onFilesChange();
   };
   const remove = (idx: number) => {
     const doc = state.documents[idx];
-    if (doc) files.delete(doc.type);
+    if (doc) {
+      files.delete(doc.type);
+      void deleteDraftFile(slug, doc.type);
+    }
     setState((s) => ({ ...s, documents: s.documents.filter((_, i) => i !== idx) }));
+    onFilesChange();
   };
+  const missing = state.documents.filter((d) => !files.has(d.type));
 
   return (
     <div>
       <SectionTitle
         title="Carica i documenti"
-        subtitle="Puoi caricarli ora o aggiungerli più tardi dall'area genitori."
+        subtitle="Puoi caricarli ora o aggiungerli più tardi dall'area genitori. Vengono inviati insieme all'iscrizione."
       />
 
+      {missing.length > 0 && (
+        <div className="mb-4 bg-sun/15 border border-sun/40 rounded-xl px-4 py-3 text-sm font-semibold">
+          {missing.length === 1
+            ? "Un documento della bozza non ha più il file: "
+            : `${missing.length} documenti della bozza non hanno più il file: `}
+          riselezionalo prima di inviare, oppure caricalo dopo dall'area genitori.
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-3">
-        {DOC_TYPES.map((type) => {
+        {docTypes.map((type) => {
           const existing = state.documents.find((d) => d.type === type);
+          const hasFile = files.has(type);
           return (
             <label
               key={type}
@@ -1213,17 +1276,22 @@ function StepDocuments({
                 <div className="w-10 h-10 rounded-xl bg-gradient-magic text-magic-foreground grid place-items-center">
                   <Upload className="w-5 h-5" />
                 </div>
-                <div className="flex-1">
-                  <div className="font-display font-bold">{type}</div>
-                  <div className="text-xs text-muted-foreground">
+                <div className="flex-1 min-w-0">
+                  <div className="font-display font-bold">{docTypeLabel(type)}</div>
+                  <div className="text-xs text-muted-foreground truncate">
                     {existing
                       ? `${existing.fileName} · ${(existing.size / 1024).toFixed(0)} KB`
-                      : "PDF, JPG o PNG"}
+                      : "PDF, JPG o PNG (max 10 MB)"}
                   </div>
                 </div>
-                {existing && (
+                {existing && hasFile && (
                   <span className="font-pixel bg-grass/10 text-grass border border-grass/30 rounded-lg px-2 py-0.5">
-                    caricato
+                    selezionato
+                  </span>
+                )}
+                {existing && !hasFile && (
+                  <span className="font-pixel bg-flame/10 text-flame border border-flame/30 rounded-lg px-2 py-0.5">
+                    da riselezionare
                   </span>
                 )}
               </div>
@@ -1231,7 +1299,10 @@ function StepDocuments({
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
                 className="sr-only"
-                onChange={(e) => addFromInput(type, e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  addFromInput(type, e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
               />
             </label>
           );
@@ -1240,20 +1311,24 @@ function StepDocuments({
 
       {state.documents.length > 0 && (
         <div className="mt-6">
-          <h3 className="font-display text-lg font-bold mb-2">File caricati</h3>
+          <h3 className="font-display text-lg font-bold mb-2">File selezionati</h3>
           <ul className="space-y-2">
             {state.documents.map((d, i) => (
               <li
                 key={i}
                 className="flex items-center justify-between rounded-xl border border-border bg-secondary/50 p-3"
               >
-                <span className="inline-flex items-center gap-2 text-sm font-semibold">
-                  <FileText className="w-4 h-4 text-magic" />
-                  <span className="text-muted-foreground">{d.type}:</span> {d.fileName}
+                <span className="inline-flex items-center gap-2 text-sm font-semibold min-w-0">
+                  <FileText className="w-4 h-4 text-magic shrink-0" />
+                  <span className="text-muted-foreground">{docTypeLabel(d.type)}:</span>
+                  <span className="truncate">{d.fileName}</span>
+                  {!files.has(d.type) && (
+                    <span className="text-flame text-xs">(file da riselezionare)</span>
+                  )}
                 </span>
                 <button
                   onClick={() => remove(i)}
-                  className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold"
+                  className="text-flame hover:text-flame/80 inline-flex items-center gap-1 text-sm font-semibold shrink-0"
                 >
                   <Trash2 className="w-4 h-4" /> Rimuovi
                 </button>
@@ -1270,10 +1345,14 @@ function StepSummary({
   state,
   location,
   figlioOrdine,
+  files,
+  filesVersion: _filesVersion,
 }: {
   state: WizardState;
   location: Location;
   figlioOrdine: number;
+  files: Map<string, File>;
+  filesVersion: number;
 }) {
   const estimate = useMemo(
     () =>
@@ -1376,13 +1455,28 @@ function StepSummary({
         </SummaryCard>
         <SummaryCard title="Documenti">
           {state.documents.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Nessun documento caricato.</div>
+            <div className="text-sm text-muted-foreground">
+              Nessun documento allegato: potrai caricarli dall'area genitori.
+            </div>
           ) : (
-            state.documents.map((d, i) => (
-              <div key={i} className="text-sm font-semibold">
-                <span className="text-muted-foreground">{d.type}:</span> {d.fileName}
+            <>
+              <div className="text-sm text-muted-foreground mb-1">
+                {state.documents.filter((d) => files.has(d.type)).length} su{" "}
+                {state.documents.length} pronti per l'invio
               </div>
-            ))
+              {state.documents.map((d, i) => (
+                <div key={i} className="text-sm font-semibold">
+                  <span className="text-muted-foreground">{docTypeLabel(d.type)}:</span>{" "}
+                  {d.fileName}
+                  {!files.has(d.type) && (
+                    <span className="text-flame">
+                      {" "}
+                      (file da riselezionare nello step Documenti)
+                    </span>
+                  )}
+                </div>
+              ))}
+            </>
           )}
         </SummaryCard>
       </div>
@@ -1411,10 +1505,12 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 function SuccessScreen({
   id,
+  report,
   location,
   onParents,
 }: {
   id: string;
+  report: DocsReport;
   location: Location;
   onParents: () => void;
 }) {
@@ -1457,17 +1553,24 @@ function SuccessScreen({
     };
   }, []);
   return (
-    <div className="rounded-2xl bg-gradient-hero text-white p-10 text-center shadow-pop relative overflow-hidden">
+    <div className="rounded-2xl bg-gradient-hero border border-border text-foreground p-10 text-center shadow-pop relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-magic/20 blur-[100px]" />
+        <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-flame/15 blur-[90px]" />
+      </div>
       <div className="relative">
-        <div className="inline-flex items-center gap-2 bg-white/15 border border-white/20 rounded-xl px-4 py-1.5 font-pixel mb-4">
-          Iscrizione #{id}
+        <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary rounded-xl px-4 py-1.5 font-pixel mb-4">
+          Iscrizione {id}
         </div>
-        <h1 className="font-display text-4xl md:text-5xl font-bold">Iscrizione inviata!</h1>
-        <p className="text-white/85 mt-3 max-w-xl mx-auto">
+        <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground">
+          Iscrizione inviata!
+        </h1>
+        <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
           La squadra Sportivissimo riceverà tutto per{" "}
-          <span className="font-bold">{location.name}</span> e ti ricontatterà presto. Nel frattempo
-          puoi tenere d'occhio lo stato dalla tua area genitori.
+          <span className="font-bold text-foreground">{location.name}</span> e ti ricontatterà
+          presto. Nel frattempo puoi tenere d'occhio lo stato dalla tua area genitori.
         </p>
+        <DocsReportBox report={report} />
         <div className="flex flex-wrap gap-3 justify-center mt-6">
           <button
             onClick={onParents}
@@ -1477,12 +1580,67 @@ function SuccessScreen({
           </button>
           <Link
             to="/centri-estivi"
-            className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white rounded-xl px-6 py-3.5 font-display font-bold hover:bg-white/20 transition-colors"
+            className="inline-flex items-center gap-2 bg-white border border-border text-foreground rounded-xl px-6 py-3.5 font-display font-bold hover:bg-secondary transition-colors"
           >
             Torna alle sedi
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Conto dei documenti: caricati, falliti (con motivo) e da ricaricare.
+function DocsReportBox({ report }: { report: DocsReport }) {
+  const total = report.uploaded.length + report.failed.length + report.missing.length;
+  if (total === 0) {
+    return (
+      <div className="mt-6 max-w-xl mx-auto rounded-xl bg-white border border-border px-4 py-3 text-sm text-muted-foreground">
+        Nessun documento allegato: potrai caricarli dall'area genitori.
+      </div>
+    );
+  }
+  const allOk = report.uploaded.length === total;
+  return (
+    <div className="mt-6 max-w-xl mx-auto rounded-xl bg-white border border-border p-4 text-left text-sm">
+      <div className={`font-display font-bold ${allOk ? "text-grass" : "text-flame"}`}>
+        Documenti caricati: {report.uploaded.length} su {total}
+      </div>
+      <ul className="mt-2 space-y-1">
+        {report.uploaded.map((t) => (
+          <li key={t} className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-grass shrink-0" />
+            <span className="font-semibold">{docTypeLabel(t)}</span>
+            <span className="text-muted-foreground">caricato</span>
+          </li>
+        ))}
+        {report.failed.map((f) => (
+          <li key={f.type} className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-flame shrink-0 mt-1.5" />
+            <span>
+              <span className="font-semibold">{docTypeLabel(f.type)}</span>{" "}
+              <span className="text-flame">non caricato: {f.error}</span>
+            </span>
+          </li>
+        ))}
+        {report.missing.map((t) => (
+          <li key={t} className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-sun shrink-0 mt-1.5" />
+            <span>
+              <span className="font-semibold">{docTypeLabel(t)}</span>{" "}
+              <span className="text-muted-foreground">
+                file non più disponibile: caricalo dall'area genitori
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {!allOk && (
+        <p className="mt-2 text-muted-foreground">
+          I documenti mancanti si caricano in qualsiasi momento dall'area genitori, nella scheda
+          dell'iscrizione.
+        </p>
+      )}
     </div>
   );
 }

@@ -57,6 +57,7 @@ import {
 } from "@/lib/enrollments/documents";
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
 import { childSchema } from "@/lib/enrollments/validation";
+import { docTypeLabel } from "@/lib/enrollments/doc-types";
 import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/catalog";
 
@@ -333,10 +334,10 @@ function DocumentRow({
     const res = await uploadEnrollmentDocument({ userId, enrollmentId, docType: type, file });
     setBusy(false);
     if (!res.ok) {
-      toast.error(`${type}: ${res.error}`);
+      toast.error(`${docTypeLabel(type)}: ${res.error}`);
       return;
     }
-    toast.success(`${type} caricato.`);
+    toast.success(`${docTypeLabel(type)} caricato.`);
     onChange();
   }
 
@@ -359,7 +360,7 @@ function DocumentRow({
       toast.error(res.error);
       return;
     }
-    toast.success(`${type} eliminato.`);
+    toast.success(`${docTypeLabel(type)} eliminato.`);
     onChange();
   }
 
@@ -368,7 +369,7 @@ function DocumentRow({
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2">
       <div className="min-w-0">
-        <div className="text-sm font-semibold truncate">{type}</div>
+        <div className="text-sm font-semibold truncate">{docTypeLabel(type)}</div>
         {doc ? (
           <button
             onClick={handleDownload}
@@ -397,7 +398,7 @@ function DocumentRow({
             onClick={handleDelete}
             disabled={busy}
             className="text-flame hover:text-flame/80 disabled:opacity-50"
-            aria-label={`Elimina ${type}`}
+            aria-label={`Elimina ${docTypeLabel(type)}`}
             title="Elimina"
           >
             <Trash2 className="w-4 h-4" />
@@ -428,7 +429,7 @@ function DocumentRow({
           <button
             onClick={handleDownload}
             className="text-muted-foreground hover:text-foreground"
-            aria-label={`Scarica ${type}`}
+            aria-label={`Scarica ${docTypeLabel(type)}`}
             title="Scarica"
           >
             <Download className="w-4 h-4" />

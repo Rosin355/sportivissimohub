@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Location } from "@/data/locations";
+import { normalizeDocType } from "./doc-types";
 
 // Vincoli replicati anche nel bucket (file_size_limit e allowed_mime_types
 // nella migrazione M2): qui servono solo per dare un errore immediato.
@@ -22,17 +23,10 @@ function sanitize(name: string) {
 
 export type UploadDocumentResult = { ok: true } | { ok: false; error: string };
 
-// I requiredDocuments delle sedi (etichette marketing in locations.ts) vengono
-// ricondotti ai doc_type canonici usati dal wizard e nel database.
-export function requiredDocTypeFor(label: string): string {
-  if (/genitore|identit/i.test(label)) return "Documento genitore";
-  if (/tessera sanitaria/i.test(label)) return "Tessera sanitaria bambino/a";
-  if (/certificato medico/i.test(label)) return "Certificato medico";
-  return label;
-}
-
+// Documenti richiesti dalla sede come codici stabili (vedi doc-types.ts):
+// il matching con enrollment_documents.doc_type è sempre per codice.
 export function requiredDocTypesForLocation(loc: Location): string[] {
-  return [...new Set(loc.requiredDocuments.map(requiredDocTypeFor))];
+  return [...new Set(loc.requiredDocuments.map(normalizeDocType))];
 }
 
 // Upload nel bucket privato "documents" sotto {user_id}/{enrollment_id}/{doc_type}/
@@ -48,7 +42,8 @@ export async function uploadEnrollmentDocument(opts: {
   if (invalid) return { ok: false, error: invalid };
 
   const supabase = getSupabaseBrowserClient();
-  const path = `${opts.userId}/${opts.enrollmentId}/${sanitize(opts.docType)}/${Date.now()}-${sanitize(opts.file.name)}`;
+  const docType = normalizeDocType(opts.docType);
+  const path = `${opts.userId}/${opts.enrollmentId}/${sanitize(docType)}/${Date.now()}-${sanitize(opts.file.name)}`;
 
   const { error: uploadError } = await supabase.storage
     .from("documents")
@@ -59,7 +54,7 @@ export async function uploadEnrollmentDocument(opts: {
 
   const { error: rowError } = await supabase.from("enrollment_documents").insert({
     enrollment_id: opts.enrollmentId,
-    doc_type: opts.docType,
+    doc_type: docType,
     storage_path: path,
     file_name: opts.file.name,
     size_bytes: opts.file.size,

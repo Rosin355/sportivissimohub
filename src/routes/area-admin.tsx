@@ -45,6 +45,7 @@ import { estimateForEnrollment } from "@/lib/enrollments/pricing";
 import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/catalog";
 import type { PaymentStatus } from "@/lib/supabase/types";
+import { docTypeLabel } from "@/lib/enrollments/doc-types";
 
 export const Route = createFileRoute("/area-admin")({
   beforeLoad: ({ context, location }) => ({
@@ -673,7 +674,7 @@ function AdminDocumentRow({
     setBusy(true);
     try {
       await setDocumentStatus(doc.id, "verificato");
-      toast.success(`${doc.type} verificato.`);
+      toast.success(`${docTypeLabel(doc.type)} verificato.`);
       onUpdate();
     } catch (e) {
       toast.error((e as Error).message);
@@ -691,7 +692,7 @@ function AdminDocumentRow({
     setBusy(true);
     try {
       await setDocumentStatus(doc.id, "rifiutato", reason.trim());
-      toast.success(`${doc.type} rifiutato.`);
+      toast.success(`${docTypeLabel(doc.type)} rifiutato.`);
       setRejecting(false);
       setReason("");
       onUpdate();
@@ -706,7 +707,7 @@ function AdminDocumentRow({
     <div className="rounded-xl border border-border bg-white p-3">
       <div className="flex items-center gap-2 text-sm flex-wrap">
         <FileText className="w-4 h-4 text-magic shrink-0" />
-        <span className="text-muted-foreground">{doc.type}:</span>
+        <span className="text-muted-foreground">{docTypeLabel(doc.type)}:</span>
         <button onClick={download} className="font-semibold underline hover:text-primary">
           {doc.fileName}
         </button>

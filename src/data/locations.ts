@@ -1,5 +1,6 @@
 import type { LocationStatus, LocationType } from "@/lib/supabase/types";
 import type { LocationInput } from "@/lib/locations/validation";
+import { normalizeDocType } from "@/lib/enrollments/doc-types";
 
 // Modello delle sedi (M10.1: vivono nella tabella `locations` + figlie
 // `location_weeks` e `location_extras`). Qui stanno i tipi usati da pagine,
@@ -235,7 +236,8 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
     activities: row.activities ?? [],
     includedServices: row.included_services ?? [],
     extraServices,
-    requiredDocuments: row.required_documents ?? [],
+    // Codici stabili (le etichette legacy del seed vengono normalizzate qui).
+    requiredDocuments: [...new Set((row.required_documents ?? []).map(normalizeDocType))],
     contacts: { phone: row.contact_phone, email: row.contact_email, manager: row.contact_manager },
     faq: parseFaq(row.faq),
     theme: asTheme(row.theme),

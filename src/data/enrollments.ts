@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Location } from "@/data/locations";
 import { fetchLocations, indexLocations } from "@/lib/locations/queries";
+import { normalizeDocType } from "@/lib/enrollments/doc-types";
 import type {
   ChildSex,
   DocumentStatus,
@@ -268,7 +269,7 @@ export function mapEnrollmentRow(row: EnrollmentJoinedRow, loc: Location | undef
     },
     documents: row.enrollment_documents.map((d) => ({
       id: d.id,
-      type: d.doc_type,
+      type: normalizeDocType(d.doc_type),
       fileName: d.file_name,
       size: d.size_bytes,
       status: d.status,

@@ -131,7 +131,15 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: "no parent email" });
     }
 
-    const message = buildEmail(payload, profile.first_name ?? "");
+    // Nome sede dalla tabella locations (fallback allo slug formattato).
+    const { data: location } = await supabase
+      .from("locations")
+      .select("name")
+      .eq("slug", payload.record.location_slug)
+      .maybeSingle();
+    const sedeNome = location?.name ?? fallbackLocationName(payload.record.location_slug);
+
+    const message = buildEmail(payload, profile.first_name ?? "", sedeNome);
     if (!message) return Response.json({ skipped: true, reason: "no template for event" });
 
     const from = Deno.env.get("EMAIL_FROM") ?? "Sportivissimo <onboarding@resend.dev>";

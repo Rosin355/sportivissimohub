@@ -15,6 +15,13 @@
       "when": 1788516346609,
       "tag": "0001_grant_locations_read",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788518153271,
+      "tag": "0002_m10_location_logos_storage",
+      "breakpoints": true
     }
   ]
 }

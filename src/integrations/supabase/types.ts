@@ -297,6 +297,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "enrollments_location_slug_fkey"
+            columns: ["location_slug"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["slug"]
+          },
+          {
             foreignKeyName: "enrollments_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -304,6 +311,178 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      location_extras: {
+        Row: {
+          code: string
+          id: string
+          label: string
+          location_id: string
+          price: number
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          id?: string
+          label: string
+          location_id: string
+          price?: number
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          id?: string
+          label?: string
+          location_id?: string
+          price?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_extras_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_weeks: {
+        Row: {
+          code: string
+          end_date: string | null
+          id: string
+          label: string
+          location_id: string
+          number: number
+          spots: number
+          start_date: string | null
+        }
+        Insert: {
+          code: string
+          end_date?: string | null
+          id?: string
+          label: string
+          location_id: string
+          number: number
+          spots?: number
+          start_date?: string | null
+        }
+        Update: {
+          code?: string
+          end_date?: string | null
+          id?: string
+          label?: string
+          location_id?: string
+          number?: number
+          spots?: number
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_weeks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          activities: string[]
+          address: string
+          admin_notes: string
+          age_label: string
+          age_max: number
+          age_min: number
+          badges: Json
+          comune: string
+          contact_email: string
+          contact_manager: string
+          contact_phone: string
+          created_at: string
+          day_plan: Json
+          description: string
+          faq: Json
+          id: string
+          included_services: string[]
+          logo_path: string | null
+          name: string
+          pricing: Json
+          required_documents: string[]
+          slug: string
+          sort_order: number
+          status: Database["public"]["Enums"]["location_status"]
+          tagline: string
+          theme: string
+          time_slots: string[]
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at: string
+        }
+        Insert: {
+          activities?: string[]
+          address?: string
+          admin_notes?: string
+          age_label?: string
+          age_max?: number
+          age_min?: number
+          badges?: Json
+          comune?: string
+          contact_email?: string
+          contact_manager?: string
+          contact_phone?: string
+          created_at?: string
+          day_plan?: Json
+          description?: string
+          faq?: Json
+          id?: string
+          included_services?: string[]
+          logo_path?: string | null
+          name: string
+          pricing?: Json
+          required_documents?: string[]
+          slug: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["location_status"]
+          tagline?: string
+          theme?: string
+          time_slots?: string[]
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Update: {
+          activities?: string[]
+          address?: string
+          admin_notes?: string
+          age_label?: string
+          age_max?: number
+          age_min?: number
+          badges?: Json
+          comune?: string
+          contact_email?: string
+          contact_manager?: string
+          contact_phone?: string
+          created_at?: string
+          day_plan?: Json
+          description?: string
+          faq?: Json
+          id?: string
+          included_services?: string[]
+          logo_path?: string | null
+          name?: string
+          pricing?: Json
+          required_documents?: string[]
+          slug?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["location_status"]
+          tagline?: string
+          theme?: string
+          time_slots?: string[]
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       pickup_delegates: {
         Row: {
@@ -409,6 +588,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      location_week_occupancy: {
+        Args: never
+        Returns: {
+          confirmed: number
+          location_slug: string
+          week_code: string
+        }[]
+      }
     }
     Enums: {
       app_role: "genitore" | "staff" | "admin"
@@ -422,6 +609,12 @@ export type Database = {
         | "confermata"
         | "lista-attesa"
         | "annullata"
+      location_status: "bozza" | "pubblicata"
+      location_type:
+        | "centro_estivo"
+        | "doposcuola"
+        | "corso"
+        | "progetto_scuola"
       tessera_tipo: "base" | "super_integrativa"
     }
     CompositeTypes: {
@@ -438,12 +631,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -467,11 +660,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -492,11 +685,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -517,11 +710,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -534,11 +727,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -561,6 +754,13 @@ export const Constants = {
         "confermata",
         "lista-attesa",
         "annullata",
+      ],
+      location_status: ["bozza", "pubblicata"],
+      location_type: [
+        "centro_estivo",
+        "doposcuola",
+        "corso",
+        "progetto_scuola",
       ],
       tessera_tipo: ["base", "super_integrativa"],
     },

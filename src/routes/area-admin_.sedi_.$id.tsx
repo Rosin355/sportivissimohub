@@ -30,6 +30,7 @@ import {
 } from "@/lib/locations/validation";
 import { removeLocationLogo, signLogoUrl, uploadLocationLogo } from "@/lib/locations/logo";
 import { REQUIRED_DOC_TYPE_OPTIONS, docTypeLabel } from "@/lib/enrollments/doc-types";
+import { LocationDocumentsAdmin } from "@/components/site/LocationDocumentsAdmin";
 import { ArrowLeft, Plus, Trash2, Save, Upload, ExternalLink } from "lucide-react";
 
 // Editor sede (admin): crea/modifica, bozza/pubblica, settimane, extra,
@@ -312,6 +313,19 @@ function LocationEditor({ initial }: { initial: Location | null }) {
                 )}
               </div>
             </div>
+          </Section>
+
+          <Section
+            title="Documenti della sede"
+            subtitle="Regolamento, moduli vuoti, informative e template PDF per l'overlay. Solo i documenti pubblici compaiono nella pagina della sede e nel wizard; i template restano interni."
+          >
+            {initial ? (
+              <LocationDocumentsAdmin location={initial} />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Salva la sede una prima volta per poter caricare documenti.
+              </p>
+            )}
           </Section>
 
           <Section title="Contatti">

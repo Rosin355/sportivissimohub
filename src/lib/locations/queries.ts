@@ -11,7 +11,8 @@ export const LOCATION_SELECT = `
   logo_path, pricing, time_slots, activities, included_services, required_documents,
   badges, day_plan, faq, admin_notes, sort_order, created_at, updated_at,
   location_weeks ( id, code, number, label, start_date, end_date, spots ),
-  location_extras ( id, code, label, price, sort_order )
+  location_extras ( id, code, label, price, sort_order ),
+  location_documents ( id, location_id, category, title, file_name, size_bytes, mime_type, is_public, sort_order, created_at )
 `;
 
 type Client = SupabaseClient<Database>;

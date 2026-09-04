@@ -30,7 +30,8 @@ import {
 } from "@/lib/enrollments/draft-files";
 import { getEnrollments } from "@/data/enrollments";
 import { toast } from "sonner";
-import type { Location } from "@/data/locations";
+import { publicLocationDocuments, type Location } from "@/data/locations";
+import { LocationDocumentsList } from "@/components/site/LocationDocumentsList";
 import { WizardProgress } from "@/components/site/WizardProgress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -363,6 +364,7 @@ export function EnrollmentWizard({ location }: { location: Location }) {
           <StepDocuments
             state={state}
             setState={setState}
+            location={location}
             slug={location.slug}
             docTypes={docTypes}
             files={docFilesRef.current}
@@ -1209,6 +1211,7 @@ function ConsentRow({
 function StepDocuments({
   state,
   setState,
+  location,
   slug,
   docTypes,
   files,
@@ -1217,6 +1220,7 @@ function StepDocuments({
 }: {
   state: WizardState;
   setState: SetState;
+  location: Location;
   slug: string;
   docTypes: string[];
   files: Map<string, File>;
@@ -1246,6 +1250,7 @@ function StepDocuments({
     onFilesChange();
   };
   const missing = state.documents.filter((d) => !files.has(d.type));
+  const locationDocs = publicLocationDocuments(location);
 
   return (
     <div>
@@ -1335,6 +1340,16 @@ function StepDocuments({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {locationDocs.length > 0 && (
+        <div className="mt-8 rounded-2xl border border-border bg-secondary/40 p-4">
+          <LocationDocumentsList
+            documents={locationDocs}
+            title="Documenti della sede da consultare"
+            subtitle="Regolamento, moduli e informative: leggili prima di inviare l'iscrizione."
+          />
         </div>
       )}
     </div>

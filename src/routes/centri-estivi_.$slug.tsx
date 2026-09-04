@@ -3,7 +3,13 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { LevelStep } from "@/components/site/LevelStep";
-import { locationCapacity, weekAvailable, type Location } from "@/data/locations";
+import {
+  locationCapacity,
+  publicLocationDocuments,
+  weekAvailable,
+  type Location,
+} from "@/data/locations";
+import { LocationDocumentsList } from "@/components/site/LocationDocumentsList";
 import { getLocation } from "@/lib/locations/server-fns";
 import { docTypeLabel } from "@/lib/enrollments/doc-types";
 import {
@@ -379,6 +385,32 @@ function LocationDetailPage() {
             </ul>
           </div>
         </section>
+
+        {/* Documenti utili (solo pubblici; niente sezione se non ce ne sono) */}
+        {publicLocationDocuments(loc).length > 0 && (
+          <section className="container mx-auto px-4 py-6">
+            <div className="rounded-2xl bg-white border border-border shadow-pop p-6">
+              <LocationDocumentsList
+                documents={publicLocationDocuments(loc)}
+                title="Documenti utili"
+                subtitle="Regolamento, moduli e informative della sede da scaricare."
+              />
+            </div>
+          </section>
+        )}
+
+        {/* Documenti utili: solo pubblici; nessuna sezione se non ce ne sono */}
+        {publicLocationDocuments(loc).length > 0 && (
+          <section className="container mx-auto px-4 py-6">
+            <div className="rounded-2xl bg-white border border-border shadow-pop p-6">
+              <LocationDocumentsList
+                documents={publicLocationDocuments(loc)}
+                title="Documenti utili"
+                subtitle="Regolamento, moduli e informative della sede da scaricare."
+              />
+            </div>
+          </section>
+        )}
 
         {/* FAQ */}
         <section className="container mx-auto px-4 py-10">

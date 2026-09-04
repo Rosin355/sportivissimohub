@@ -1,4 +1,4 @@
-import type { LocationStatus, LocationType } from "@/lib/supabase/types";
+import type { LocationDocumentCategory, LocationStatus, LocationType } from "@/lib/supabase/types";
 import type { LocationInput } from "@/lib/locations/validation";
 import { normalizeDocType } from "@/lib/enrollments/doc-types";
 
@@ -46,6 +46,36 @@ export type LocationPricing = {
 
 export type LocationExtra = { id: string; label: string; price: number };
 
+// Documento della sede (M10.2): regolamenti, moduli vuoti, informative e
+// template PDF per l'overlay. Il percorso nello storage non viaggia verso il
+// client: i download passano sempre dalla server function.
+export type LocationDocument = {
+  id: string;
+  locationId: string;
+  category: LocationDocumentCategory;
+  title: string;
+  fileName: string;
+  sizeBytes: number;
+  mimeType: string;
+  isPublic: boolean;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export const LOCATION_DOCUMENT_CATEGORIES: LocationDocumentCategory[] = [
+  "regolamento",
+  "modulo",
+  "informativa",
+  "template_overlay",
+];
+
+export const LOCATION_DOCUMENT_CATEGORY_LABELS: Record<LocationDocumentCategory, string> = {
+  regolamento: "Regolamento",
+  modulo: "Modulo",
+  informativa: "Informativa",
+  template_overlay: "Template PDF (uso interno)",
+};
+
 export type Location = {
   id: string;
   slug: string;
@@ -77,6 +107,9 @@ export type Location = {
   logoUrl: string | null;
   adminNotes: string;
   sortOrder: number;
+  // Solo le righe visibili al chiamante (RLS): il pubblico vede i documenti
+  // pubblici delle sedi pubblicate, l'admin tutti.
+  documents: LocationDocument[];
 };
 
 /* ---------- riga DB -> Location ---------- */
@@ -126,6 +159,18 @@ export type LocationRow = {
     label: string;
     price: number | string;
     sort_order: number;
+  }>;
+  location_documents?: Array<{
+    id: string;
+    location_id: string;
+    category: LocationDocumentCategory;
+    title: string;
+    file_name: string;
+    size_bytes: number;
+    mime_type: string;
+    is_public: boolean;
+    sort_order: number;
+    created_at: string;
   }>;
 };
 
@@ -212,6 +257,20 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
       spots: w.spots,
       confirmed: occupancy.get(`${row.slug}:${w.code}`) ?? 0,
     }));
+  const documents: LocationDocument[] = [...(row.location_documents ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at))
+    .map((d) => ({
+      id: d.id,
+      locationId: d.location_id,
+      category: d.category,
+      title: d.title,
+      fileName: d.file_name,
+      sizeBytes: d.size_bytes,
+      mimeType: d.mime_type,
+      isPublic: d.is_public,
+      sortOrder: d.sort_order,
+      createdAt: d.created_at,
+    }));
   const extraServices: LocationExtra[] = [...row.location_extras]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((e) => ({ id: e.code, label: e.label, price: num(e.price) }));
@@ -245,7 +304,14 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
     logoUrl: null,
     adminNotes: row.admin_notes,
     sortOrder: row.sort_order,
+    documents,
   };
+}
+
+// Documenti mostrabili al pubblico (pagina sede, wizard): pubblici e mai i
+// template di lavoro, anche quando il chiamante è un admin che vede tutto.
+export function publicLocationDocuments(loc: Location): LocationDocument[] {
+  return loc.documents.filter((d) => d.isPublic && d.category !== "template_overlay");
 }
 
 /* ---------- disponibilità (sempre calcolata dalle iscrizioni confermate) ---------- */

@@ -26,6 +26,12 @@ export type LocationType = "centro_estivo" | "doposcuola" | "corso" | "progetto_
 
 export type LocationStatus = "bozza" | "pubblicata";
 
+export type LocationDocumentCategory =
+  | "regolamento"
+  | "modulo"
+  | "informativa"
+  | "template_overlay";
+
 export type Database = {
   public: {
     Tables: {
@@ -584,6 +590,56 @@ export type Database = {
           },
         ];
       };
+      location_documents: {
+        Row: {
+          id: string;
+          location_id: string;
+          category: LocationDocumentCategory;
+          title: string;
+          storage_path: string;
+          file_name: string;
+          size_bytes: number;
+          mime_type: string;
+          is_public: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          category: LocationDocumentCategory;
+          title: string;
+          storage_path: string;
+          file_name: string;
+          size_bytes: number;
+          mime_type: string;
+          is_public?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          category?: LocationDocumentCategory;
+          title?: string;
+          storage_path?: string;
+          file_name?: string;
+          size_bytes?: number;
+          mime_type?: string;
+          is_public?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "location_documents_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -604,6 +660,7 @@ export type Database = {
       tessera_tipo: TesseraTipo;
       location_type: LocationType;
       location_status: LocationStatus;
+      location_document_category: LocationDocumentCategory;
     };
     CompositeTypes: Record<string, never>;
   };

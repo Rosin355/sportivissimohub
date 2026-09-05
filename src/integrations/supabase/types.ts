@@ -312,6 +312,56 @@ export type Database = {
           },
         ]
       }
+      location_documents: {
+        Row: {
+          category: Database["public"]["Enums"]["location_document_category"]
+          created_at: string
+          file_name: string
+          id: string
+          is_public: boolean
+          location_id: string
+          mime_type: string
+          size_bytes: number
+          sort_order: number
+          storage_path: string
+          title: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["location_document_category"]
+          created_at?: string
+          file_name: string
+          id?: string
+          is_public?: boolean
+          location_id: string
+          mime_type: string
+          size_bytes: number
+          sort_order?: number
+          storage_path: string
+          title: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["location_document_category"]
+          created_at?: string
+          file_name?: string
+          id?: string
+          is_public?: boolean
+          location_id?: string
+          mime_type?: string
+          size_bytes?: number
+          sort_order?: number
+          storage_path?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_documents_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location_extras: {
         Row: {
           code: string
@@ -609,6 +659,11 @@ export type Database = {
         | "confermata"
         | "lista-attesa"
         | "annullata"
+      location_document_category:
+        | "regolamento"
+        | "modulo"
+        | "informativa"
+        | "template_overlay"
       location_status: "bozza" | "pubblicata"
       location_type:
         | "centro_estivo"
@@ -754,6 +809,12 @@ export const Constants = {
         "confermata",
         "lista-attesa",
         "annullata",
+      ],
+      location_document_category: [
+        "regolamento",
+        "modulo",
+        "informativa",
+        "template_overlay",
       ],
       location_status: ["bozza", "pubblicata"],
       location_type: [

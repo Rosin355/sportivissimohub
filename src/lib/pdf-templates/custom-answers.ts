@@ -31,7 +31,7 @@ export async function appendCustomAnswersPage(
   const rows = customAnswerRows(e, loc);
   if (rows.length === 0) return bytes;
   const appendix = await PdfBuilder.create();
-  appendix.header(
+  await appendix.header(
     "Informazioni aggiuntive richieste dalla sede",
     `Iscrizione ${e.code} — ${e.session.locationName}. Allegato al modulo originale.`,
     ASSOCIAZIONE.denominazione,

@@ -73,6 +73,46 @@ export const childBaseSchema = z.object({
 
 export const childSchema = childBaseSchema;
 
+// Dialog "Aggiungi figlio" dell'area genitori: anagrafica minima con il
+// toggle per i minori senza codice fiscale italiano (stesse regole del
+// wizard: cittadinanza, nazione di residenza e documento obbligatori).
+export const childDialogSchema = childBaseSchema
+  .omit({ fiscalCode: true })
+  .extend({
+    hasItalianCf: z.boolean(),
+    fiscalCode: z.string().trim(),
+    cittadinanza: z.string().trim(),
+    nazioneResidenza: z.string().trim(),
+    tipoDocumento: z.string().trim(),
+    numeroDocumento: z.string().trim(),
+  })
+  .superRefine((c, ctx) => {
+    if (c.hasItalianCf) {
+      if (!isValidFiscalCode(c.fiscalCode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["fiscalCode"],
+          message: "Codice fiscale del bambino non valido (controlla anche l'ultimo carattere).",
+        });
+      }
+      return;
+    }
+    for (const [key, label] of [
+      ["cittadinanza", "la cittadinanza"],
+      ["nazioneResidenza", "la nazione di residenza"],
+      ["tipoDocumento", "il tipo di documento"],
+      ["numeroDocumento", "il numero del documento"],
+    ] as const) {
+      if (!c[key]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `Per un bambino senza codice fiscale italiano indica ${label}.`,
+        });
+      }
+    }
+  });
+
 // Schema completo del figlio per il wizard: anagrafica estesa e supporto ai
 // minori senza codice fiscale italiano.
 export const childFullSchema = childBaseSchema

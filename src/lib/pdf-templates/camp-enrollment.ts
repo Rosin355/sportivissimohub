@@ -4,6 +4,7 @@ import { PdfBuilder, BLANK } from "./layout";
 import { ASSOCIAZIONE } from "./config";
 import type { PdfBuildContext } from "./index";
 import { customAnswerRows, writeCustomAnswersSection } from "./custom-answers";
+import { loadSportivissimoLogo } from "./assets";
 
 // Modulo di iscrizione al centro estivo, precompilato con i dati del wizard.
 export async function buildCampEnrollmentPdf(
@@ -13,10 +14,16 @@ export async function buildCampEnrollmentPdf(
   const pdf = await PdfBuilder.create();
   const estimate = estimateForEnrollment(e, ctx.location);
 
-  pdf.header(
+  // Intestazione: logo Sportivissimo + logo del comune (se caricato) + sede.
+  await pdf.header(
     `Modulo di iscrizione — Centro estivo ${e.session.locationName}`,
     `Iscrizione ${e.code} del ${new Date(e.createdAt).toLocaleDateString("it-IT")} — stato: ${e.status}.`,
     ASSOCIAZIONE.denominazione,
+    {
+      locationName: e.session.locationName,
+      leftLogo: { bytes: loadSportivissimoLogo(), mime: "image/png" },
+      rightLogo: ctx.comuneLogo,
+    },
   );
 
   pdf.section("Dati del bambino/a");

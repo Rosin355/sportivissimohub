@@ -388,6 +388,11 @@ export type NewChildInput = Pick<
   | "allergies"
   | "medicalNotes"
   | "specialNeeds"
+  | "hasItalianCf"
+  | "cittadinanza"
+  | "nazioneResidenza"
+  | "tipoDocumento"
+  | "numeroDocumento"
 >;
 
 // I campi anagrafici estesi (sesso, luogo di nascita, ecc.) vengono completati
@@ -401,14 +406,26 @@ export async function addChild(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Devi accedere per aggiungere un figlio." };
 
-  const fiscalCode = input.fiscalCode.toUpperCase();
-  const { data: existing } = await supabase
-    .from("children")
-    .select("id")
-    .eq("fiscal_code", fiscalCode)
-    .maybeSingle();
+  // Minori senza CF italiano (stesse regole del wizard e del vincolo DB
+  // children_cf_or_foreign): CF nullo + cittadinanza, nazione di residenza e
+  // documento; il duplicato si cerca per nome, cognome e data di nascita.
+  const fiscalCode = input.hasItalianCf ? input.fiscalCode.trim().toUpperCase() : null;
+  const lookup = supabase.from("children").select("id").eq("parent_id", user.id);
+  const { data: existing } = await (
+    fiscalCode
+      ? lookup.eq("fiscal_code", fiscalCode)
+      : lookup
+          .eq("first_name", input.firstName)
+          .eq("last_name", input.lastName)
+          .eq("birth_date", input.birthDate)
+  ).maybeSingle();
   if (existing) {
-    return { ok: false, error: "C'è già un figlio registrato con questo codice fiscale." };
+    return {
+      ok: false,
+      error: fiscalCode
+        ? "C'è già un figlio registrato con questo codice fiscale."
+        : "C'è già un figlio registrato con questo nome e data di nascita.",
+    };
   }
 
   const { error } = await supabase.from("children").insert({
@@ -417,6 +434,11 @@ export async function addChild(
     last_name: input.lastName,
     birth_date: input.birthDate,
     fiscal_code: fiscalCode,
+    has_italian_cf: input.hasItalianCf,
+    cittadinanza: input.hasItalianCf ? null : input.cittadinanza,
+    nazione_residenza: input.hasItalianCf ? null : input.nazioneResidenza,
+    tipo_documento: input.hasItalianCf ? null : input.tipoDocumento,
+    numero_documento: input.hasItalianCf ? null : input.numeroDocumento,
     school: input.school,
     grade: input.grade,
     allergies: input.allergies,

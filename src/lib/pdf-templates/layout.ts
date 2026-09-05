@@ -1,5 +1,5 @@
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { sanitizePdfText as sanitize } from "./text";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { sanitizePdfText as sanitize } from "./text.ts";
 
 // Impaginatore minimale per moduli A4: titoli, sezioni, righe etichetta/valore,
 // caselle di consenso e righe firma. I font Standard usano WinAnsi: il testo
@@ -13,6 +13,18 @@ const LINE = rgb(0.8, 0.82, 0.86);
 const ACCENT = rgb(0.97, 0.45, 0.09);
 
 export const BLANK = "____________________";
+
+// Immagine per l'intestazione: pdf-lib incorpora solo PNG e JPEG.
+export type LogoImage = { bytes: Uint8Array; mime: "image/png" | "image/jpeg" };
+
+export type HeaderOptions = {
+  locationName?: string; // "Sede: …" sotto la riga dell'associazione
+  leftLogo?: LogoImage | null; // logo Sportivissimo
+  rightLogo?: LogoImage | null; // logo del comune della sede
+};
+
+const LOGO_HEIGHT = 42;
+const LOGO_MAX_WIDTH = 120;
 
 export class PdfBuilder {
   private doc: PDFDocument;
@@ -60,15 +72,66 @@ export class PdfBuilder {
     return lines.length > 0 ? lines : [""];
   }
 
-  header(title: string, subtitle: string, orgLine: string) {
-    this.page.drawText(sanitize(orgLine), {
-      x: MARGIN,
-      y: this.y - 12,
-      size: 13,
+  private async embedLogo(logo: LogoImage | null | undefined): Promise<PDFImage | null> {
+    if (!logo) return null;
+    try {
+      return logo.mime === "image/png"
+        ? await this.doc.embedPng(logo.bytes)
+        : await this.doc.embedJpg(logo.bytes);
+    } catch (e) {
+      console.error("Logo PDF non incorporabile:", e);
+      return null;
+    }
+  }
+
+  private drawLogo(img: PDFImage, x: number, top: number, alignRight = false): number {
+    const scale = Math.min(LOGO_HEIGHT / img.height, LOGO_MAX_WIDTH / img.width);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    this.page.drawImage(img, { x: alignRight ? x - w : x, y: top - h, width: w, height: h });
+    return w;
+  }
+
+  // Intestazione: logo Sportivissimo a sinistra, logo del comune a destra
+  // (se c'è), riga dell'associazione e nome sede, poi titolo e sottotitolo.
+  async header(title: string, subtitle: string, orgLine: string, opts: HeaderOptions = {}) {
+    const left = await this.embedLogo(opts.leftLogo);
+    const right = await this.embedLogo(opts.rightLogo);
+    const top = this.y;
+    let textX = MARGIN;
+    if (left) textX += this.drawLogo(left, MARGIN, top) + 12;
+    const rightWidth = right ? this.drawLogo(right, A4.width - MARGIN, top, true) + 12 : 0;
+    const textMaxWidth = A4.width - MARGIN - textX - rightWidth;
+
+    // La riga dell'associazione non va spezzata: si riduce il corpo finché entra.
+    const org = sanitize(orgLine);
+    let orgSize = 13;
+    while (orgSize > 9 && this.bold.widthOfTextAtSize(org, orgSize) > textMaxWidth) orgSize -= 0.5;
+    this.page.drawText(this.wrap(org, this.bold, orgSize, textMaxWidth)[0], {
+      x: textX,
+      y: top - 14,
+      size: orgSize,
       font: this.bold,
       color: ACCENT,
     });
-    this.y -= 30;
+    if (opts.locationName) {
+      this.page.drawText(this.wrap(`Sede: ${opts.locationName}`, this.font, 10, textMaxWidth)[0], {
+        x: textX,
+        y: top - 29,
+        size: 10,
+        font: this.font,
+        color: MUTED,
+      });
+    }
+    const block = Math.max(left || right ? LOGO_HEIGHT : 0, opts.locationName ? 34 : 18);
+    this.y = top - block - 8;
+    this.page.drawLine({
+      start: { x: MARGIN, y: this.y },
+      end: { x: A4.width - MARGIN, y: this.y },
+      thickness: 0.8,
+      color: LINE,
+    });
+    this.y -= 10;
     for (const line of this.wrap(title, this.bold, 16, A4.width - MARGIN * 2)) {
       this.page.drawText(line, {
         x: MARGIN,

@@ -36,6 +36,7 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 - Campi personalizzati per sede (M10.3) in `location_custom_fields`, risposte in `enrollments.custom_answers`; schema zod dinamica e limiti espliciti in `src/lib/enrollments/custom-fields.ts` (nessun effetto su prezzi/posti/logica, risposte raccolte mai alterate, code immutabile, campi si disattivano e non si eliminano).
 - Documenti della sede (M10.2) in `location_documents` + bucket privato `location-documents`: download solo via `getLocationDocumentUrl` (`src/lib/locations/documents-fns.ts`) con la sessione corrente; le policy storage ammettono la lettura pubblica solo dei file con riga pubblica di sede pubblicata; la categoria `template_overlay` non è mai pubblica. Nessuna service key.
 - CF sodalizio per i PDF in `src/lib/pdf-templates/config.ts`: 91018400282 (dal modulo ACSI ufficiale).
+- I PDF puliti hanno l'intestazione con logo Sportivissimo (`assets/pdf-templates/logo-sportivissimo.png`, sostituibile con un file migliore a parità di nome) e logo del comune dal bucket `location-logos` (solo PNG/JPG).
 - I moduli cartacei originali sono digitalizzati solo per Galzignano (`ORIGINAL_FORM_SLUGS` in `catalog.ts`); la pagina ACSI del tesseramento minore è uguale per tutte le sedi.
 
 ## Documenti di riferimento

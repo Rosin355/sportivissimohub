@@ -12,8 +12,11 @@ export type { PdfTemplateKey } from "./catalog";
 // Due famiglie: PDF puliti generati da zero (layout.ts) e overlay sui moduli
 // cartacei originali (overlay/). I metadati (etichette, nomi file,
 // disponibilità per sede) stanno in catalog.ts, importabile dal client.
-// Contesto passato ai builder: la sede dell'iscrizione (dal DB).
-export type PdfBuildContext = { location: Location | null };
+import type { LogoImage } from "./layout";
+
+// Contesto passato ai builder: la sede dell'iscrizione (dal DB) e il logo del
+// comune scaricato dal bucket location-logos (null se assente o non PNG/JPEG).
+export type PdfBuildContext = { location: Location | null; comuneLogo: LogoImage | null };
 
 export const PDF_TEMPLATES: Record<
   PdfTemplateKey,

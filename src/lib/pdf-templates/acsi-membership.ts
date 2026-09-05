@@ -1,6 +1,8 @@
 import type { Enrollment, GuardianData } from "@/data/enrollments";
 import { PdfBuilder, BLANK } from "./layout";
 import { ASSOCIAZIONE } from "./config";
+import type { PdfBuildContext } from "./index";
+import { loadSportivissimoLogo } from "./assets";
 
 function guardianBlock(pdf: PdfBuilder, title: string, g: GuardianData | null) {
   pdf.section(title);
@@ -15,13 +17,21 @@ function guardianBlock(pdf: PdfBuilder, title: string, g: GuardianData | null) {
 
 // Modulo di tesseramento ACSI per conto di minore. Per iscrizioni precedenti
 // alla M9.1 i campi mancanti restano in bianco, da completare a mano.
-export async function buildAcsiMembershipPdf(e: Enrollment): Promise<Uint8Array> {
+export async function buildAcsiMembershipPdf(
+  e: Enrollment,
+  ctx: PdfBuildContext,
+): Promise<Uint8Array> {
   const pdf = await PdfBuilder.create();
 
-  pdf.header(
+  await pdf.header(
     "Modulo di tesseramento ACSI per conto di minore",
     `Sodalizio: ${ASSOCIAZIONE.denominazione} — C.F. ${ASSOCIAZIONE.codiceFiscale} — ${ASSOCIAZIONE.enteAffiliazione}. Iscrizione ${e.code}.`,
     ASSOCIAZIONE.denominazione,
+    {
+      locationName: e.session.locationName,
+      leftLogo: { bytes: loadSportivissimoLogo(), mime: "image/png" },
+      rightLogo: ctx.comuneLogo,
+    },
   );
 
   guardianBlock(pdf, "Genitore / tutore 1 (richiedente)", e.guardian);

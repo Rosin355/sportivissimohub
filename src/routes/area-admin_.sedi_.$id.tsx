@@ -304,7 +304,8 @@ function LocationEditor({ initial }: { initial: Location | null }) {
                       </button>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      PNG, JPG, SVG o WebP, max 2 MB. Mostrato nella pagina pubblica della sede.
+                      PNG, JPG, SVG o WebP, max 2 MB. Mostrato nella pagina pubblica della sede;
+                      nell'intestazione dei PDF solo se PNG o JPG.
                     </p>
                   </>
                 ) : (

@@ -56,7 +56,7 @@ import {
   requiredDocTypesForLocation,
 } from "@/lib/enrollments/documents";
 import { getDocumentDownloadUrl } from "@/lib/enrollments/server-fns";
-import { childSchema } from "@/lib/enrollments/validation";
+import { childDialogSchema } from "@/lib/enrollments/validation";
 import { docTypeLabel } from "@/lib/enrollments/doc-types";
 import { answersForDisplay } from "@/lib/enrollments/custom-fields";
 import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
@@ -525,13 +525,18 @@ function AddChildDialog({
   onOpenChange: (o: boolean) => void;
   onSaved: () => void;
 }) {
-  const form = useForm<z.infer<typeof childSchema>>({
-    resolver: zodResolver(childSchema),
+  const form = useForm<z.infer<typeof childDialogSchema>>({
+    resolver: zodResolver(childDialogSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
       birthDate: "",
+      hasItalianCf: true,
       fiscalCode: "",
+      cittadinanza: "",
+      nazioneResidenza: "",
+      tipoDocumento: "",
+      numeroDocumento: "",
       school: "",
       grade: "",
       allergies: "",
@@ -539,8 +544,9 @@ function AddChildDialog({
       specialNeeds: "",
     },
   });
+  const hasItalianCf = form.watch("hasItalianCf");
 
-  async function onSubmit(values: z.infer<typeof childSchema>) {
+  async function onSubmit(values: z.infer<typeof childDialogSchema>) {
     const res = await addChild(values);
     if (!res.ok) {
       toast.error(res.error);
@@ -604,23 +610,107 @@ function AddChildDialog({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="fiscalCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold">Codice fiscale</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {hasItalianCf ? (
+                <FormField
+                  control={form.control}
+                  name="fiscalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold">Codice fiscale</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="cittadinanza"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold">Cittadinanza</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
+            {/* Minori senza CF italiano: stesse regole del wizard (M9.1). */}
+            <FormField
+              control={form.control}
+              name="hasItalianCf"
+              render={({ field }) => (
+                <FormItem>
+                  <label className="flex items-start gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 rounded border-input"
+                      checked={!field.value}
+                      onChange={(e) => field.onChange(!e.target.checked)}
+                    />
+                    <span>
+                      <span className="font-semibold">
+                        Il bambino non ha il codice fiscale italiano
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        Servono cittadinanza, nazione di residenza e gli estremi di un documento.
+                      </span>
+                    </span>
+                  </label>
+                </FormItem>
+              )}
+            />
+            {!hasItalianCf && (
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="nazioneResidenza"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel className="font-semibold">Nazione di residenza</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tipoDocumento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold">Tipo documento</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Passaporto, carta d'identità…" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="numeroDocumento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold">Numero documento</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}

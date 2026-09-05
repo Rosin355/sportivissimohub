@@ -220,6 +220,7 @@ export type Database = {
           consent_privacy: boolean
           consent_rules: boolean
           created_at: string
+          custom_answers: Json
           extras: string[]
           figlio_ordine: number
           id: string
@@ -247,6 +248,7 @@ export type Database = {
           consent_privacy?: boolean
           consent_rules?: boolean
           created_at?: string
+          custom_answers?: Json
           extras?: string[]
           figlio_ordine?: number
           id?: string
@@ -274,6 +276,7 @@ export type Database = {
           consent_privacy?: boolean
           consent_rules?: boolean
           created_at?: string
+          custom_answers?: Json
           extras?: string[]
           figlio_ordine?: number
           id?: string
@@ -308,6 +311,103 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_custom_fields: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          field_type: Database["public"]["Enums"]["custom_field_type"]
+          id: string
+          label: string
+          location_id: string
+          options: string[]
+          required: boolean
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          field_type: Database["public"]["Enums"]["custom_field_type"]
+          id?: string
+          label: string
+          location_id: string
+          options?: string[]
+          required?: boolean
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          field_type?: Database["public"]["Enums"]["custom_field_type"]
+          id?: string
+          label?: string
+          location_id?: string
+          options?: string[]
+          required?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_custom_fields_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_documents: {
+        Row: {
+          category: Database["public"]["Enums"]["location_document_category"]
+          created_at: string
+          file_name: string
+          id: string
+          is_public: boolean
+          location_id: string
+          mime_type: string
+          size_bytes: number
+          sort_order: number
+          storage_path: string
+          title: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["location_document_category"]
+          created_at?: string
+          file_name: string
+          id?: string
+          is_public?: boolean
+          location_id: string
+          mime_type: string
+          size_bytes: number
+          sort_order?: number
+          storage_path: string
+          title: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["location_document_category"]
+          created_at?: string
+          file_name?: string
+          id?: string
+          is_public?: boolean
+          location_id?: string
+          mime_type?: string
+          size_bytes?: number
+          sort_order?: number
+          storage_path?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_documents_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -600,6 +700,7 @@ export type Database = {
     Enums: {
       app_role: "genitore" | "staff" | "admin"
       child_sex: "M" | "F"
+      custom_field_type: "testo" | "si_no" | "scelta" | "data"
       document_status: "caricato" | "verificato" | "rifiutato"
       enrollment_status:
         | "nuova"
@@ -609,6 +710,11 @@ export type Database = {
         | "confermata"
         | "lista-attesa"
         | "annullata"
+      location_document_category:
+        | "regolamento"
+        | "modulo"
+        | "informativa"
+        | "template_overlay"
       location_status: "bozza" | "pubblicata"
       location_type:
         | "centro_estivo"
@@ -745,6 +851,7 @@ export const Constants = {
     Enums: {
       app_role: ["genitore", "staff", "admin"],
       child_sex: ["M", "F"],
+      custom_field_type: ["testo", "si_no", "scelta", "data"],
       document_status: ["caricato", "verificato", "rifiutato"],
       enrollment_status: [
         "nuova",
@@ -754,6 +861,12 @@ export const Constants = {
         "confermata",
         "lista-attesa",
         "annullata",
+      ],
+      location_document_category: [
+        "regolamento",
+        "modulo",
+        "informativa",
+        "template_overlay",
       ],
       location_status: ["bozza", "pubblicata"],
       location_type: [

@@ -22,6 +22,20 @@
       "when": 1788518153271,
       "tag": "0002_m10_location_logos_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788613186886,
+      "tag": "0003_m10_2_location_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788613206802,
+      "tag": "0004_m10_3_custom_fields",
+      "breakpoints": true
     }
   ]
 }

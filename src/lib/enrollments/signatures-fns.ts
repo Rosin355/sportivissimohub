@@ -102,12 +102,12 @@ export const saveSignature = createServerFn({ method: "POST" })
       return { ok: false, error: "Registrazione della firma non riuscita. Riprova." };
     }
 
-    await supabase.from("audit_log").insert({
-      actor_id: user.id,
-      action: "sign_enrollment",
-      entity: "enrollment",
-      entity_id: enrollment.id,
-      detail: { signature_id: inserted.id, signer_role: data.signerRole, signer_name: signerName },
+    // La voce di audit la scrive la funzione security definer (audit_log è
+    // chiuso ai client): registra solo 'firma_apposta' con i dati della riga
+    // appena inserita, verificati lato database.
+    const { error: auditError } = await supabase.rpc("log_enrollment_signature", {
+      _signature_id: inserted.id,
     });
+    if (auditError) console.error("Audit firma:", auditError.message);
     return { ok: true, id: inserted.id };
   });

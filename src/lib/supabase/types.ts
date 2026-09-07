@@ -749,6 +749,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { location_slug: string; week_code: string; confirmed: number }[];
       };
+      log_enrollment_signature: {
+        Args: { _signature_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: AppRole;

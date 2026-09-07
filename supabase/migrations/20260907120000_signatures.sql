@@ -52,11 +52,64 @@ create policy "admin legge tutte le firme" on public.enrollment_signatures
 -- Su Lovable Cloud i privilegi non arrivano dai default.
 grant select, insert on public.enrollment_signatures to authenticated;
 
--- Il genitore può registrare nel registro delle azioni le PROPRIE azioni
--- (firma): audit_log resta append-only (nessuna policy di update/delete).
-create policy "utente scrive audit log delle proprie azioni" on public.audit_log
-  for insert with check (actor_id = auth.uid());
-grant insert on public.audit_log to authenticated;
+-- ---------------------------------------------------------------------------
+-- Registro delle azioni: audit_log resta CHIUSO ai client (nessuna policy di
+-- insert per i genitori). La voce della firma la scrive questa funzione
+-- security definer, che registra SOLO l'azione 'firma_apposta' con i dati
+-- letti dalla riga di enrollment_signatures (verificata: firma dell'utente
+-- corrente su una propria iscrizione). Idempotente: una voce per firma.
+-- ---------------------------------------------------------------------------
+create or replace function public.log_enrollment_signature(_signature_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  sig record;
+begin
+  if auth.uid() is null then
+    raise exception 'Utente non autenticato';
+  end if;
+
+  select s.id, s.enrollment_id, s.signer_role, s.signer_name, s.signed_documents, s.signed_at
+    into sig
+  from public.enrollment_signatures s
+  join public.enrollments e on e.id = s.enrollment_id
+  where s.id = _signature_id
+    and s.user_id = auth.uid()
+    and e.parent_id = auth.uid();
+  if not found then
+    raise exception 'Firma non trovata o non appartenente all''utente corrente';
+  end if;
+
+  if exists (
+    select 1 from public.audit_log
+    where action = 'firma_apposta'
+      and detail->>'signature_id' = sig.id::text
+  ) then
+    return;
+  end if;
+
+  insert into public.audit_log (actor_id, action, entity, entity_id, detail)
+  values (
+    auth.uid(),
+    'firma_apposta',
+    'enrollment',
+    sig.enrollment_id::text,
+    jsonb_build_object(
+      'signature_id', sig.id,
+      'signer_role', sig.signer_role,
+      'signer_name', sig.signer_name,
+      'signed_documents', to_jsonb(sig.signed_documents),
+      'signed_at', sig.signed_at
+    )
+  );
+end;
+$$;
+
+revoke all on function public.log_enrollment_signature(uuid) from public;
+grant execute on function public.log_enrollment_signature(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Storage: le firme stanno nel bucket "documents" (PNG, cartella "firme").

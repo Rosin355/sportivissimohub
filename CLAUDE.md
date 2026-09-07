@@ -27,7 +27,7 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 - Ruoli in `user_roles` (genitore/staff/admin) con `has_role()` security definer. Mai fidarsi del client.
 - Mai committare chiavi o secrets. Env: nomi variabili allineati a quelli forniti da Lovable Cloud (verificare `.env` nel repo), con fallback e errore esplicito a runtime se mancanti.
 - Il client Supabase browser è un singleton. Nessuna service key nel codice dell'app: l'autorizzazione delle server function è delegata alle RLS con la sessione utente.
-- Genitore non può mai modificare status, payment_status, admin_notes; audit_log append-only per le azioni admin.
+- Genitore non può mai modificare status, payment_status, admin_notes; audit_log append-only e chiuso ai client: le azioni dell'admin le scrive l'app con la sua sessione, quelle del genitore (es. firma) passano da funzioni security definer dedicate che registrano solo l'azione prevista con dati verificati nel database.
 
 ## Vincoli operativi noti
 

@@ -16,12 +16,12 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 - `b55124d` M10.3 domande personalizzate per sede.
 - `a441ec1` M10.4 figli senza CF italiano dall'area genitori, intestazione PDF con loghi.
 - `10ebfa5` documentazione di progetto (`docs/`), piano M11.
-- Firma elettronica semplice (commit successivo a `10ebfa5`, vedi registro): richiede la migrazione qui sotto.
+- Firma elettronica semplice (`9e11de0` + correzione audit nel commit successivo, vedi registro): richiede la migrazione qui sotto.
 
 ## Migrazioni in attesa di applicazione su Lovable
 
 - Nessuna arretrata: M10.1, M10.1b, M10.2 e M10.3 risultano applicate (commit Lovable `eb0b151`, `22acd9c`, `478bc7b`).
-- **Nuova con la firma elettronica:** `supabase/migrations/20260907120000_signatures.sql` (tabella `enrollment_signatures`, RLS, GRANT). Da applicare via prompt su Lovable prima di pubblicare.
+- **Nuova con la firma elettronica:** `supabase/migrations/20260907120000_signatures.sql` (tabella `enrollment_signatures`, RLS, GRANT, funzione security definer `log_enrollment_signature` per la voce di audit; audit_log resta chiuso ai client). Da applicare via prompt su Lovable prima di pubblicare.
 
 ## Task in corso
 

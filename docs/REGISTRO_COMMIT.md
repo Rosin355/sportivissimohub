@@ -30,7 +30,11 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-07 · `……` · Firma — Firma elettronica semplice dei moduli
+### 2026-09-07 · `……` · Firma — Registro delle azioni chiuso ai client
+
+Correzione di sicurezza sulla firma: il registro delle azioni non accetta più scritture dirette dagli account genitore. La voce "firma apposta" viene scritta da una funzione del database che verifica da sola che la firma esista e appartenga a chi la registra, e annota solo quei dati. Nessun cambiamento visibile per chi usa il sito.
+
+### 2026-09-07 · `9e11de0` · Firma — Firma elettronica semplice dei moduli
 
 Dall'area genitori si possono firmare i moduli con il dito o con il mouse, dopo aver visto cosa si firma (moduli e consensi) e spuntato una dichiarazione esplicita. Firmano il titolare dell'account e, se indicato, il secondo genitore, anche in momenti diversi. Ogni firma resta conservata come evidenza (chi, quando, cosa ha dichiarato) e viene inserita nei PDF con data e dicitura "Firmato elettronicamente da … il …"; l'amministrazione vede se i moduli sono firmati. La firma non è obbligatoria per iscriversi.
 

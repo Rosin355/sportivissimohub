@@ -1,0 +1,61 @@
+# MILESTONE 11 — Registro sede (replica digitale del gestionale Excel del cliente)
+
+> **Prerequisito:** M10.1 (sedi nel DB) completata e M10.3 conclusa. Prima di iniziare: `git pull`, leggere `PIANO_LAVORI.md`, confrontare con `git log`. Flusso di lavoro invariato: commit atomici, mai push autonomo, migrazioni segnalate nel riepilogo per applicazione via Lovable (una alla volta).
+
+## Decisioni di prodotto confermate dal cliente
+
+1. **Gita = voce separata**, fuori dal calcolo della quota settimanale: addebito a parte sull'iscrizione (tabella `extra_charges`), coerente con l'impianto dell'Excel. Il saldo diventa `quota + gita − versato`.
+2. **Codici di frequenza e prezzi configurabili per sede** (tabella `location_frequency_codes`), con seed degli 8 codici standard ai prezzi Asigliano come default modificabili. Niente hardcoding. In interfaccia, una breve descrizione spiega all'admin cosa sono i codici di frequenza.
+
+## Contesto
+
+Il cliente gestisce oggi i centri estivi con file Excel (riferimento: `asigliano_2026.xlsx` compilato e template vuoto `ELENCO_CRE_2026.xlsx`). Questa milestone replica quel metodo nel pannello admin, correggendone i difetti noti. Il suo modello:
+
+- **Foglio ISCRIZIONI**: matrice bambini × settimane (9 colonne settimana). In ogni cella un **codice frequenza** che determina il prezzo dalla legenda:
+  - `MC` Mezza primaria convenzione (€30), `IC` Intera primaria convenzione (€60)
+  - `M` Mezza primaria no convenzione (€55), `I` Intera primaria no convenzione (€90)
+  - `AMC`/`AIC` Mezza/Intera asilo convenzione (€30/€60), `AM`/`AI` Mezza/Intera asilo no convenzione (€55/€90)
+  - "Convenzione" = residente/convenzionato col comune (equivale al tier residenti già in `pricing` M9). La legenda codici→prezzi vive in un blocco in fondo al foglio: i prezzi sono di fatto configurabili per sede.
+- **QUOTA** = Σ (COUNTIF settimane per codice × prezzo del codice) + tessera (`TESS`, €10). La **GITA** (col. N, €30-35) è **voce separata, NON entra nella quota**.
+- **Pagamenti**: 8 colonne alternate BON.1-4 / CONT.1-4 (bonifico/contanti, fino a 4 rate per canale), inclusi importi negativi come rimborsi (es. -10 con nota "restituiti soldi"). **SALDO** = quota − rate versate. Il file del cliente ha un bug: la formula SALDO salta le colonne BON.3/CONT.3 — **da correggere, non replicare**.
+- **Riepilogo in fondo al foglio** (righe 78-93): conteggi per settimana per categoria (mezza/intera × primaria/asilo, "TOTALE INTERA (PASTI)" per ordinare i pasti), totali cassa per metodo, spese con data e consegne contanti, saldo cassa residuo.
+- **Foglio PRESENZE**: matrice bambini × giorni (5 gg per blocco settimana, colonna vuota di separazione). Marcature P/A/I/M/pomeriggio (attenzione: nei fogli del cliente "P" è ambiguo tra presente e pomeriggio). In fondo: riga PASTI ORDINATI per giorno + riga "ok" di conferma, righe presenze animatori con gli stessi codici, riga PASTI ANIMATORI.
+
+## Sotto-task
+
+### M11.1 — Schema (una migrazione)
+
+- **`location_frequency_codes`**: location_id (FK), code (es. MC, unique per sede), label, categoria (primaria/asilo), fascia (mezza/intera), convenzione boolean, prezzo numeric, active boolean, sort_order. Seed: gli 8 codici standard con i prezzi Asigliano per ogni sede esistente, modificabili dall'editor. RLS: lettura admin/staff, scrittura solo admin. GRANT come per le altre tabelle (su questo progetto i default non bastano).
+- **`enrollment_week_codes`**: enrollment_id (FK), week_code (coerente con `location_weeks.code`), frequency_code; unique (enrollment_id, week_code). È la "cella" della matrice del cliente: quale codice frequenza ha quel bambino in quella settimana. Popolamento iniziale derivato da `enrollments.week_ids` + residenza + fascia oraria dell'iscrizione, poi modificabile dall'admin (con audit_log).
+- **`extra_charges`**: enrollment_id (FK), tipo (per ora 'gita'), descrizione, importo, created_at. Fuori dalla formula quota.
+- **`payments`**: enrollment_id (FK), importo (negativi ammessi = rimborsi), metodo (bonifico/contanti), data, nota, created_by. Sostituisce le 8 colonne fisse: N rate.
+- **Movimenti di cassa non legati a iscrizioni** (spese, consegne contanti): valutare in implementazione `payments` con enrollment_id null e tipo dedicato, oppure tabella `cash_movements`; documentare la scelta nel riepilogo.
+- **Estensione presenze**: su `attendance` colonna `mark` (enum con valori distinti per presente/assente/intera/mattina/pomeriggio — disambiguare la "P" del cliente pur mostrando in UI le etichette che conosce). Nuove tabelle `staff_attendance` (location_id, staff_name, giorno, mark) e `daily_meals` (location_id, giorno, pasti_bambini calcolato, pasti_staff manuale, stato da_ordinare/ordinato/confermato).
+- Vincoli: quota SEMPRE calcolata server-side (mai fidarsi del client); i genitori non vedono né modificano nulla di questo modulo, salvo i propri pagamenti in sola lettura.
+
+### M11.2 — Griglia iscrizioni (`/area-admin/sedi/$slug/registro`)
+
+- Righe = bambini iscritti alla sede, colonne = settimane della sede. Cella = select dei codici frequenza attivi della sede (+ vuoto). Modifica admin con scrittura su `enrollment_week_codes` e audit_log.
+- Colonne calcolate server-side: QUOTA (Σ settimane×prezzo + tessera), GITA (da extra_charges, separata), VERSATO (Σ payments), SALDO = quota + gita − versato (formula corretta, senza il bug BON3/CONT3). Colonna note.
+- Sotto la griglia, il riepilogo del cliente: per ogni settimana, conteggi per categoria/fascia (mezza/intera × primaria/asilo), totale intera = pasti previsti, totali complessivi. Replica il pannello righe 78-93 del file.
+- Breve testo informativo in testa alla griglia che spiega i codici frequenza e rimanda alla configurazione per sede.
+
+### M11.3 — Pagamenti
+
+- Drawer/dialog per bambino: lista rate (data, metodo, importo, nota), aggiunta/modifica/eliminazione con audit. Importi negativi ammessi con etichetta "rimborso".
+- Vista cassa per sede: totali per metodo, filtro periodo, elenco movimenti, registrazione spese/uscite e consegne contanti.
+- Gita gestita da `extra_charges`: aggiunta/rimozione dall'admin, visibile nella griglia come colonna distinta.
+
+### M11.4 — Presenze giornaliere estese
+
+- Griglia giorno per giorno della settimana corrente (evoluzione della vista staff M8): mark per bambino con i codici configurati, righe staff/animatori, riga pasti (bambini "intera" presenti + pasti staff), pulsante "segna ordinato" → stato daily_meals.
+- Accesso staff limitato alla propria sede (RLS esistente), admin ovunque.
+
+### M11.5 — Export Excel
+
+- Export `.xlsx` per sede che replica **il layout esatto dei fogli del cliente**: foglio ISCRIZIONI (matrice codici, quota, gita, rate, saldo, legenda prezzi in fondo, riepilogo conteggi) e foglio PRESENZE (matrice giorni, pasti, staff). Libreria già presente o `exceljs` (segnalare se serve nuova dipendenza). I valori sono quelli calcolati dal DB (numeri, non formule — il DB è la fonte di verità).
+- Per questo task usare come riferimento di layout il template vuoto `assets/reference/ELENCO_CRE_2026.xlsx` (il file compilato contiene dati personali e NON va committato).
+
+## Regole di consegna
+
+Come da `PIANO_LAVORI.md`: un sotto-task alla volta, `npx tsc --noEmit` + `npm run build` + `npm run lint` a ogni chiusura, riepilogo finale con file modificati, SQL delle migrazioni da applicare su Lovable, caselle spuntate in PIANO_LAVORI.md, regressioni escluse (wizard genitori, aree M5-M8 invariate), prossimo task consigliato. Mai push.

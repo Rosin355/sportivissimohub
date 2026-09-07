@@ -1,6 +1,6 @@
 # Sportivissimo Hub — Piano lavori
 
-Fonte di verità operativa. Claude Code: prima di ogni sessione, confronta questo file con `git log` e aggiorna le caselle dei task man mano che li completi (spuntarli fa parte del task stesso).
+Fonte di verità operativa. Claude Code: prima di ogni sessione, confronta questo file con `git log` e aggiorna le caselle dei task man mano che li completi (spuntarli fa parte del task stesso). Registro per il cliente in `docs/REGISTRO_COMMIT.md`, fotografia dello stato in `docs/STATO_PROGETTO.md`.
 
 ---
 
@@ -24,7 +24,7 @@ Fonte di verità operativa. Claude Code: prima di ogni sessione, confronta quest
 
 ## IN CORSO / DA VERIFICARE A INIZIO SESSIONE
 
-- Nessun task in corso. M10 completata: prossimi i bloccanti pre-lancio.
+- Nessun task in corso. M10 completata e testata. Prossimo: M11 (registro sede) oppure i bloccanti pre-lancio, a scelta del cliente.
 - Da verificare a mano su Lovable: la policy password in Cloud → Users & Auth deve coincidere con `src/lib/auth/password.ts` (8+ caratteri, maiuscola, minuscola, numero).
 
 ## BACKLOG — M10 (prossima milestone grossa, perimetro confermato)
@@ -38,6 +38,20 @@ Obiettivo: l'admin gestisce le sedi in autonomia, senza interventi sul codice.
 - [x] **M10.3 — Campi personalizzati per sede** (2026-09-04). Migrazione `20260904150000_m10_3_custom_fields.sql`: enum `custom_field_type` (testo, si_no, scelta, data), tabella `location_custom_fields` (code slug stabile unico per sede, etichetta, tipo, options, required, sort_order, active) con trigger che blocca il cambio di code/sede/tipo; colonna `enrollments.custom_answers` jsonb (chiave = code); RLS pubblico solo campi attivi di sedi pubblicate, staff lettura, admin scrittura; GRANT. Libreria condivisa `src/lib/enrollments/custom-fields.ts`: schema zod dinamica dalle definizioni (usata nel wizard e nella server function), formattazione, generazione code, limite 15 campi attivi. Editor sede: sezione "Campi personalizzati" (crea, modifica etichetta/opzioni/obbligatorio, riordina, attiva/disattiva; mai eliminazione fisica). Wizard: step "Informazioni richieste dalla sede" tra Deleghe e Documenti, solo se la sede ha campi attivi (step dinamici, nessun buco), rendering per tipo, obbligatorietà, riepilogo, bozze vecchie compatibili. Esposizione: dettaglio iscrizione admin, card nell'area genitori, colonne CSV per campo delle sedi filtrate, appendice "Informazioni aggiuntive richieste dalla sede" nel PDF pulito e come pagina in coda al modulo originale. Limiti documentati nel codice: nessun effetto su prezzi, posti o logica; modificare/disattivare un campo non tocca le risposte raccolte.
 - [x] **M10.4 — Rifiniture collegate** (2026-09-05). Dialog "Aggiungi figlio": toggle "senza codice fiscale italiano" con cittadinanza, nazione di residenza e documento (stesse regole del wizard, `childDialogSchema`; duplicato cercato per nome+data di nascita; insert coerente col vincolo `children_cf_or_foreign`). PDF puliti (iscrizione e tesseramento ACSI): intestazione con logo Sportivissimo (`assets/pdf-templates/logo-sportivissimo.png`, ricavato dal modulo ufficiale, incorporato via `?inline`), logo del comune scaricato dal bucket `location-logos` con la sessione corrente (solo PNG/JPG: pdf-lib non incorpora SVG/WebP; se manca resta solo Sportivissimo) e riga "Sede: …". `PdfBuilder.header` è ora asincrono. Nessuna migrazione.
 
+## MILESTONE 11 — Registro sede
+
+Specifica completa in `docs/MILESTONE_11.md`. Prerequisiti già soddisfatti (M10.1 e M10.3 complete). Decisioni di prodotto confermate: gita come voce separata fuori dal calcolo quota; codici di frequenza e prezzi configurabili per sede con breve descrizione in interfaccia.
+
+- [ ] M11.1 — Schema (una migrazione): codici di frequenza per sede, celle bambino×settimana, addebiti extra (gita), pagamenti a N rate, presenze estese, pasti giornalieri.
+- [ ] M11.2 — Griglia iscrizioni per sede con quota, gita, versato, saldo e riepilogo conteggi.
+- [ ] M11.3 — Pagamenti e cassa per sede.
+- [ ] M11.4 — Presenze giornaliere estese (bambini, staff, pasti).
+- [ ] M11.5 — Export Excel col layout dei fogli del cliente.
+
+## MILESTONE — Firma elettronica semplice
+
+- [ ] Firma dei moduli dall'area genitori (canvas touch/mouse, dichiarazione esplicita, due firmatari), evidenze in `enrollment_signatures` + PNG nel bucket privato, firma inserita nei PDF puliti e overlay, indicatore e download nell'admin. Firma non obbligatoria; wizard invariato.
+
 ## BACKLOG — Pre-lancio (bloccanti prima delle famiglie vere)
 
 - [ ] Privacy policy e cookie policy reali (dati di minori: prerequisito legale, non rifinitura) + pagina informativa trattamento dati linkata nel wizard.
@@ -45,7 +59,7 @@ Obiettivo: l'admin gestisce le sedi in autonomia, senza interventi sul codice.
 - [x] CF del sodalizio in `pdf-templates/config.ts` (91018400282, dal modulo ACSI ufficiale).
 - [ ] Verifica backup database (piano Supabase/Lovable Cloud) prima dei dati reali.
 - [ ] Attivazione email transazionali (manuale, su Lovable): 1. Cloud → Emails → Get started: dominio dell'associazione (DNS fino a 48h) + template auth in italiano brandizzati; 2. a dominio verificato, prompt a Lovable per sostituire la funzione Resend mai attivata con tre app email Lovable Emails (conferma iscrizione, cambio stato, sollecito documenti) + trigger su enrollments (unica migrazione autorizzata); 3. un solo test end-to-end, niente batch: il dominio nuovo si sta costruendo la reputazione. Il prompt dettagliato per il punto 2 è in chat con Claude (sessione Sportivissimo).
-- [ ] Giro completo dei test end-to-end (piano in chat: 8 test, con test RLS a due account).
+- [x] Giro di test end-to-end della M10 completato (2026-09-04/05) con le correzioni in `68967d2`. Da ripetere dopo il publish con M10.2–M10.4 e firma elettronica (8 test, RLS a due account).
 
 ## BACKLOG — Rifiniture (post-lancio ok)
 

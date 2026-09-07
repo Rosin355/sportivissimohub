@@ -17,8 +17,9 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 2. Ogni push su `main` rideploya la preview Lovable. Il live si aggiorna solo col publish manuale.
 3. **Le migrazioni NON si applicano da sole col push**: vanno applicate via prompt in Lovable (contenuto SQL nel blocco di revisione, una alla volta, senza creare migrazioni autonome). Se un task crea una migrazione, segnalarlo esplicitamente nel riepilogo finale.
 4. Le edge functions e i template email sono gestiti da Lovable Emails: non crearne di nuovi senza istruzione esplicita.
-5. Prima di iniziare qualsiasi sessione: `git pull` (Lovable può aver committato), poi leggere `PIANO_LAVORI.md` e confrontare con `git log` per capire cosa è già fatto. **Mai rifare lavori già completati.**
+5. Prima di iniziare qualsiasi sessione: `git pull` (Lovable può aver committato), poi leggere `docs/PIANO_LAVORI.md` e `docs/STATO_PROGETTO.md` e confrontare con `git log` per capire cosa è già fatto. **Mai rifare lavori già completati.**
 6. A fine task: `npx tsc --noEmit`, `npm run build`, `npm run lint` (6 warning react-refresh nei componenti shadcn/ui sono noti e innocui), riepilogo di file modificati, controlli, regressioni escluse, task residui.
+7. **Documentazione automatica (parte di ogni task):** ogni commit di sviluppo aggiunge la propria voce a `docs/REGISTRO_COMMIT.md` nello stesso commit; a fine sessione si aggiorna `docs/STATO_PROGETTO.md`; le caselle di `docs/PIANO_LAVORI.md` si spuntano come già previsto. La documentazione non è un task separato: un commit senza la sua voce di registro è un commit incompleto.
 
 ## Regole di sicurezza (non negoziabili)
 
@@ -41,6 +42,11 @@ Piattaforma per centri estivi, doposcuola, progetti scolastici e corsi dell'Asso
 
 ## Documenti di riferimento
 
-- `PIANO_LAVORI.md` — stato lavori, task completati, backlog e specifica M10. **Fonte di verità operativa.**
-- `SPORTIVISSIMO_PRD.md` — requisiti di design e contenuti delle pagine pubbliche (nota: descrive il redesign UI; lo stato reale del backend è in PIANO_LAVORI.md).
-- `MILESTONE_9.md` — specifica storica della M9 (completata; non presente nel repo).
+Tutti in `docs/` (CLAUDE.md resta nella root perché Claude Code lo legge da lì).
+
+- `docs/PIANO_LAVORI.md` — stato lavori, task completati, backlog e specifica M10. **Fonte di verità operativa.**
+- `docs/STATO_PROGETTO.md` — fotografia sintetica: cosa è in produzione, cosa è committato ma non attivato, migrazioni in attesa, task in corso, prossimo task, bloccanti pre-lancio con responsabile.
+- `docs/REGISTRO_COMMIT.md` — registro dei lavori per il cliente, una voce per commit in linguaggio non tecnico.
+- `docs/MILESTONE_11.md` — specifica completa della M11 (registro sede).
+- `docs/SPORTIVISSIMO_PRD.md` — requisiti di design e contenuti delle pagine pubbliche (nota: descrive il redesign UI; lo stato reale del backend è in docs/PIANO_LAVORI.md).
+- `MILESTONE_9.md` — specifica storica della M9 (completata): il file non è mai stato nel repo né è stato ritrovato; resta solo il riferimento.

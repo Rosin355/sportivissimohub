@@ -26,6 +26,29 @@ export type HeaderOptions = {
 const LOGO_HEIGHT = 42;
 const LOGO_MAX_WIDTH = 120;
 
+// Firma elettronica semplice da inserire negli spazi firma (PNG dal bucket).
+export type SignatureImage = { png: Uint8Array; signerName: string; signedAt: string };
+
+export type SignatureSlot = {
+  label: string;
+  image?: SignatureImage | null;
+  date?: boolean; // slot "Data": mostra la data della firma se presente
+};
+
+export function formatSignedDate(iso: string, withTime = false): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return withTime
+    ? d.toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })
+    : d.toLocaleDateString("it-IT");
+}
+
+export function signedCaptionText(sig: SignatureImage): string {
+  return `Firmato elettronicamente da ${sig.signerName} il ${formatSignedDate(sig.signedAt, true)}`;
+}
+
+const SIGNATURE_HEIGHT = 30;
+
 export class PdfBuilder {
   private doc: PDFDocument;
   private page: PDFPage;
@@ -270,16 +293,37 @@ export class PdfBuilder {
     }
   }
 
-  // Righe firma affiancate, lasciate in bianco.
-  signatures(labels: string[]) {
-    this.ensure(58);
-    this.y -= 42;
-    const colWidth = (A4.width - MARGIN * 2) / labels.length;
-    labels.forEach((label, i) => {
+  // Righe firma affiancate. Con la firma elettronica l'immagine va sopra la
+  // riga con la dicitura "Firmato elettronicamente da … il …"; senza firma lo
+  // spazio resta in bianco.
+  async signatures(slots: Array<string | SignatureSlot>) {
+    const items: SignatureSlot[] = slots.map((s) => (typeof s === "string" ? { label: s } : s));
+    const anyImage = items.some((s) => s.image);
+    this.ensure(anyImage ? 92 : 58);
+    this.y -= anyImage ? 56 : 42;
+    const colWidth = (A4.width - MARGIN * 2) / items.length;
+    for (const [i, slot] of items.entries()) {
       const x = MARGIN + colWidth * i;
+      const lineWidth = colWidth - 24;
+      let label = slot.label;
+      if (slot.image && !slot.date) {
+        try {
+          const img = await this.doc.embedPng(slot.image.png);
+          const scale = Math.min(SIGNATURE_HEIGHT / img.height, lineWidth / img.width);
+          this.page.drawImage(img, {
+            x,
+            y: this.y + 2,
+            width: img.width * scale,
+            height: img.height * scale,
+          });
+        } catch (e) {
+          console.error("Firma non incorporabile:", e);
+        }
+      }
+      if (slot.date && slot.image) label = `Data: ${formatSignedDate(slot.image.signedAt)}`;
       this.page.drawLine({
         start: { x, y: this.y },
-        end: { x: x + colWidth - 24, y: this.y },
+        end: { x: x + lineWidth, y: this.y },
         thickness: 0.8,
         color: INK,
       });
@@ -290,8 +334,23 @@ export class PdfBuilder {
         font: this.font,
         color: MUTED,
       });
-    });
-    this.y -= 18;
+      if (slot.image && !slot.date) {
+        const lines = this.wrap(signedCaptionText(slot.image), this.font, 6.5, lineWidth).slice(
+          0,
+          2,
+        );
+        lines.forEach((line, k) => {
+          this.page.drawText(line, {
+            x,
+            y: this.y - 22 - k * 8,
+            size: 6.5,
+            font: this.font,
+            color: INK,
+          });
+        });
+      }
+    }
+    this.y -= anyImage ? 36 : 18;
   }
 
   spacer(h = 8) {

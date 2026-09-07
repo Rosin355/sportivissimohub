@@ -110,7 +110,11 @@ export async function buildCampEnrollmentPdf(
   pdf.paragraph(
     "Il/La sottoscritto/a chiede l'iscrizione del minore al centro estivo indicato, dichiara di aver preso visione del regolamento e conferma i consensi espressi in fase di iscrizione online.",
   );
-  pdf.signatures([`Data: ${BLANK}`, "Firma del genitore"]);
+  const signer = ctx.signatures.genitore_1 ?? ctx.signatures.genitore_2 ?? null;
+  await pdf.signatures([
+    { label: `Data: ${BLANK}`, date: true, image: signer },
+    { label: "Firma del genitore", image: signer },
+  ]);
 
   return pdf.bytes();
 }

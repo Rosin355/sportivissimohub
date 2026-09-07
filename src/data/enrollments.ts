@@ -3,6 +3,7 @@ import type { Location } from "@/data/locations";
 import { fetchLocations, indexLocations } from "@/lib/locations/queries";
 import { normalizeDocType } from "@/lib/enrollments/doc-types";
 import { parseCustomAnswers, type CustomAnswers } from "@/lib/enrollments/custom-fields";
+import type { SignerRole } from "@/lib/supabase/types";
 import type {
   ChildSex,
   DocumentStatus,
@@ -86,6 +87,17 @@ export type DocumentMeta = {
   storagePath?: string;
 };
 
+// Firma elettronica semplice (evidenza): il PNG resta nel bucket privato e
+// arriva solo al server per i PDF; qui i metadati, tutte le firme apposte.
+export type EnrollmentSignature = {
+  id: string;
+  signerRole: SignerRole;
+  signerName: string;
+  signedAt: string;
+  consentText: string;
+  signedDocuments: string[];
+};
+
 export type Enrollment = {
   id: string; // uuid della riga in enrollments
   code: string; // codice leggibile, es. ENR-2026-0042
@@ -95,6 +107,7 @@ export type Enrollment = {
   figlioOrdine: number;
   // Risposte ai campi personalizzati della sede (chiave = code del campo).
   customAnswers: CustomAnswers;
+  signatures: EnrollmentSignature[];
   guardian: GuardianData;
   secondaryGuardian: GuardianData | null;
   child: ChildData;
@@ -116,7 +129,8 @@ export const ENROLLMENT_SELECT = `
   profiles ( email, first_name, last_name, phone, fiscal_code, address, city, province, zip ),
   children ( first_name, last_name, birth_date, fiscal_code, school, grade, allergies, medical_notes, special_needs, sesso, comune_nascita, provincia_nascita, nazione_nascita, has_italian_cf, cittadinanza, nazione_residenza, tipo_documento, numero_documento ),
   pickup_delegates ( id, first_name, last_name, phone, document ),
-  enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason, storage_path )
+  enrollment_documents ( id, doc_type, file_name, size_bytes, status, rejection_reason, storage_path ),
+  enrollment_signatures ( id, signer_role, signer_name, signed_at, consent_text, signed_documents )
 `;
 
 export type EnrollmentJoinedRow = {
@@ -191,6 +205,14 @@ export type EnrollmentJoinedRow = {
     rejection_reason: string | null;
     storage_path: string;
   }>;
+  enrollment_signatures?: Array<{
+    id: string;
+    signer_role: SignerRole;
+    signer_name: string;
+    signed_at: string;
+    consent_text: string;
+    signed_documents: string[];
+  }>;
 };
 
 function calcAge(birthDate: string): number {
@@ -213,6 +235,16 @@ export function mapEnrollmentRow(row: EnrollmentJoinedRow, loc: Location | undef
     paymentStatus: row.payment_status,
     figlioOrdine: row.figlio_ordine ?? 1,
     customAnswers: parseCustomAnswers(row.custom_answers),
+    signatures: [...(row.enrollment_signatures ?? [])]
+      .sort((a, b) => b.signed_at.localeCompare(a.signed_at))
+      .map((s) => ({
+        id: s.id,
+        signerRole: s.signer_role,
+        signerName: s.signer_name,
+        signedAt: s.signed_at,
+        consentText: s.consent_text,
+        signedDocuments: s.signed_documents ?? [],
+      })),
     secondaryGuardian: row.secondary_guardian,
     guardian: {
       firstName: row.profiles?.first_name ?? "",

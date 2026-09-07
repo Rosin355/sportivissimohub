@@ -30,7 +30,11 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-07 · `……` · Docs — Sistema di documentazione e piano M11
+### 2026-09-07 · `……` · Firma — Firma elettronica semplice dei moduli
+
+Dall'area genitori si possono firmare i moduli con il dito o con il mouse, dopo aver visto cosa si firma (moduli e consensi) e spuntato una dichiarazione esplicita. Firmano il titolare dell'account e, se indicato, il secondo genitore, anche in momenti diversi. Ogni firma resta conservata come evidenza (chi, quando, cosa ha dichiarato) e viene inserita nei PDF con data e dicitura "Firmato elettronicamente da … il …"; l'amministrazione vede se i moduli sono firmati. La firma non è obbligatoria per iscriversi.
+
+### 2026-09-07 · `10ebfa5` · Docs — Sistema di documentazione e piano M11
 
 Creata la cartella `docs/` con il piano lavori, la specifica della M11, il PRD, questo registro dei lavori per il cliente e la fotografia dello stato del progetto. Le istruzioni di progetto ora impongono di aggiornare la documentazione a ogni commit. Nel piano: giro di test M10 spuntato, sezione M11 (registro sede) con le decisioni di prodotto confermate.
 

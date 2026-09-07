@@ -1,7 +1,12 @@
 import type { Enrollment } from "@/data/enrollments";
 import { loadGalzignano2026Template } from "./assets";
 import { renderOverlay } from "./overlay/engine";
-import { GALZIGNANO_2026, acsiMinorOps, galzignanoEnrollmentOps } from "./overlay/galzignano-2026";
+import {
+  GALZIGNANO_2026,
+  acsiMinorOps,
+  galzignanoEnrollmentOps,
+  galzignanoSignatureOps,
+} from "./overlay/galzignano-2026";
 import type { PdfBuildContext } from "./index";
 import { appendCustomAnswersPage } from "./custom-answers";
 
@@ -14,12 +19,24 @@ export async function buildGalzignanoOriginalPdf(
   const bytes = await renderOverlay(template, [
     ...galzignanoEnrollmentOps(e, ctx.location),
     ...acsiMinorOps(e),
+    ...galzignanoSignatureOps(ctx.signatures),
   ]);
   return appendCustomAnswersPage(bytes, e, ctx.location);
 }
 
 // Solo la pagina del modulo ACSI ufficiale, precompilata: vale per ogni sede.
-export async function buildAcsiMinorOriginalPdf(e: Enrollment): Promise<Uint8Array> {
+export async function buildAcsiMinorOriginalPdf(
+  e: Enrollment,
+  ctx: PdfBuildContext,
+): Promise<Uint8Array> {
   const template = loadGalzignano2026Template();
-  return renderOverlay(template, acsiMinorOps(e), { keepPages: [GALZIGNANO_2026.acsiPage] });
+  // Solo le firme della pagina ACSI (p4): le altre pagine non vengono tenute.
+  const sigOps = galzignanoSignatureOps(ctx.signatures).filter((op) =>
+    op.kind === "text" || op.kind === "check"
+      ? op.field.page === GALZIGNANO_2026.acsiPage
+      : op.page === GALZIGNANO_2026.acsiPage,
+  );
+  return renderOverlay(template, [...acsiMinorOps(e), ...sigOps], {
+    keepPages: [GALZIGNANO_2026.acsiPage],
+  });
 }

@@ -3,12 +3,15 @@ import type { Location } from "../../../data/locations";
 import { sexFromFiscalCode } from "../../enrollments/fiscal-code.ts";
 import {
   check,
-  text,
+  image,
   stripAnnotationsOnBox,
+  text,
+  whiteoutBox,
   type CheckField,
   type OverlayOp,
   type TextField,
 } from "./engine.ts";
+import { formatSignedDate, signedCaptionText, type SignatureImage } from "../layout.ts";
 
 // Mappa coordinate del modulo cartaceo "Il colore del gioco" 2026 (Galzignano
 // Terme): assets/pdf-templates/galzignano-2026.pdf, 4 pagine A4.
@@ -142,6 +145,42 @@ const P4 = {
   fotoSi: box(4, 55.8, 138.8, 10.2),
   fotoNo: box(4, 189.0, 138.8, 10.2),
 };
+
+/* ---------- spazi firma (coordinate degli spazi del modulo) ---------- */
+
+const SIGN = {
+  p2Firma: { x: 395, y: 93, w: 140, h: 30 },
+  p2Data: line(2, 62, 95, 100),
+  p3Firma: { x: 450, y: 88, w: 100, h: 28 },
+  p3Data: line(3, 195, 89, 65),
+  p4Firma1: { x: 180, y: 583, w: 244, h: 31 },
+  p4Firma2: { x: 180, y: 424, w: 242, h: 31 },
+  p4Data: line(4, 58, 40, 120),
+};
+
+// Firma elettronica negli spazi firma del modulo: p2 e p3 (firma del
+// genitore che ha compilato) e p4 (genitore 1 e 2). Senza firma, spazi in
+// bianco. La data è quella della firma.
+export function galzignanoSignatureOps(
+  sigs: Partial<Record<"genitore_1" | "genitore_2", SignatureImage>>,
+): OverlayOp[] {
+  const ops: OverlayOp[] = [];
+  const main = sigs.genitore_1 ?? sigs.genitore_2;
+  if (main) {
+    ops.push(image(2, SIGN.p2Firma, main.png, signedCaptionText(main)));
+    ops.push(text(SIGN.p2Data, formatSignedDate(main.signedAt)));
+    ops.push(image(3, SIGN.p3Firma, main.png, signedCaptionText(main)));
+    ops.push(text(SIGN.p3Data, formatSignedDate(main.signedAt)));
+    ops.push(text(SIGN.p4Data, formatSignedDate(main.signedAt)));
+  }
+  if (sigs.genitore_1) {
+    ops.push(image(4, SIGN.p4Firma1, sigs.genitore_1.png, signedCaptionText(sigs.genitore_1)));
+  }
+  if (sigs.genitore_2) {
+    ops.push(image(4, SIGN.p4Firma2, sigs.genitore_2.png, signedCaptionText(sigs.genitore_2)));
+  }
+  return ops;
+}
 
 /* ---------- helper dati ---------- */
 

@@ -50,7 +50,7 @@ Specifica completa in `docs/MILESTONE_11.md`. Prerequisiti già soddisfatti (M10
 
 ## MILESTONE — Firma elettronica semplice
 
-- [ ] Firma dei moduli dall'area genitori (canvas touch/mouse, dichiarazione esplicita, due firmatari), evidenze in `enrollment_signatures` + PNG nel bucket privato, firma inserita nei PDF puliti e overlay, indicatore e download nell'admin. Firma non obbligatoria; wizard invariato.
+- [x] Firma elettronica semplice (2026-09-07). Migrazione `20260907120000_signatures.sql`: enum `signer_role`, tabella append-only `enrollment_signatures` (ruolo, nome, utente, storage_path del PNG in `documents/{parent}/{iscrizione}/firme/`, testo della dichiarazione, moduli firmati, data) con RLS genitore insert/select sulle proprie e admin select, nessun update/delete; policy audit_log per le azioni dell'utente; il genitore non può più cancellare i file della cartella firme. Componente `SignatureDialog` (signature_pad, unica nuova dipendenza) con anteprima moduli/consensi e dichiarazione; `SignaturePanel` nella card iscrizione dell'area genitori (genitore 1 = titolare, genitore 2 se presente). Server function `saveSignature` (nome firmatario dal DB, PNG validato). PDF: `PdfBuilder.signatures` con immagine, data e dicitura; overlay Galzignano con le coordinate degli spazi firma di p2, p3 e p4. Admin: chip firmati/non firmati in tabella e sezione Firme nella scheda; i PDF scaricati includono le firme. Firma non obbligatoria; wizard invariato.
 
 ## BACKLOG — Pre-lancio (bloccanti prima delle famiglie vere)
 

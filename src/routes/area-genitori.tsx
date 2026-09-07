@@ -61,6 +61,7 @@ import { docTypeLabel } from "@/lib/enrollments/doc-types";
 import { answersForDisplay } from "@/lib/enrollments/custom-fields";
 import { PdfDownloadButton } from "@/components/site/PdfDownloadButton";
 import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/catalog";
+import { SignaturePanel } from "@/components/site/SignatureDialog";
 
 export const Route = createFileRoute("/area-genitori")({
   beforeLoad: ({ context, location }) => ({
@@ -312,6 +313,8 @@ function EnrollmentCard({
           />
         ))}
       </div>
+
+      <SignaturePanel enrollment={enrollment} onChange={onChange} />
     </div>
   );
 }

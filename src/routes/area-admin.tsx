@@ -47,6 +47,13 @@ import { PDF_TEMPLATE_INFO, pdfTemplatesForLocation } from "@/lib/pdf-templates/
 import type { PaymentStatus } from "@/lib/supabase/types";
 import { docTypeLabel } from "@/lib/enrollments/doc-types";
 import { answersForDisplay } from "@/lib/enrollments/custom-fields";
+import {
+  SIGNATURE_STATUS_LABELS,
+  SIGNER_ROLE_LABELS,
+  formatSignedAt,
+  latestSignatures,
+  signatureStatus,
+} from "@/lib/enrollments/signatures";
 
 export const Route = createFileRoute("/area-admin")({
   beforeLoad: ({ context, location }) => ({
@@ -241,6 +248,7 @@ function AreaAdmin() {
                   <th className="py-2 pr-3">Sede</th>
                   <th className="py-2 pr-3">Settimane</th>
                   <th className="py-2 pr-3">Stato</th>
+                  <th className="py-2 pr-3">Firma</th>
                   <th className="py-2 pr-3">Data</th>
                   <th className="py-2 pr-3"></th>
                 </tr>
@@ -259,6 +267,9 @@ function AreaAdmin() {
                     <td className="py-3 pr-3">
                       <EnrollmentStatusBadge status={e.status} />
                     </td>
+                    <td className="py-3 pr-3">
+                      <SignatureChip enrollment={e} />
+                    </td>
                     <td className="py-3 pr-3 text-muted-foreground">
                       {new Date(e.createdAt).toLocaleDateString("it-IT")}
                     </td>
@@ -274,7 +285,7 @@ function AreaAdmin() {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                    <td colSpan={8} className="py-8 text-center text-muted-foreground">
                       Nessuna iscrizione con questi filtri.
                     </td>
                   </tr>
@@ -613,7 +624,37 @@ function EnrollmentSheet({
             )}
           </Section>
 
-          <Section title="Moduli PDF precompilati">
+          <Section title="Firma elettronica">
+            <div className="mb-2">
+              <SignatureChip enrollment={enrollment} />
+            </div>
+            {enrollment.signatures.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                Nessuna firma apposta: i moduli vanno firmati a mano.
+              </div>
+            ) : (
+              <>
+                {Object.entries(latestSignatures(enrollment)).map(([role, sig]) => (
+                  <KV
+                    key={role}
+                    k={SIGNER_ROLE_LABELS[role as keyof typeof SIGNER_ROLE_LABELS]}
+                    v={`${sig.signerName} · ${formatSignedAt(sig.signedAt)}`}
+                  />
+                ))}
+                {enrollment.signatures.length >
+                  Object.keys(latestSignatures(enrollment)).length && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Firme precedenti conservate: {enrollment.signatures.length}.
+                  </div>
+                )}
+                <div className="text-xs text-muted-foreground mt-1">
+                  I PDF qui sotto includono le firme più recenti con data e dicitura.
+                </div>
+              </>
+            )}
+          </Section>
+
+          <Section title="Moduli PDF precompilati (con firme se presenti)">
             <div className="flex flex-wrap gap-2">
               {pdfTemplatesForLocation(enrollment.session.locationSlug).map((key) => (
                 <PdfDownloadButton
@@ -781,6 +822,21 @@ function AdminDocumentRow({
         </div>
       )}
     </div>
+  );
+}
+
+function SignatureChip({ enrollment }: { enrollment: Enrollment }) {
+  const status = signatureStatus(enrollment);
+  const cls =
+    status === "completa"
+      ? "bg-grass/15 text-grass border-grass/30"
+      : status === "parziale"
+        ? "bg-sun/20 text-sun-foreground border-sun/40"
+        : "bg-secondary text-muted-foreground border-border";
+  return (
+    <span className={`font-pixel rounded-lg border px-2 py-0.5 whitespace-nowrap ${cls}`}>
+      {SIGNATURE_STATUS_LABELS[status]}
+    </span>
   );
 }
 

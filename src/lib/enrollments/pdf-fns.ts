@@ -5,7 +5,8 @@ import { ENROLLMENT_SELECT, mapEnrollmentRow, type EnrollmentJoinedRow } from "@
 import { PDF_TEMPLATES, pdfFileName } from "@/lib/pdf-templates";
 import { PDF_TEMPLATE_INFO, PDF_TEMPLATE_KEYS } from "@/lib/pdf-templates/catalog";
 import { fetchLocationBySlug, LOGO_BUCKET } from "@/lib/locations/queries";
-import type { LogoImage } from "@/lib/pdf-templates/layout";
+import type { LogoImage, SignatureImage } from "@/lib/pdf-templates/layout";
+import type { SignerRole } from "@/lib/supabase/types";
 import type { Location } from "@/data/locations";
 
 export type GeneratePdfResult =
@@ -47,6 +48,36 @@ async function loadComuneLogo(
   }
 }
 
+// Firma elettronica più recente per ruolo: metadati dalla tabella (RLS:
+// genitore proprietario o admin) e PNG dal bucket privato con la sessione.
+async function loadSignatures(
+  supabase: ReturnType<typeof getSupabaseServerClient>,
+  enrollmentId: string,
+): Promise<Partial<Record<SignerRole, SignatureImage>>> {
+  const out: Partial<Record<SignerRole, SignatureImage>> = {};
+  const { data } = await supabase
+    .from("enrollment_signatures")
+    .select("signer_role, signer_name, signed_at, storage_path")
+    .eq("enrollment_id", enrollmentId)
+    .order("signed_at", { ascending: false });
+  for (const row of data ?? []) {
+    if (out[row.signer_role]) continue;
+    const { data: blob, error } = await supabase.storage
+      .from("documents")
+      .download(row.storage_path);
+    if (error || !blob) {
+      console.error("Firma non scaricata:", error?.message);
+      continue;
+    }
+    out[row.signer_role] = {
+      png: new Uint8Array(await blob.arrayBuffer()),
+      signerName: row.signer_name,
+      signedAt: row.signed_at,
+    };
+  }
+  return out;
+}
+
 // Genera on-demand il PDF richiesto. L'autorizzazione è demandata alle RLS:
 // la query restituisce l'iscrizione solo al genitore proprietario o all'admin.
 // Il PDF non viene salvato nel bucket: i dati vivono nel DB, il PDF è una vista.
@@ -83,8 +114,11 @@ export const generateEnrollmentPdf = createServerFn({ method: "POST" })
     try {
       const location = await fetchLocationBySlug(supabase, row.location_slug);
       const enrollment = mapEnrollmentRow(row, location ?? undefined);
-      const comuneLogo = await loadComuneLogo(supabase, location);
-      const bytes = await template.build(enrollment, { location, comuneLogo });
+      const [comuneLogo, signatures] = await Promise.all([
+        loadComuneLogo(supabase, location),
+        loadSignatures(supabase, row.id),
+      ]);
+      const bytes = await template.build(enrollment, { location, comuneLogo, signatures });
       return {
         ok: true,
         fileName: pdfFileName(data.template, enrollment),

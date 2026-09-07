@@ -1,6 +1,6 @@
 // Calibrazione dell'overlay sul modulo cartaceo Galzignano 2026.
 //
-//   node scripts/pdf-calibrate.ts [--no-grid] [--no-outline] [--acsi] [output.pdf]
+//   node scripts/pdf-calibrate.ts [--no-grid] [--no-outline] [--acsi] [--firma firma.png] [output.pdf]
 //
 // Genera il template con griglia di coordinate (linee ogni 10 pt, etichette
 // ogni 50 pt), contorno dei campi mappati (rosso testo, blu caselle) e dati di
@@ -15,11 +15,14 @@ import {
   GALZIGNANO_2026,
   acsiMinorOps,
   galzignanoEnrollmentOps,
+  galzignanoSignatureOps,
 } from "../src/lib/pdf-templates/overlay/galzignano-2026.ts";
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith("--")));
-const out = args.find((a) => !a.startsWith("--")) ?? "galzignano-2026-calibrazione.pdf";
+const out =
+  args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--firma") ??
+  "galzignano-2026-calibrazione.pdf";
 
 const root = path.resolve(import.meta.dirname, "..");
 const template = new Uint8Array(fs.readFileSync(path.join(root, GALZIGNANO_2026.asset)));
@@ -115,9 +118,31 @@ const sampleLocation = {
   })),
 };
 
+// --firma <png>: inserisce quel PNG come firma di entrambi i genitori per
+// verificare gli spazi firma di p2, p3 e p4.
+const firmaIdx = args.indexOf("--firma");
+const firmaPng = firmaIdx >= 0 && args[firmaIdx + 1] ? args[firmaIdx + 1] : null;
+const signatures = firmaPng
+  ? (() => {
+      const png = new Uint8Array(fs.readFileSync(firmaPng));
+      return {
+        genitore_1: {
+          png,
+          signerName: "Maria Francesca Rossi Bianchi",
+          signedAt: new Date().toISOString(),
+        },
+        genitore_2: { png, signerName: "Giovanni Verdi", signedAt: new Date().toISOString() },
+      };
+    })()
+  : {};
+
 const ops = flags.has("--acsi")
-  ? acsiMinorOps(sample)
-  : [...galzignanoEnrollmentOps(sample, sampleLocation), ...acsiMinorOps(sample)];
+  ? [...acsiMinorOps(sample), ...galzignanoSignatureOps(signatures)]
+  : [
+      ...galzignanoEnrollmentOps(sample, sampleLocation),
+      ...acsiMinorOps(sample),
+      ...galzignanoSignatureOps(signatures),
+    ];
 
 const bytes = await renderOverlay(template, ops, {
   keepPages: flags.has("--acsi") ? [GALZIGNANO_2026.acsiPage] : undefined,

@@ -40,7 +40,10 @@ export type OverlayOp =
   | ({ kind: "whiteout" } & Region)
   // Rimuove le annotazioni (FreeText, timbri…) il cui centro cade nella
   // regione: le annotazioni si disegnano sopra tutto, un whiteout non basta.
-  | ({ kind: "strip-annotations" } & Region);
+  | ({ kind: "strip-annotations" } & Region)
+  // Immagine PNG adattata dentro il riquadro (es. firma), con dicitura opzionale
+  // in piccolo sul fondo del riquadro.
+  | ({ kind: "image"; png: Uint8Array; caption?: string } & Region);
 
 export type OverlayOptions = {
   // Pagine da tenere nel PDF finale (1-based, in ordine); default: tutte.
@@ -64,6 +67,15 @@ export function check(field: CheckField, checked: boolean): OverlayOp {
 
 // Copre un segno prestampato dentro una casella (es. una X di default),
 // lasciando intatto il bordo.
+export function image(
+  page: number,
+  box: { x: number; y: number; w: number; h: number },
+  png: Uint8Array,
+  caption?: string,
+): OverlayOp {
+  return { kind: "image", page, ...box, png, caption };
+}
+
 export function whiteoutBox(field: CheckField, inset = 1.3): OverlayOp {
   return {
     kind: "whiteout",
@@ -280,6 +292,17 @@ function drawOutline(page: PDFPage, op: OverlayOp) {
       opacity: 0,
       borderOpacity: 0.9,
     });
+  } else if (op.kind === "image") {
+    page.drawRectangle({
+      x: op.x,
+      y: op.y,
+      width: op.w,
+      height: op.h,
+      borderColor: rgb(0.1, 0.7, 0.3),
+      borderWidth: 0.5,
+      opacity: 0,
+      borderOpacity: 0.9,
+    });
   }
 }
 
@@ -312,6 +335,33 @@ export async function renderOverlay(
     } else if (op.kind === "check") {
       const page = pageOf(op.field.page);
       if (page && op.checked) drawCheck(page, op.field);
+    } else if (op.kind === "image") {
+      const page = pageOf(op.page);
+      if (!page) continue;
+      try {
+        const img = await doc.embedPng(op.png);
+        const captionH = op.caption ? 8 : 0;
+        const maxH = Math.max(op.h - captionH - 2, 6);
+        const scale = Math.min(maxH / img.height, op.w / img.width);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        page.drawImage(img, {
+          x: op.x + (op.w - w) / 2,
+          y: op.y + captionH + (maxH - h) / 2,
+          width: w,
+          height: h,
+        });
+        if (op.caption) {
+          // La dicitura deve stare nel riquadro: corpo ridotto, poi troncata.
+          let caption = sanitizePdfText(op.caption);
+          let size = 5.5;
+          while (size > 4 && font.widthOfTextAtSize(caption, size) > op.w - 2) size -= 0.25;
+          caption = truncate(caption, op.w - 2, size, font);
+          page.drawText(caption, { x: op.x + 1, y: op.y + 1.5, size, font, color: INK });
+        }
+      } catch (e) {
+        console.error("Immagine overlay non incorporabile:", e);
+      }
     }
   }
 

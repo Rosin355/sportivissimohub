@@ -94,7 +94,15 @@ export async function buildAcsiMembershipPdf(
   pdf.paragraph(
     "Il/La sottoscritto/a, in qualità di esercente la responsabilità genitoriale, chiede il tesseramento del minore sopra indicato e dichiara che i dati riportati corrispondono al vero.",
   );
-  pdf.signatures([`Data: ${BLANK}`, "Firma del genitore 1", "Firma del genitore 2"]);
+  await pdf.signatures([
+    {
+      label: `Data: ${BLANK}`,
+      date: true,
+      image: ctx.signatures.genitore_1 ?? ctx.signatures.genitore_2 ?? null,
+    },
+    { label: "Firma del genitore 1", image: ctx.signatures.genitore_1 ?? null },
+    { label: "Firma del genitore 2", image: ctx.signatures.genitore_2 ?? null },
+  ]);
 
   return pdf.bytes();
 }

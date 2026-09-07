@@ -34,6 +34,8 @@ export type LocationDocumentCategory =
 
 export type CustomFieldType = "testo" | "si_no" | "scelta" | "data";
 
+export type SignerRole = "genitore_1" | "genitore_2";
+
 export type Database = {
   public: {
     Tables: {
@@ -692,6 +694,50 @@ export type Database = {
           },
         ];
       };
+      enrollment_signatures: {
+        Row: {
+          id: string;
+          enrollment_id: string;
+          signer_role: SignerRole;
+          signer_name: string;
+          user_id: string;
+          storage_path: string;
+          consent_text: string;
+          signed_documents: string[];
+          signed_at: string;
+        };
+        Insert: {
+          id?: string;
+          enrollment_id: string;
+          signer_role: SignerRole;
+          signer_name: string;
+          user_id: string;
+          storage_path: string;
+          consent_text: string;
+          signed_documents?: string[];
+          signed_at?: string;
+        };
+        Update: {
+          id?: string;
+          enrollment_id?: string;
+          signer_role?: SignerRole;
+          signer_name?: string;
+          user_id?: string;
+          storage_path?: string;
+          consent_text?: string;
+          signed_documents?: string[];
+          signed_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_signatures_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "enrollments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -714,6 +760,7 @@ export type Database = {
       location_status: LocationStatus;
       location_document_category: LocationDocumentCategory;
       custom_field_type: CustomFieldType;
+      signer_role: SignerRole;
     };
     CompositeTypes: Record<string, never>;
   };

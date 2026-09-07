@@ -15,7 +15,8 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 - `601d6f1` + `fdfb094` M10.2 documenti della sede.
 - `b55124d` M10.3 domande personalizzate per sede.
 - `a441ec1` M10.4 figli senza CF italiano dall'area genitori, intestazione PDF con loghi.
-- Commit di questa sessione: documentazione (`docs/`) e firma elettronica semplice (vedi registro).
+- `10ebfa5` documentazione di progetto (`docs/`), piano M11.
+- Firma elettronica semplice (commit successivo a `10ebfa5`, vedi registro): richiede la migrazione qui sotto.
 
 ## Migrazioni in attesa di applicazione su Lovable
 

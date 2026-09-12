@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/supabase/auth";
 import { listLocations } from "@/lib/locations/server-fns";
 import { LOCATION_TYPE_LABELS } from "@/lib/locations/validation";
 import { locationCapacity, type Location } from "@/data/locations";
-import { ArrowLeft, Plus, Pencil, ExternalLink, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, ExternalLink, MapPin, Table2 } from "lucide-react";
 
 // Elenco sedi per l'admin: tutte, comprese le bozze (RLS).
 export const Route = createFileRoute("/area-admin_/sedi")({
@@ -106,6 +106,13 @@ function SediPage() {
                         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border border-border hover:bg-secondary mr-2"
                       >
                         <ExternalLink className="w-3.5 h-3.5" /> Pagina
+                      </Link>
+                      <Link
+                        to="/area-admin/sedi/$slug/registro"
+                        params={{ slug: l.slug }}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border border-border hover:bg-secondary mr-2"
+                      >
+                        <Table2 className="w-3.5 h-3.5" /> Registro
                       </Link>
                       <Link
                         to="/area-admin/sedi/$id"

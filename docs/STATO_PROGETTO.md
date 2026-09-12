@@ -17,21 +17,23 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 - `a441ec1` M10.4 figli senza CF italiano dall'area genitori, intestazione PDF con loghi.
 - `10ebfa5` documentazione di progetto (`docs/`), piano M11.
 - Firma elettronica semplice (`9e11de0`, correzione audit `44438bb`): richiede la migrazione qui sotto.
-- M11.1 schema del registro sede: solo database e tipi, nessuna schermata nuova. Richiede la migrazione qui sotto.
+- M11.1 schema del registro sede (`ac169d0`): migrazione **applicata** su Lovable il 2026-09-12.
+- M11.2 griglia del registro sede: nuova pagina `/area-admin/sedi/<sede>/registro`, nessuna migrazione.
 
 ## Migrazioni in attesa di applicazione su Lovable
 
 - Nessuna arretrata: M10.1, M10.1b, M10.2 e M10.3 risultano applicate (commit Lovable `eb0b151`, `22acd9c`, `478bc7b`).
-- **Nuova con la firma elettronica:** `supabase/migrations/20260907120000_signatures.sql` (tabella `enrollment_signatures`, RLS, GRANT, funzione security definer `log_enrollment_signature` per la voce di audit; audit_log resta chiuso ai client). Da applicare via prompt su Lovable prima di pubblicare.
-- **Nuova con M11.1:** `supabase/migrations/20260912100000_m11_1_registro_sede.sql` (codici di frequenza per sede con seed, celle bambino × settimana, addebiti extra, pagamenti, cassa, presenze staff, pasti, colonna `mark` su `attendance`, funzione `location_registry_totals`). Da applicare **dopo** quella della firma, nell'ordine dei file.
+- **Nessuna in attesa.** Le due ultime (firma elettronica `20260907120000_signatures.sql` e registro sede `20260912100000_m11_1_registro_sede.sql`) sono state applicate su Lovable il 2026-09-12 e verificate: il contenuto applicato coincide con i file del repository (commit Lovable `66260e2`, copie in `drizzle/migrations/0005` e `0006`).
+- M11.2 non introduce migrazioni.
 
 ## Task in corso
 
-- M11 (registro sede) avviata: M11.1 schema consegnato. Le schermate arrivano con M11.2.
+- M11 (registro sede) in corso: consegnati M11.1 (schema) e M11.2 (griglia iscrizioni).
 
 ## Prossimo task
 
-- **M11.2 — Griglia iscrizioni per sede** (`/area-admin/sedi/$slug/registro`): righe bambini, colonne settimane, cella con il codice di frequenza, colonne quota/gita/versato/saldo calcolate dal database con `location_registry_totals`, riepilogo conteggi per settimana e testo che spiega i codici. Prerequisito: la migrazione M11.1 applicata su Lovable.
+- **M11.3 — Pagamenti e cassa per sede**: dialogo rate per bambino (data, metodo, importo, nota, rimborsi con importo negativo), vista cassa con totali per metodo e registrazione di spese e consegne contanti, gestione della gita come addebito extra. Nessuna migrazione prevista: le tabelle esistono già dalla M11.1.
+- Da valutare prima o insieme alla M11.3: **editor dei codici di frequenza nella scheda sede**. Oggi i codici e i prezzi esistono con i valori del seed e la griglia li mostra, ma non c'è ancora una schermata per modificarli, che la decisione di prodotto prevede.
 
 ## Bloccanti pre-lancio (prima delle famiglie vere)
 

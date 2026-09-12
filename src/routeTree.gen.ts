@@ -23,6 +23,7 @@ import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi_.$s
 import { Route as AreaAdminSediRouteImport } from './routes/area-admin_.sedi'
 import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi_.$slug_.iscrizione'
 import { Route as AreaAdminSediIdRouteImport } from './routes/area-admin_.sedi_.$id'
+import { Route as AreaAdminSediSlugRegistroRouteImport } from './routes/area-admin_.sedi_.$slug.registro'
 
 const PasswordDimenticataRoute = PasswordDimenticataRouteImport.update({
   id: '/password-dimenticata',
@@ -95,6 +96,12 @@ const AreaAdminSediIdRoute = AreaAdminSediIdRouteImport.update({
   path: '/area-admin/sedi/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaAdminSediSlugRegistroRoute =
+  AreaAdminSediSlugRegistroRouteImport.update({
+    id: '/area-admin_/sedi_/$slug/registro',
+    path: '/area-admin/sedi/$slug/registro',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
   '/area-admin/sedi/$id': typeof AreaAdminSediIdRoute
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
+  '/area-admin/sedi/$slug/registro': typeof AreaAdminSediSlugRegistroRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,6 +135,7 @@ export interface FileRoutesByTo {
   '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
   '/area-admin/sedi/$id': typeof AreaAdminSediIdRoute
   '/centri-estivi/$slug/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
+  '/area-admin/sedi/$slug/registro': typeof AreaAdminSediSlugRegistroRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,6 +153,7 @@ export interface FileRoutesById {
   '/centri-estivi_/$slug': typeof CentriEstiviSlugRoute
   '/area-admin_/sedi_/$id': typeof AreaAdminSediIdRoute
   '/centri-estivi_/$slug_/iscrizione': typeof CentriEstiviSlugIscrizioneRoute
+  '/area-admin_/sedi_/$slug/registro': typeof AreaAdminSediSlugRegistroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/centri-estivi/$slug'
     | '/area-admin/sedi/$id'
     | '/centri-estivi/$slug/iscrizione'
+    | '/area-admin/sedi/$slug/registro'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/centri-estivi/$slug'
     | '/area-admin/sedi/$id'
     | '/centri-estivi/$slug/iscrizione'
+    | '/area-admin/sedi/$slug/registro'
   id:
     | '__root__'
     | '/'
@@ -194,6 +206,7 @@ export interface FileRouteTypes {
     | '/centri-estivi_/$slug'
     | '/area-admin_/sedi_/$id'
     | '/centri-estivi_/$slug_/iscrizione'
+    | '/area-admin_/sedi_/$slug/registro'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -211,6 +224,7 @@ export interface RootRouteChildren {
   CentriEstiviSlugRoute: typeof CentriEstiviSlugRoute
   AreaAdminSediIdRoute: typeof AreaAdminSediIdRoute
   CentriEstiviSlugIscrizioneRoute: typeof CentriEstiviSlugIscrizioneRoute
+  AreaAdminSediSlugRegistroRoute: typeof AreaAdminSediSlugRegistroRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -313,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaAdminSediIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-admin_/sedi_/$slug/registro': {
+      id: '/area-admin_/sedi_/$slug/registro'
+      path: '/area-admin/sedi/$slug/registro'
+      fullPath: '/area-admin/sedi/$slug/registro'
+      preLoaderRoute: typeof AreaAdminSediSlugRegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -331,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   CentriEstiviSlugRoute: CentriEstiviSlugRoute,
   AreaAdminSediIdRoute: AreaAdminSediIdRoute,
   CentriEstiviSlugIscrizioneRoute: CentriEstiviSlugIscrizioneRoute,
+  AreaAdminSediSlugRegistroRoute: AreaAdminSediSlugRegistroRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -30,7 +30,13 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-12 · `……` · M11 — Registro sede: impianto dei dati
+### 2026-09-12 · `……` · M11 — Registro sede: la griglia delle iscrizioni
+
+Arriva la schermata vera e propria del registro, una per sede, che replica il foglio ISCRIZIONI del file Excel. Nelle righe i bambini iscritti, nelle colonne le settimane, e in ogni casella si sceglie il codice di frequenza da una tendina. Accanto compaiono quota, gita, versato e saldo, calcolati dal sistema e aggiornati appena si cambia una casella. Sotto la griglia c'è il riepilogo per settimana: quanti bambini a mezza giornata e quanti a giornata intera, divisi tra primaria e asilo, con la riga dei pasti da ordinare.
+
+Ogni modifica di casella resta tracciata nel registro delle azioni, con il valore di prima e quello dopo. Le sedi che non hanno ancora settimane o codici configurati non danno errore: la pagina lo dice e indica dove sistemarli. Le caselle ancora da assegnare sono evidenziate, così si vede a colpo d'occhio cosa manca.
+
+### 2026-09-12 · `ac169d0` · M11 — Registro sede: impianto dei dati
 
 Prima parte del registro di sede, la versione digitale del gestionale Excel usato oggi. Preparata la struttura dati che regge tutto il resto: la legenda dei codici di frequenza con i relativi prezzi, configurabile sede per sede (di partenza gli otto codici in uso con i prezzi di Asigliano, tutti modificabili); la casella che dice quale codice ha ogni bambino in ogni settimana; la gita come voce separata dalla quota; i pagamenti a rate libere, con la possibilità di registrare rimborsi; la cassa di sede con spese e consegne di contante; le presenze di bambini e animatori e i pasti ordinati ogni giorno.
 

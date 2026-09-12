@@ -36,6 +36,20 @@ export type CustomFieldType = "testo" | "si_no" | "scelta" | "data";
 
 export type SignerRole = "genitore_1" | "genitore_2";
 
+export type FrequencyCategory = "primaria" | "asilo";
+
+export type FrequencyBand = "mezza" | "intera";
+
+export type ExtraChargeType = "gita" | "altro";
+
+export type PaymentMethod = "bonifico" | "contanti";
+
+export type CashMovementKind = "spesa" | "consegna" | "altro";
+
+export type AttendanceMark = "intera" | "mattina" | "pomeriggio" | "presente" | "assente";
+
+export type MealOrderStatus = "da_ordinare" | "ordinato" | "confermato";
+
 export type Database = {
   public: {
     Tables: {
@@ -396,6 +410,7 @@ export type Database = {
           checked_out_at: string | null;
           recorded_by: string;
           created_at: string;
+          mark: AttendanceMark | null;
         };
         Insert: {
           id?: string;
@@ -405,6 +420,7 @@ export type Database = {
           checked_out_at?: string | null;
           recorded_by: string;
           created_at?: string;
+          mark?: AttendanceMark | null;
         };
         Update: {
           id?: string;
@@ -414,6 +430,7 @@ export type Database = {
           checked_out_at?: string | null;
           recorded_by?: string;
           created_at?: string;
+          mark?: AttendanceMark | null;
         };
         Relationships: [
           {
@@ -738,6 +755,296 @@ export type Database = {
           },
         ];
       };
+      location_frequency_codes: {
+        Row: {
+          id: string;
+          location_id: string;
+          code: string;
+          label: string;
+          category: FrequencyCategory;
+          band: FrequencyBand;
+          convenzione: boolean;
+          price: number;
+          active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          code: string;
+          label: string;
+          category: FrequencyCategory;
+          band: FrequencyBand;
+          convenzione?: boolean;
+          price?: number;
+          active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          code?: string;
+          label?: string;
+          category?: FrequencyCategory;
+          band?: FrequencyBand;
+          convenzione?: boolean;
+          price?: number;
+          active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "location_frequency_codes_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      enrollment_week_codes: {
+        Row: {
+          id: string;
+          enrollment_id: string;
+          week_code: string;
+          frequency_code: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          enrollment_id: string;
+          week_code: string;
+          frequency_code: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          enrollment_id?: string;
+          week_code?: string;
+          frequency_code?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_week_codes_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "enrollments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      extra_charges: {
+        Row: {
+          id: string;
+          enrollment_id: string;
+          charge_type: ExtraChargeType;
+          description: string;
+          amount: number;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          enrollment_id: string;
+          charge_type?: ExtraChargeType;
+          description?: string;
+          amount: number;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          enrollment_id?: string;
+          charge_type?: ExtraChargeType;
+          description?: string;
+          amount?: number;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "extra_charges_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "enrollments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payments: {
+        Row: {
+          id: string;
+          enrollment_id: string;
+          amount: number;
+          method: PaymentMethod;
+          paid_on: string;
+          note: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          enrollment_id: string;
+          amount: number;
+          method: PaymentMethod;
+          paid_on?: string;
+          note?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          enrollment_id?: string;
+          amount?: number;
+          method?: PaymentMethod;
+          paid_on?: string;
+          note?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payments_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "enrollments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cash_movements: {
+        Row: {
+          id: string;
+          location_id: string;
+          kind: CashMovementKind;
+          amount: number;
+          method: PaymentMethod;
+          moved_on: string;
+          description: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          kind?: CashMovementKind;
+          amount: number;
+          method?: PaymentMethod;
+          moved_on?: string;
+          description?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          kind?: CashMovementKind;
+          amount?: number;
+          method?: PaymentMethod;
+          moved_on?: string;
+          description?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_attendance: {
+        Row: {
+          id: string;
+          location_id: string;
+          staff_name: string;
+          day: string;
+          mark: AttendanceMark;
+          note: string;
+          recorded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          staff_name: string;
+          day: string;
+          mark: AttendanceMark;
+          note?: string;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          staff_name?: string;
+          day?: string;
+          mark?: AttendanceMark;
+          note?: string;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_attendance_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      daily_meals: {
+        Row: {
+          id: string;
+          location_id: string;
+          day: string;
+          meals_children: number;
+          meals_staff: number;
+          status: MealOrderStatus;
+          note: string;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          day: string;
+          meals_children?: number;
+          meals_staff?: number;
+          status?: MealOrderStatus;
+          note?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          day?: string;
+          meals_children?: number;
+          meals_staff?: number;
+          status?: MealOrderStatus;
+          note?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "daily_meals_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -753,6 +1060,19 @@ export type Database = {
         Args: { _signature_id: string };
         Returns: undefined;
       };
+      location_registry_totals: {
+        Args: { _location_slug: string };
+        Returns: {
+          enrollment_id: string;
+          weeks_total: number;
+          tessera: number;
+          quota: number;
+          gita: number;
+          extra_total: number;
+          versato: number;
+          saldo: number;
+        }[];
+      };
     };
     Enums: {
       app_role: AppRole;
@@ -765,6 +1085,13 @@ export type Database = {
       location_document_category: LocationDocumentCategory;
       custom_field_type: CustomFieldType;
       signer_role: SignerRole;
+      frequency_category: FrequencyCategory;
+      frequency_band: FrequencyBand;
+      extra_charge_type: ExtraChargeType;
+      payment_method: PaymentMethod;
+      cash_movement_kind: CashMovementKind;
+      attendance_mark: AttendanceMark;
+      meal_order_status: MealOrderStatus;
     };
     CompositeTypes: Record<string, never>;
   };

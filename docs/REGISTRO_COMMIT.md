@@ -26,11 +26,17 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 | Fix | Correzioni dai test sul sito | settembre 2026 |
 | Docs | Documentazione di progetto | settembre 2026 |
 | Firma | Firma elettronica semplice dei moduli | settembre 2026 |
-| M11 | Registro sede (replica digitale del gestionale Excel) | in programma |
+| M11 | Registro sede (replica digitale del gestionale Excel) | settembre 2026 |
 
 ## Voci
 
-### 2026-09-07 · `……` · Firma — Registro delle azioni chiuso ai client
+### 2026-09-12 · `……` · M11 — Registro sede: impianto dei dati
+
+Prima parte del registro di sede, la versione digitale del gestionale Excel usato oggi. Preparata la struttura dati che regge tutto il resto: la legenda dei codici di frequenza con i relativi prezzi, configurabile sede per sede (di partenza gli otto codici in uso con i prezzi di Asigliano, tutti modificabili); la casella che dice quale codice ha ogni bambino in ogni settimana; la gita come voce separata dalla quota; i pagamenti a rate libere, con la possibilità di registrare rimborsi; la cassa di sede con spese e consegne di contante; le presenze di bambini e animatori e i pasti ordinati ogni giorno.
+
+La quota non viene mai scritta a mano: la calcola il sistema sommando le settimane e la tessera. Il saldo somma la gita e sottrae tutte le rate versate, correggendo l'errore del file Excel attuale, dove la formula del saldo dimenticava la terza rata di ogni canale. Chi vede cosa: l'amministrazione gestisce tutto, gli animatori vedono solo ciò che serve alle presenze e mai gli importi, il genitore vede soltanto i propri pagamenti e in sola lettura. Non cambia ancora nulla nelle schermate: qui si costruiscono le fondamenta.
+
+### 2026-09-07 · `44438bb` · Firma — Registro delle azioni chiuso ai client
 
 Correzione di sicurezza sulla firma: il registro delle azioni non accetta più scritture dirette dagli account genitore. La voce "firma apposta" viene scritta da una funzione del database che verifica da sola che la firma esista e appartenga a chi la registra, e annota solo quei dati. Nessun cambiamento visibile per chi usa il sito.
 

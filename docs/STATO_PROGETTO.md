@@ -2,7 +2,7 @@
 
 Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIANO_LAVORI.md` (task) e `docs/REGISTRO_COMMIT.md` (storico per il cliente).
 
-**Aggiornato al:** 2026-09-07 · ultimo commit di sviluppo su `main`: vedi `git log`.
+**Aggiornato al:** 2026-09-12 · ultimo commit di sviluppo su `main`: vedi `git log`.
 
 ## In produzione (sito pubblicato)
 
@@ -16,20 +16,22 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 - `b55124d` M10.3 domande personalizzate per sede.
 - `a441ec1` M10.4 figli senza CF italiano dall'area genitori, intestazione PDF con loghi.
 - `10ebfa5` documentazione di progetto (`docs/`), piano M11.
-- Firma elettronica semplice (`9e11de0` + correzione audit nel commit successivo, vedi registro): richiede la migrazione qui sotto.
+- Firma elettronica semplice (`9e11de0`, correzione audit `44438bb`): richiede la migrazione qui sotto.
+- M11.1 schema del registro sede: solo database e tipi, nessuna schermata nuova. Richiede la migrazione qui sotto.
 
 ## Migrazioni in attesa di applicazione su Lovable
 
 - Nessuna arretrata: M10.1, M10.1b, M10.2 e M10.3 risultano applicate (commit Lovable `eb0b151`, `22acd9c`, `478bc7b`).
 - **Nuova con la firma elettronica:** `supabase/migrations/20260907120000_signatures.sql` (tabella `enrollment_signatures`, RLS, GRANT, funzione security definer `log_enrollment_signature` per la voce di audit; audit_log resta chiuso ai client). Da applicare via prompt su Lovable prima di pubblicare.
+- **Nuova con M11.1:** `supabase/migrations/20260912100000_m11_1_registro_sede.sql` (codici di frequenza per sede con seed, celle bambino × settimana, addebiti extra, pagamenti, cassa, presenze staff, pasti, colonna `mark` su `attendance`, funzione `location_registry_totals`). Da applicare **dopo** quella della firma, nell'ordine dei file.
 
 ## Task in corso
 
-- Nessuno. M10 completata (M10.1–M10.4) e testata; firma elettronica semplice consegnata in questa sessione.
+- M11 (registro sede) avviata: M11.1 schema consegnato. Le schermate arrivano con M11.2.
 
 ## Prossimo task
 
-- **M11 — Registro sede** (specifica in `docs/MILESTONE_11.md`): prerequisiti soddisfatti (M10.1 e M10.3). Decisioni confermate: gita come voce separata fuori dalla quota; codici di frequenza e prezzi configurabili per sede con breve descrizione in interfaccia. Partire da M11.1 (schema, una migrazione).
+- **M11.2 — Griglia iscrizioni per sede** (`/area-admin/sedi/$slug/registro`): righe bambini, colonne settimane, cella con il codice di frequenza, colonne quota/gita/versato/saldo calcolate dal database con `location_registry_totals`, riepilogo conteggi per settimana e testo che spiega i codici. Prerequisito: la migrazione M11.1 applicata su Lovable.
 
 ## Bloccanti pre-lancio (prima delle famiglie vere)
 

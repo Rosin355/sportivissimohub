@@ -206,6 +206,57 @@ export type Database = {
           },
         ]
       }
+      enrollment_signatures: {
+        Row: {
+          consent_text: string
+          enrollment_id: string
+          id: string
+          signed_at: string
+          signed_documents: string[]
+          signer_name: string
+          signer_role: Database["public"]["Enums"]["signer_role"]
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          consent_text: string
+          enrollment_id: string
+          id?: string
+          signed_at?: string
+          signed_documents?: string[]
+          signer_name: string
+          signer_role: Database["public"]["Enums"]["signer_role"]
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          consent_text?: string
+          enrollment_id?: string
+          id?: string
+          signed_at?: string
+          signed_documents?: string[]
+          signer_name?: string
+          signer_role?: Database["public"]["Enums"]["signer_role"]
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_signatures_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_signatures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           admin_notes: string
@@ -696,6 +747,10 @@ export type Database = {
           week_code: string
         }[]
       }
+      log_enrollment_signature: {
+        Args: { _signature_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "genitore" | "staff" | "admin"
@@ -721,6 +776,7 @@ export type Database = {
         | "doposcuola"
         | "corso"
         | "progetto_scuola"
+      signer_role: "genitore_1" | "genitore_2"
       tessera_tipo: "base" | "super_integrativa"
     }
     CompositeTypes: {
@@ -875,6 +931,7 @@ export const Constants = {
         "corso",
         "progetto_scuola",
       ],
+      signer_role: ["genitore_1", "genitore_2"],
       tessera_tipo: ["base", "super_integrativa"],
     },
   },

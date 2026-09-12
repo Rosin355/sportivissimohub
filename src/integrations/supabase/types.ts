@@ -22,6 +22,7 @@ export type Database = {
           day: string
           enrollment_id: string
           id: string
+          mark: Database["public"]["Enums"]["attendance_mark"] | null
           recorded_by: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           day: string
           enrollment_id: string
           id?: string
+          mark?: Database["public"]["Enums"]["attendance_mark"] | null
           recorded_by: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           day?: string
           enrollment_id?: string
           id?: string
+          mark?: Database["public"]["Enums"]["attendance_mark"] | null
           recorded_by?: string
         }
         Relationships: [
@@ -81,6 +84,57 @@ export type Database = {
           id?: never
         }
         Relationships: []
+      }
+      cash_movements: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          kind: Database["public"]["Enums"]["cash_movement_kind"]
+          location_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          moved_on: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["cash_movement_kind"]
+          location_id: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          moved_on?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["cash_movement_kind"]
+          location_id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          moved_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       children: {
         Row: {
@@ -156,6 +210,57 @@ export type Database = {
           {
             foreignKeyName: "children_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_meals: {
+        Row: {
+          day: string
+          id: string
+          location_id: string
+          meals_children: number
+          meals_staff: number
+          note: string
+          status: Database["public"]["Enums"]["meal_order_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          day: string
+          id?: string
+          location_id: string
+          meals_children?: number
+          meals_staff?: number
+          note?: string
+          status?: Database["public"]["Enums"]["meal_order_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          day?: string
+          id?: string
+          location_id?: string
+          meals_children?: number
+          meals_staff?: number
+          note?: string
+          status?: Database["public"]["Enums"]["meal_order_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_meals_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_meals_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -253,6 +358,38 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrollment_week_codes: {
+        Row: {
+          enrollment_id: string
+          frequency_code: string
+          id: string
+          updated_at: string
+          week_code: string
+        }
+        Insert: {
+          enrollment_id: string
+          frequency_code: string
+          id?: string
+          updated_at?: string
+          week_code: string
+        }
+        Update: {
+          enrollment_id?: string
+          frequency_code?: string
+          id?: string
+          updated_at?: string
+          week_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_week_codes_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
             referencedColumns: ["id"]
           },
         ]
@@ -362,6 +499,51 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extra_charges: {
+        Row: {
+          amount: number
+          charge_type: Database["public"]["Enums"]["extra_charge_type"]
+          created_at: string
+          created_by: string | null
+          description: string
+          enrollment_id: string
+          id: string
+        }
+        Insert: {
+          amount: number
+          charge_type?: Database["public"]["Enums"]["extra_charge_type"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          enrollment_id: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          charge_type?: Database["public"]["Enums"]["extra_charge_type"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          enrollment_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_charges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extra_charges_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
             referencedColumns: ["id"]
           },
         ]
@@ -491,6 +673,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "location_extras_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_frequency_codes: {
+        Row: {
+          active: boolean
+          band: Database["public"]["Enums"]["frequency_band"]
+          category: Database["public"]["Enums"]["frequency_category"]
+          code: string
+          convenzione: boolean
+          created_at: string
+          id: string
+          label: string
+          location_id: string
+          price: number
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          band: Database["public"]["Enums"]["frequency_band"]
+          category: Database["public"]["Enums"]["frequency_category"]
+          code: string
+          convenzione?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          location_id: string
+          price?: number
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          band?: Database["public"]["Enums"]["frequency_band"]
+          category?: Database["public"]["Enums"]["frequency_category"]
+          code?: string
+          convenzione?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          location_id?: string
+          price?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_frequency_codes_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -635,6 +867,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          enrollment_id: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          note: string
+          paid_on: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          enrollment_id: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          note?: string
+          paid_on?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          enrollment_id?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          note?: string
+          paid_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pickup_delegates: {
         Row: {
           document: string
@@ -712,6 +992,54 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_attendance: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          location_id: string
+          mark: Database["public"]["Enums"]["attendance_mark"]
+          note: string
+          recorded_by: string | null
+          staff_name: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          id?: string
+          location_id: string
+          mark: Database["public"]["Enums"]["attendance_mark"]
+          note?: string
+          recorded_by?: string | null
+          staff_name: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          location_id?: string
+          mark?: Database["public"]["Enums"]["attendance_mark"]
+          note?: string
+          recorded_by?: string | null
+          staff_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_attendance_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           role: Database["public"]["Enums"]["app_role"]
@@ -739,6 +1067,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      location_registry_totals: {
+        Args: { _location_slug: string }
+        Returns: {
+          enrollment_id: string
+          extra_total: number
+          gita: number
+          quota: number
+          saldo: number
+          tessera: number
+          versato: number
+          weeks_total: number
+        }[]
+      }
       location_week_occupancy: {
         Args: never
         Returns: {
@@ -754,6 +1095,13 @@ export type Database = {
     }
     Enums: {
       app_role: "genitore" | "staff" | "admin"
+      attendance_mark:
+        | "intera"
+        | "mattina"
+        | "pomeriggio"
+        | "presente"
+        | "assente"
+      cash_movement_kind: "spesa" | "consegna" | "altro"
       child_sex: "M" | "F"
       custom_field_type: "testo" | "si_no" | "scelta" | "data"
       document_status: "caricato" | "verificato" | "rifiutato"
@@ -765,6 +1113,9 @@ export type Database = {
         | "confermata"
         | "lista-attesa"
         | "annullata"
+      extra_charge_type: "gita" | "altro"
+      frequency_band: "mezza" | "intera"
+      frequency_category: "primaria" | "asilo"
       location_document_category:
         | "regolamento"
         | "modulo"
@@ -776,6 +1127,8 @@ export type Database = {
         | "doposcuola"
         | "corso"
         | "progetto_scuola"
+      meal_order_status: "da_ordinare" | "ordinato" | "confermato"
+      payment_method: "bonifico" | "contanti"
       signer_role: "genitore_1" | "genitore_2"
       tessera_tipo: "base" | "super_integrativa"
     }
@@ -906,6 +1259,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["genitore", "staff", "admin"],
+      attendance_mark: [
+        "intera",
+        "mattina",
+        "pomeriggio",
+        "presente",
+        "assente",
+      ],
+      cash_movement_kind: ["spesa", "consegna", "altro"],
       child_sex: ["M", "F"],
       custom_field_type: ["testo", "si_no", "scelta", "data"],
       document_status: ["caricato", "verificato", "rifiutato"],
@@ -918,6 +1279,9 @@ export const Constants = {
         "lista-attesa",
         "annullata",
       ],
+      extra_charge_type: ["gita", "altro"],
+      frequency_band: ["mezza", "intera"],
+      frequency_category: ["primaria", "asilo"],
       location_document_category: [
         "regolamento",
         "modulo",
@@ -931,6 +1295,8 @@ export const Constants = {
         "corso",
         "progetto_scuola",
       ],
+      meal_order_status: ["da_ordinare", "ordinato", "confermato"],
+      payment_method: ["bonifico", "contanti"],
       signer_role: ["genitore_1", "genitore_2"],
       tessera_tipo: ["base", "super_integrativa"],
     },

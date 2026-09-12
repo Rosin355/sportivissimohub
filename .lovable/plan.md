@@ -1,35 +1,27 @@
-## Obiettivo
-Portare in Lovable Cloud tutto il backend già scritto nel repo, senza toccare il frontend né aggiungere nuove migrazioni.
+# Applicazione delle due migrazioni caricate
 
-## Passi
+Applico il contenuto SQL dei due file esattamente com'è, in ordine di data. Nessuna migrazione scritta da me, nessuna modifica al codice dell'app.
 
-1. **Migrazione 1 — `20260722000001_auth_profiles.sql`**
-   Propongo il contenuto integrale (enum `app_role`, tabelle `profiles` e `user_roles`, funzione `has_role`, trigger `handle_new_user`, RLS + policy) nel blocco SQL per la tua approvazione. Applico solo dopo il tuo OK.
+## Ordine
 
-2. **Migrazione 2 — `20260722000002_core_schema.sql` (in due parti)**
-   Il file originale contiene sia DDL/RLS sia la creazione del bucket storage. Le API di Lovable Cloud non accettano `INSERT INTO storage.buckets` dentro una migrazione, quindi lo spezzo — il contenuto SQL resta identico a quello del file, solo diviso:
-   - **2a**: enum (`enrollment_status`, `document_status`, `payment_status`), tabelle `children`, `enrollments`, `pickup_delegates`, `enrollment_documents`, `audit_log`, trigger `updated_at`, generatore `code`, tutte le RLS/policy delle tabelle public.
-   - **2b (dopo il passo 3)**: solo le 4 policy su `storage.objects` per il bucket `documents`.
+1. `20260907120000_signatures.sql` — firma elettronica dei moduli
+   - tipo `signer_role`, tabella `enrollment_signatures` (append-only) con indice e vincoli
+   - RLS: il genitore legge/inserisce solo sulle proprie iscrizioni, l'admin legge tutto
+   - grant a `authenticated`
+   - funzione `log_enrollment_signature` (security definer, idempotente) che scrive la voce in `audit_log`
+   - ricreazione della policy di storage "genitore elimina i propri file": i file nella cartella `firme` non sono più eliminabili
 
-3. **Bucket `documents`**
-   Creato via tool dedicato (`storage_create_bucket`) come privato. Poi verifico che esista e applico 2b con le policy di accesso (genitore legge/carica/elimina i propri file sotto `{uid}/…`, admin legge tutto).
+2. `20260912100000_m11_1_registro_sede.sql` — registro di sede
+   - nuovi tipi: categorie/fasce di frequenza, addebiti extra, metodo di pagamento, movimenti di cassa, marcatura presenza, stato ordine pasti
+   - nuove tabelle: `location_frequency_codes`, `enrollment_week_codes`, `extra_charges`, `payments`, `cash_movements`, `staff_attendance`, `daily_meals`
+   - nuova colonna `attendance.mark` (nullable, non tocca le righe esistenti)
+   - trigger di validazione e di immutabilità, funzione `location_registry_totals` (solo admin)
+   - RLS e grant su tutte le nuove tabelle
+   - popolamento iniziale incluso nel file: gli 8 codici di frequenza standard per ogni sede e le celle settimana/codice derivate dalle iscrizioni esistenti
 
-4. **Migrazione 3 — `20260722000003_attendance.sql`**
-   Tabella `attendance` con RLS e policy staff/admin, proposta integrale per approvazione.
+## Note tecniche
 
-5. **Edge function `send-transactional-email`**
-   Deploy così com'è da `supabase/functions/send-transactional-email/`. Nessuna modifica al codice.
-   Nota: i secret `RESEND_API_KEY` e `EMAIL_FROM` non risultano configurati — te li chiederò con `add_secret` dopo il deploy (senza di essi la funzione risponde 500).
-
-6. **Database Webhook su `enrollments`**
-   Non esiste un tool Lovable per creare Database Webhooks a livello di API Supabase. Non posso configurarlo automaticamente. Ti fornirò le istruzioni precise (endpoint della edge function, header, eventi `INSERT`/`UPDATE`, tabella `public.enrollments`) e lo dovrai creare a mano nella dashboard Supabase — oppure, se preferisci, posso proporre in alternativa un trigger DB via `pg_net` come migrazione aggiuntiva (ma esce dal vincolo "nessuna nuova migrazione", quindi lo faccio solo se me lo confermi).
-
-7. **Riepilogo finale**
-   Al termine elenco: tabelle create, policy RLS attive per tabella, bucket + policy storage, edge function deployata, stato secret, stato webhook.
-
-## Vincoli rispettati
-- Nessun file frontend toccato.
-- Nessuna migrazione nuova creata sotto `supabase/migrations/` — le SQL applicate sono quelle esistenti (la sola divisione della #2 è per compatibilità con l'API bucket, contenuto invariato).
-- Edge function deployata as-is.
-
-Confermi per procedere con la migrazione 1?
+- Il file delle firme contiene un `drop policy if exists` sulla policy di eliminazione dei file del bucket `documents`, subito ricreata nella versione più restrittiva: è parte del file, la applico senza modifiche.
+- Il file del registro include istruzioni `insert` di popolamento: restano nel file così com'è, come previsto dalla migrazione.
+- Se una delle due fallisce, mi fermo e ti riporto l'errore esatto senza correggere nulla di mia iniziativa.
+- Al termine: elenco tabelle create, policy RLS attive e funzioni aggiunte.

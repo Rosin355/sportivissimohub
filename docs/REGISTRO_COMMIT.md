@@ -30,7 +30,13 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-12 · `……` · M11 — Registro sede: la griglia delle iscrizioni
+### 2026-09-13 · `……` · M11 — Registro sede: codici di frequenza modificabili
+
+Nella scheda di ogni sede c'è ora la sezione dei codici di frequenza, cioè la legenda del registro. Per ogni codice si possono cambiare descrizione, prezzo, se è della primaria o dell'asilo, se è mezza giornata o giornata intera e se vale la convenzione col comune, oppure disattivarlo. La sigla del codice invece non cambia mai, perché è quella scritta nelle caselle del registro. Un codice non si cancella: disattivato, non si può più scegliere ma resta valido dove è già stato usato.
+
+La pagina avvisa che un nuovo prezzo vale anche per le caselle già compilate, e mostra quante caselle usano ogni codice, così l'effetto sulle quote è chiaro prima di salvare. Si possono aggiungere codici nuovi, e le sedi create da poco, che non hanno ancora nessun codice, possono caricare con un clic gli otto codici standard. Ogni modifica resta tracciata nel registro delle azioni.
+
+### 2026-09-12 · `4041d7c` · M11 — Registro sede: la griglia delle iscrizioni
 
 Arriva la schermata vera e propria del registro, una per sede, che replica il foglio ISCRIZIONI del file Excel. Nelle righe i bambini iscritti, nelle colonne le settimane, e in ogni casella si sceglie il codice di frequenza da una tendina. Accanto compaiono quota, gita, versato e saldo, calcolati dal sistema e aggiornati appena si cambia una casella. Sotto la griglia c'è il riepilogo per settimana: quanti bambini a mezza giornata e quanti a giornata intera, divisi tra primaria e asilo, con la riga dei pasti da ordinare.
 

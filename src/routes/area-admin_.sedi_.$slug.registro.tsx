@@ -151,7 +151,16 @@ function RegistroPage() {
                 dice se fa mezza giornata o giornata intera, se è della primaria o dell'asilo e se
                 ha la convenzione col comune. Il prezzo lo porta il codice, e la quota si calcola da
                 sola sommando le settimane più la tessera. La gita resta una voce a parte e non
-                entra nella quota.
+                entra nella quota. Codici e prezzi si configurano nella{" "}
+                <Link
+                  to="/area-admin/sedi/$id"
+                  params={{ id: data.locationId }}
+                  hash="codici-frequenza"
+                  className="font-semibold underline"
+                >
+                  scheda sede
+                </Link>
+                .
               </p>
               {hasCodes ? (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -170,7 +179,15 @@ function RegistroPage() {
               ) : (
                 <p className="mt-2 font-semibold text-flame">
                   Questa sede non ha ancora codici di frequenza attivi: le caselle restano vuote
-                  finché non ne esiste almeno uno.
+                  finché non ne esiste almeno uno.{" "}
+                  <Link
+                    to="/area-admin/sedi/$id"
+                    params={{ id: data.locationId }}
+                    hash="codici-frequenza"
+                    className="underline"
+                  >
+                    Configurali nella scheda sede.
+                  </Link>
                 </p>
               )}
             </div>

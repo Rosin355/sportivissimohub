@@ -40,6 +40,17 @@ Il cliente gestisce oggi i centri estivi con file Excel (riferimento: `asigliano
 - Sotto la griglia, il riepilogo del cliente: per ogni settimana, conteggi per categoria/fascia (mezza/intera × primaria/asilo), totale intera = pasti previsti, totali complessivi. Replica il pannello righe 78-93 del file.
 - Breve testo informativo in testa alla griglia che spiega i codici frequenza e rimanda alla configurazione per sede.
 
+### M11.2b — Editor dei codici di frequenza per sede
+
+- Sezione "Codici di frequenza" nella scheda sede (`/area-admin/sedi/$id`), solo admin, con breve spiegazione di cosa sono i codici e di come entrano nella quota.
+- Per ogni codice si modificano: etichetta, categoria (primaria/asilo), fascia (mezza/intera), convenzione, prezzo, attivo/disattivo.
+- **Codice e sede immutabili** (già garantito dal trigger `location_frequency_codes_lock` della M11.1): l'interfaccia non li rende modificabili e la server function non li accetta.
+- Un codice non si elimina: si disattiva. Un codice disattivato sparisce dalle tendine della griglia ma resta valido nelle caselle già compilate.
+- Ogni creazione e modifica finisce in `audit_log` con i valori precedenti e quelli nuovi.
+- Avviso esplicito in interfaccia: prezzo, categoria e fascia valgono anche per le caselle già compilate, quindi quote e riepilogo si aggiornano subito (come cambiando la legenda nel file Excel). Accanto a ogni codice, il numero di caselle che lo usano.
+- Aggiunta di un nuovo codice (il codice si sceglie alla creazione e poi non cambia) e, per le sedi che non hanno ancora nessun codice, caricamento degli 8 codici standard: le sedi create dal pannello dopo la M11.1 non hanno ricevuto il seed.
+- Nessuna migrazione: tabella, vincoli e RLS esistono dalla M11.1.
+
 ### M11.3 — Pagamenti
 
 - Drawer/dialog per bambino: lista rate (data, metodo, importo, nota), aggiunta/modifica/eliminazione con audit. Importi negativi ammessi con etichetta "rimborso".

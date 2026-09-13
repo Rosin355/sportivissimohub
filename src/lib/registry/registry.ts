@@ -87,6 +87,91 @@ export function formatEuro(value: number): string {
   });
 }
 
+export const FREQUENCY_CATEGORIES: FrequencyCategory[] = ["primaria", "asilo"];
+export const FREQUENCY_BANDS: FrequencyBand[] = ["mezza", "intera"];
+
+// Gli 8 codici standard del foglio del cliente, ai prezzi Asigliano: sono gli
+// stessi del seed della M11.1 e servono alle sedi create dopo, che il seed non
+// ha raggiunto. Default modificabili, non valori di sistema.
+export const STANDARD_FREQUENCY_CODES: Omit<RegistryCode, "id" | "active">[] = [
+  {
+    code: "MC",
+    label: "Mezza giornata primaria — convenzione",
+    category: "primaria",
+    band: "mezza",
+    convenzione: true,
+    price: 30,
+    sortOrder: 1,
+  },
+  {
+    code: "IC",
+    label: "Giornata intera primaria — convenzione",
+    category: "primaria",
+    band: "intera",
+    convenzione: true,
+    price: 60,
+    sortOrder: 2,
+  },
+  {
+    code: "M",
+    label: "Mezza giornata primaria",
+    category: "primaria",
+    band: "mezza",
+    convenzione: false,
+    price: 55,
+    sortOrder: 3,
+  },
+  {
+    code: "I",
+    label: "Giornata intera primaria",
+    category: "primaria",
+    band: "intera",
+    convenzione: false,
+    price: 90,
+    sortOrder: 4,
+  },
+  {
+    code: "AMC",
+    label: "Mezza giornata asilo — convenzione",
+    category: "asilo",
+    band: "mezza",
+    convenzione: true,
+    price: 30,
+    sortOrder: 5,
+  },
+  {
+    code: "AIC",
+    label: "Giornata intera asilo — convenzione",
+    category: "asilo",
+    band: "intera",
+    convenzione: true,
+    price: 60,
+    sortOrder: 6,
+  },
+  {
+    code: "AM",
+    label: "Mezza giornata asilo",
+    category: "asilo",
+    band: "mezza",
+    convenzione: false,
+    price: 55,
+    sortOrder: 7,
+  },
+  {
+    code: "AI",
+    label: "Giornata intera asilo",
+    category: "asilo",
+    band: "intera",
+    convenzione: false,
+    price: 90,
+    sortOrder: 8,
+  },
+];
+
+// Stesso formato del vincolo nel database: maiuscole e cifre, massimo 8.
+export const FREQUENCY_CODE_PATTERN = /^[A-Z0-9]{1,8}$/;
+export const MAX_FREQUENCY_PRICE = 10000;
+
 /* ---------- celle ---------- */
 
 // Settimane scelte nell'iscrizione che non hanno ancora un codice: sono le

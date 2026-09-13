@@ -32,6 +32,7 @@ import { removeLocationLogo, signLogoUrl, uploadLocationLogo } from "@/lib/locat
 import { REQUIRED_DOC_TYPE_OPTIONS, docTypeLabel } from "@/lib/enrollments/doc-types";
 import { LocationDocumentsAdmin } from "@/components/site/LocationDocumentsAdmin";
 import { LocationCustomFieldsAdmin } from "@/components/site/LocationCustomFieldsAdmin";
+import { LocationFrequencyCodesAdmin } from "@/components/site/LocationFrequencyCodesAdmin";
 import { ArrowLeft, Plus, Trash2, Save, Upload, ExternalLink } from "lucide-react";
 
 // Editor sede (admin): crea/modifica, bozza/pubblica, settimane, extra,
@@ -339,6 +340,20 @@ function LocationEditor({ initial }: { initial: Location | null }) {
             ) : (
               <p className="text-xs text-muted-foreground">
                 Salva la sede una prima volta per poter aggiungere campi.
+              </p>
+            )}
+          </Section>
+
+          <Section
+            id="codici-frequenza"
+            title="Codici di frequenza"
+            subtitle="La legenda del registro sede: ogni codice dice se il bambino fa mezza giornata o giornata intera, se è della primaria o dell'asilo e se ha la convenzione col comune, e porta il prezzo della settimana. La quota del registro è la somma dei prezzi delle settimane più la tessera; la gita resta a parte. Il codice non cambia mai; un codice non si elimina, si disattiva."
+          >
+            {initial ? (
+              <LocationFrequencyCodesAdmin location={initial} />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Salva la sede una prima volta per poter configurare i codici di frequenza.
               </p>
             )}
           </Section>
@@ -655,16 +670,21 @@ function LocationEditor({ initial }: { initial: Location | null }) {
 /* ---------- componenti di supporto ---------- */
 
 function Section({
+  id,
   title,
   subtitle,
   children,
 }: {
+  id?: string;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-white shadow-pop p-5">
+    <section
+      id={id}
+      className="rounded-2xl border border-border bg-white shadow-pop p-5 scroll-mt-6"
+    >
       <h2 className="font-display text-xl font-bold">{title}</h2>
       {subtitle && <p className="text-xs text-muted-foreground mt-1 mb-3">{subtitle}</p>}
       <div className={subtitle ? "" : "mt-3"}>{children}</div>

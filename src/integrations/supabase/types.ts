@@ -794,6 +794,7 @@ export type Database = {
           logo_path: string | null
           name: string
           pricing: Json
+          program_id: string | null
           required_documents: string[]
           slug: string
           sort_order: number
@@ -826,6 +827,7 @@ export type Database = {
           logo_path?: string | null
           name: string
           pricing?: Json
+          program_id?: string | null
           required_documents?: string[]
           slug: string
           sort_order?: number
@@ -858,6 +860,7 @@ export type Database = {
           logo_path?: string | null
           name?: string
           pricing?: Json
+          program_id?: string | null
           required_documents?: string[]
           slug?: string
           sort_order?: number
@@ -868,7 +871,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "locations_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -995,6 +1006,66 @@ export type Database = {
         }
         Relationships: []
       }
+      programs: {
+        Row: {
+          age_range: string
+          category: Database["public"]["Enums"]["program_category"]
+          cover_image_path: string | null
+          created_at: string
+          enrollment_model: Database["public"]["Enums"]["enrollment_model"]
+          id: string
+          long_description: string
+          name: string
+          period_label: string
+          short_description: string
+          slug: string
+          sort_order: number
+          status: Database["public"]["Enums"]["program_status"]
+          subtitle: string
+          targets: Database["public"]["Enums"]["program_target"][]
+          theme: string
+          updated_at: string
+        }
+        Insert: {
+          age_range?: string
+          category: Database["public"]["Enums"]["program_category"]
+          cover_image_path?: string | null
+          created_at?: string
+          enrollment_model: Database["public"]["Enums"]["enrollment_model"]
+          id?: string
+          long_description?: string
+          name: string
+          period_label?: string
+          short_description?: string
+          slug: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["program_status"]
+          subtitle?: string
+          targets?: Database["public"]["Enums"]["program_target"][]
+          theme?: string
+          updated_at?: string
+        }
+        Update: {
+          age_range?: string
+          category?: Database["public"]["Enums"]["program_category"]
+          cover_image_path?: string | null
+          created_at?: string
+          enrollment_model?: Database["public"]["Enums"]["enrollment_model"]
+          id?: string
+          long_description?: string
+          name?: string
+          period_label?: string
+          short_description?: string
+          slug?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["program_status"]
+          subtitle?: string
+          targets?: Database["public"]["Enums"]["program_target"][]
+          theme?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_attendance: {
         Row: {
           created_at: string
@@ -1108,6 +1179,7 @@ export type Database = {
       child_sex: "M" | "F"
       custom_field_type: "testo" | "si_no" | "scelta" | "data"
       document_status: "caricato" | "verificato" | "rifiutato"
+      enrollment_model: "settimane" | "periodo" | "ciclo_incontri" | "vetrina"
       enrollment_status:
         | "nuova"
         | "revisione"
@@ -1132,6 +1204,15 @@ export type Database = {
         | "progetto_scuola"
       meal_order_status: "da_ordinare" | "ordinato" | "confermato"
       payment_method: "bonifico" | "contanti"
+      program_category: "scolastico" | "extrascolastico"
+      program_status: "bozza" | "pubblicato" | "archiviato"
+      program_target:
+        | "nido"
+        | "infanzia"
+        | "primaria"
+        | "secondaria"
+        | "adulti"
+        | "famiglie"
       signer_role: "genitore_1" | "genitore_2"
       tessera_tipo: "base" | "super_integrativa"
     }
@@ -1273,6 +1354,7 @@ export const Constants = {
       child_sex: ["M", "F"],
       custom_field_type: ["testo", "si_no", "scelta", "data"],
       document_status: ["caricato", "verificato", "rifiutato"],
+      enrollment_model: ["settimane", "periodo", "ciclo_incontri", "vetrina"],
       enrollment_status: [
         "nuova",
         "revisione",
@@ -1300,6 +1382,16 @@ export const Constants = {
       ],
       meal_order_status: ["da_ordinare", "ordinato", "confermato"],
       payment_method: ["bonifico", "contanti"],
+      program_category: ["scolastico", "extrascolastico"],
+      program_status: ["bozza", "pubblicato", "archiviato"],
+      program_target: [
+        "nido",
+        "infanzia",
+        "primaria",
+        "secondaria",
+        "adulti",
+        "famiglie",
+      ],
       signer_role: ["genitore_1", "genitore_2"],
       tessera_tipo: ["base", "super_integrativa"],
     },

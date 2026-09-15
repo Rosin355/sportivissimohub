@@ -10,6 +10,7 @@ import {
   type RegistryTotals,
   type RegistryWeek,
 } from "./registry";
+import { fetchEnrollmentTotals, mapTotalsRow, num, type TotalsRow } from "./registry-server";
 
 // Registro sede (M11.2): lettura della griglia e scrittura delle celle.
 // L'autorizzazione è delle RLS con la sessione utente (solo admin scrive; la
@@ -45,22 +46,6 @@ type CodeRow = {
 };
 
 type CellRow = { enrollment_id: string; week_code: string; frequency_code: string };
-
-type TotalsRow = {
-  enrollment_id: string;
-  weeks_total: number;
-  tessera: number;
-  quota: number;
-  gita: number;
-  extra_total: number;
-  versato: number;
-  saldo: number;
-};
-
-function num(value: number | string | null): number {
-  const n = typeof value === "string" ? Number(value) : (value ?? 0);
-  return Number.isFinite(n) ? n : 0;
-}
 
 export const getRegistry = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1) }).parse(input))
@@ -136,15 +121,7 @@ export const getRegistry = createServerFn({ method: "GET" })
 
     const totalsByEnrollment = new Map<string, RegistryTotals>();
     for (const row of (totalsRes.data ?? []) as TotalsRow[]) {
-      totalsByEnrollment.set(row.enrollment_id, {
-        weeksTotal: num(row.weeks_total),
-        tessera: num(row.tessera),
-        quota: num(row.quota),
-        gita: num(row.gita),
-        extraTotal: num(row.extra_total),
-        versato: num(row.versato),
-        saldo: num(row.saldo),
-      });
+      totalsByEnrollment.set(row.enrollment_id, mapTotalsRow(row));
     }
 
     const codes: RegistryCode[] = (codesRes.data ?? []).map((c) => ({
@@ -277,26 +254,9 @@ export const setWeekCode = createServerFn({ method: "POST" })
 
     // Totali aggiornati della sola iscrizione toccata: la griglia aggiorna la
     // riga senza ricaricare tutta la pagina, sempre con i numeri del database.
-    const { data: totalsRows } = await supabase.rpc("location_registry_totals", {
-      _location_slug: enrollment.location_slug,
-    });
-    const updated = ((totalsRows ?? []) as TotalsRow[]).find(
-      (r) => r.enrollment_id === data.enrollmentId,
-    );
-
     return {
       ok: true,
       frequencyCode: data.frequencyCode,
-      totals: updated
-        ? {
-            weeksTotal: num(updated.weeks_total),
-            tessera: num(updated.tessera),
-            quota: num(updated.quota),
-            gita: num(updated.gita),
-            extraTotal: num(updated.extra_total),
-            versato: num(updated.versato),
-            saldo: num(updated.saldo),
-          }
-        : EMPTY_TOTALS,
+      totals: await fetchEnrollmentTotals(supabase, enrollment.location_slug, data.enrollmentId),
     };
   });

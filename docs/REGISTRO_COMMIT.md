@@ -30,7 +30,13 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-13 · `……` · M11 — Registro sede: codici di frequenza modificabili
+### 2026-09-15 · `……` · M11 — Registro sede: pagamenti e cassa
+
+Dal registro di ogni sede si apre la scheda pagamenti di un bambino, cliccando sulle colonne della gita o del versato. Lì si registrano le rate con data, bonifico o contanti, importo e una nota, e si segnano i rimborsi. Le rate sono libere: non c'è più il limite delle quattro colonne per canale del file Excel. Nella stessa scheda si aggiungono o tolgono la gita e gli altri addebiti a parte. In alto si vedono quota, gita, versato e saldo, ricalcolati dal sistema a ogni modifica.
+
+Nuova anche la pagina della cassa di sede. Mostra, per un periodo a scelta o per tutta la stagione, quanto è entrato con bonifico e in contanti, i rimborsi, le spese e le consegne di contanti, con l'elenco di tutti i movimenti. Da qui si registrano le spese e le consegne. Ogni inserimento, modifica o cancellazione resta tracciato nel registro delle azioni. Pagamenti, quote e cassa li vede solo l'amministrazione.
+
+### 2026-09-13 · `44ab4da` · M11 — Registro sede: codici di frequenza modificabili
 
 Nella scheda di ogni sede c'è ora la sezione dei codici di frequenza, cioè la legenda del registro. Per ogni codice si possono cambiare descrizione, prezzo, se è della primaria o dell'asilo, se è mezza giornata o giornata intera e se vale la convenzione col comune, oppure disattivarlo. La sigla del codice invece non cambia mai, perché è quella scritta nelle caselle del registro. Un codice non si cancella: disattivato, non si può più scegliere ma resta valido dove è già stato usato.
 

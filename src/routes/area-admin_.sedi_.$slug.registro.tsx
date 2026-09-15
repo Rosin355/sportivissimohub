@@ -5,6 +5,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { requireRole } from "@/lib/supabase/auth";
 import { getRegistry, setWeekCode } from "@/lib/registry/registry-fns";
+import { EnrollmentLedgerDialog } from "@/components/site/EnrollmentLedgerDialog";
 import {
   BAND_LABELS,
   CATEGORY_LABELS,
@@ -17,7 +18,7 @@ import {
   type RegistryData,
   type RegistryRow,
 } from "@/lib/registry/registry";
-import { ArrowLeft, CalendarRange, Info, Pencil, Users } from "lucide-react";
+import { ArrowLeft, CalendarRange, Info, Pencil, Users, Wallet } from "lucide-react";
 
 // Registro sede (M11.2): la matrice bambini × settimane del gestionale del
 // cliente. La cella contiene il codice di frequenza; quota, gita, versato e
@@ -59,6 +60,8 @@ function RegistroPage() {
   const data: RegistryData = Route.useLoaderData();
   const [rows, setRows] = useState<RegistryRow[]>(data.rows);
   const [saving, setSaving] = useState<string | null>(null);
+  // Iscrizione di cui è aperta la scheda pagamenti (rate, rimborsi, gita).
+  const [ledgerId, setLedgerId] = useState<string | null>(null);
 
   // Il loader rigira i dati dal database (navigazione, invalidate): la copia
   // locale serve solo per riflettere subito la cella appena salvata.
@@ -131,13 +134,22 @@ function RegistroPage() {
               {data.weeks.length === 1 ? "settimana" : "settimane"} configurate
             </p>
           </div>
-          <Link
-            to="/area-admin/sedi/$id"
-            params={{ id: data.locationId }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold hover:bg-secondary"
-          >
-            <Pencil className="w-4 h-4" /> Scheda sede
-          </Link>
+          <div className="flex gap-2 flex-wrap">
+            <Link
+              to="/area-admin/sedi/$slug/cassa"
+              params={{ slug: data.locationSlug }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold hover:bg-secondary"
+            >
+              <Wallet className="w-4 h-4" /> Cassa della sede
+            </Link>
+            <Link
+              to="/area-admin/sedi/$id"
+              params={{ id: data.locationId }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold hover:bg-secondary"
+            >
+              <Pencil className="w-4 h-4" /> Scheda sede
+            </Link>
+          </div>
         </div>
 
         {/* Spiegazione dei codici + legenda con i prezzi reali della sede */}
@@ -299,10 +311,25 @@ function RegistroPage() {
                           {formatEuro(row.totals.quota)}
                         </td>
                         <td className="py-2 px-2 text-right whitespace-nowrap">
-                          {row.totals.gita ? formatEuro(row.totals.gita) : "—"}
+                          <button
+                            type="button"
+                            onClick={() => setLedgerId(row.enrollmentId)}
+                            title="Gita e altri addebiti"
+                            className="rounded-md px-1.5 py-0.5 underline decoration-dotted underline-offset-4 hover:bg-secondary"
+                          >
+                            {row.totals.gita ? formatEuro(row.totals.gita) : "—"}
+                          </button>
                         </td>
                         <td className="py-2 px-2 text-right whitespace-nowrap">
-                          {formatEuro(row.totals.versato)}
+                          <button
+                            type="button"
+                            onClick={() => setLedgerId(row.enrollmentId)}
+                            title="Rate e rimborsi"
+                            className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 underline decoration-dotted underline-offset-4 hover:bg-secondary"
+                          >
+                            <Wallet className="w-3.5 h-3.5 opacity-60" />
+                            {formatEuro(row.totals.versato)}
+                          </button>
                         </td>
                         <td
                           className={`py-2 px-2 text-right whitespace-nowrap font-semibold ${
@@ -428,6 +455,16 @@ function RegistroPage() {
             </section>
           </>
         )}
+
+        <EnrollmentLedgerDialog
+          enrollmentId={ledgerId}
+          onClose={() => setLedgerId(null)}
+          onTotalsChange={(enrollmentId, totals) =>
+            setRows((current) =>
+              current.map((r) => (r.enrollmentId === enrollmentId ? { ...r, totals } : r)),
+            )
+          }
+        />
       </main>
       <SiteFooter />
     </div>

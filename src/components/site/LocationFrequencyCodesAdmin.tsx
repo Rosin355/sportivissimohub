@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Pencil, Plus, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { ConfirmDeletionDialog } from "@/components/site/ConfirmDeletionDialog";
 import { Input } from "@/components/ui/input";
 import type { Location } from "@/data/locations";
 import type { FrequencyBand, FrequencyCategory } from "@/lib/supabase/types";
@@ -19,6 +20,8 @@ import {
   listFrequencyCodes,
   loadStandardFrequencyCodes,
   updateFrequencyCode,
+  deleteFrequencyCode,
+  getFrequencyCodeDeletionPreview,
   type FrequencyCodeWithUsage,
 } from "@/lib/registry/frequency-codes-fns";
 
@@ -61,6 +64,7 @@ export function LocationFrequencyCodesAdmin({ location }: { location: Location }
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const res = await listFrequencyCodes({
@@ -143,7 +147,8 @@ export function LocationFrequencyCodesAdmin({ location }: { location: Location }
         <>
           <p className="text-xs text-muted-foreground">
             {activeCount} codici attivi su {codes.length}. Un codice disattivato sparisce dalle
-            tendine del registro ma resta valido nelle caselle dove è già stato usato.
+            tendine del registro ma resta valido nelle caselle dove è già stato usato. Si elimina
+            definitivamente solo un codice che nessuna casella usa.
           </p>
           <ul className="space-y-2">
             {codes.map((c) =>
@@ -211,12 +216,33 @@ export function LocationFrequencyCodesAdmin({ location }: { location: Location }
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
+                  {c.usage === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setDeletingId(c.id)}
+                      disabled={busy}
+                      className={btnSmall}
+                      aria-label={`Elimina il codice ${c.code}`}
+                      title="Nessuna casella lo usa: si può eliminare definitivamente"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </li>
               ),
             )}
           </ul>
         </>
       )}
+
+      <ConfirmDeletionDialog
+        open={deletingId !== null}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+        loadPreview={() => getFrequencyCodeDeletionPreview({ data: { id: deletingId! } })}
+        onConfirm={() =>
+          run(() => deleteFrequencyCode({ data: { id: deletingId! } }), "Codice eliminato.")
+        }
+      />
 
       <NewCodeForm
         busy={busy}

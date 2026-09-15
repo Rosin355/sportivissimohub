@@ -185,6 +185,20 @@ function LocationEditor({ initial }: { initial: Location | null }) {
           </div>
         </div>
 
+        {initial?.archivedAt && (
+          <div className="rounded-2xl border border-border bg-secondary/60 px-4 py-3 mb-6 text-sm">
+            <strong>
+              Sede archiviata il {new Date(initial.archivedAt).toLocaleDateString("it-IT")}.
+            </strong>{" "}
+            È fuori da sito, wizard e area staff; registro, cassa e iscrizioni restano consultabili.
+            Per pubblicarla di nuovo ripristinala dall'
+            <Link to="/area-admin/sedi" className="underline font-semibold">
+              elenco sedi
+            </Link>
+            .
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <Section title="Dati principali">
             <div className="grid md:grid-cols-2 gap-4">
@@ -218,8 +232,16 @@ function LocationEditor({ initial }: { initial: Location | null }) {
               >
                 <select className={selectCls} {...register("status")}>
                   {LOCATION_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s === "bozza" ? "Bozza" : "Pubblicata"}
+                    <option
+                      key={s}
+                      value={s}
+                      disabled={s === "pubblicata" && Boolean(initial?.archivedAt)}
+                    >
+                      {s === "bozza"
+                        ? "Bozza"
+                        : initial?.archivedAt
+                          ? "Pubblicata (ripristina prima la sede)"
+                          : "Pubblicata"}
                     </option>
                   ))}
                 </select>

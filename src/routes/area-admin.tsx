@@ -32,7 +32,11 @@ import {
   CheckCircle2,
   XCircle,
   MapPin,
+  Trash2,
+  UserX,
 } from "lucide-react";
+import { ConfirmDeletionDialog } from "@/components/site/ConfirmDeletionDialog";
+import { deleteEnrollment, getEnrollmentDeletionPreview } from "@/lib/enrollments/lifecycle-fns";
 import { requireRole } from "@/lib/supabase/auth";
 import {
   setDocumentStatus,
@@ -133,8 +137,11 @@ function AreaAdmin() {
             <p className="text-sm text-muted-foreground mt-1">
               Stagione {new Date().getFullYear()} ·{" "}
               {locations.filter((l) => l.status === "pubblicata").length} sedi pubblicate
-              {locations.some((l) => l.status === "bozza")
-                ? ` · ${locations.filter((l) => l.status === "bozza").length} in bozza`
+              {locations.some((l) => l.status === "bozza" && !l.archivedAt)
+                ? ` · ${locations.filter((l) => l.status === "bozza" && !l.archivedAt).length} in bozza`
+                : ""}
+              {locations.some((l) => l.archivedAt)
+                ? ` · ${locations.filter((l) => l.archivedAt).length} archiviate`
                 : ""}
             </p>
           </div>
@@ -144,6 +151,12 @@ function AreaAdmin() {
               className="inline-flex items-center gap-2 bg-white border border-border text-foreground rounded-xl px-5 py-3 font-display font-bold hover:bg-secondary transition-colors"
             >
               <MapPin className="w-4 h-4" /> Gestisci sedi
+            </Link>
+            <Link
+              to="/area-admin/figli-duplicati"
+              className="inline-flex items-center gap-2 bg-white border border-border text-foreground rounded-xl px-5 py-3 font-display font-bold hover:bg-secondary transition-colors"
+            >
+              <UserX className="w-4 h-4" /> Figli duplicati
             </Link>
             <button
               onClick={refresh}
@@ -220,7 +233,7 @@ function AreaAdmin() {
                 {locations.map((l) => (
                   <option key={l.slug} value={l.slug}>
                     {l.name}
-                    {l.status === "bozza" ? " (bozza)" : ""}
+                    {l.archivedAt ? " (archiviata)" : l.status === "bozza" ? " (bozza)" : ""}
                   </option>
                 ))}
               </select>
@@ -417,8 +430,10 @@ function EnrollmentSheet({
   onUpdate: () => void;
 }) {
   const [notes, setNotes] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   useEffect(() => {
     setNotes(enrollment?.adminNotes ?? "");
+    setConfirmDelete(false);
   }, [enrollment]);
   if (!enrollment) return null;
 
@@ -687,6 +702,38 @@ function EnrollmentSheet({
             >
               Salva note
             </button>
+          </Section>
+
+          <Section title="Eliminazione definitiva">
+            <p className="text-sm text-muted-foreground">
+              Per togliere un'iscrizione dal registro usa lo stato "annullata": resta come storico.
+              L'eliminazione definitiva è possibile solo se non ci sono pagamenti, presenze né firme
+              elettroniche, e rimuove anche documenti caricati, delegati, caselle del registro e
+              addebiti extra.
+            </p>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl border border-flame/40 px-4 py-2 text-sm font-semibold text-flame hover:bg-flame/10"
+            >
+              <Trash2 className="w-4 h-4" /> Elimina iscrizione
+            </button>
+            <ConfirmDeletionDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              loadPreview={() => getEnrollmentDeletionPreview({ data: { id: enrollment.id } })}
+              onConfirm={async () => {
+                const res = await deleteEnrollment({ data: { id: enrollment.id } });
+                if (!res.ok) {
+                  toast.error(res.error);
+                  return false;
+                }
+                toast.success(`Iscrizione ${enrollment.code} eliminata.`);
+                onClose();
+                onUpdate();
+                return true;
+              }}
+            />
           </Section>
         </div>
       </SheetContent>

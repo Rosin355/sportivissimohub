@@ -448,6 +448,7 @@ export type Database = {
           slug: string;
           type: LocationType;
           status: LocationStatus;
+          archived_at: string | null;
           name: string;
           comune: string;
           address: string;
@@ -479,6 +480,7 @@ export type Database = {
           slug: string;
           type?: LocationType;
           status?: LocationStatus;
+          archived_at?: string | null;
           name: string;
           comune?: string;
           address?: string;
@@ -510,6 +512,7 @@ export type Database = {
           slug?: string;
           type?: LocationType;
           status?: LocationStatus;
+          archived_at?: string | null;
           name?: string;
           comune?: string;
           address?: string;

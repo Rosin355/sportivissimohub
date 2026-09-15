@@ -21,6 +21,7 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 - M11.2 griglia del registro sede (`4041d7c`): nuova pagina `/area-admin/sedi/<sede>/registro`, nessuna migrazione.
 - M11.2b editor dei codici di frequenza nella scheda sede (`44ab4da`, già su `origin/main`).
 - M11.3 pagamenti e cassa: scheda pagamenti dal registro e nuova pagina `/area-admin/sedi/<sede>/cassa`, nessuna migrazione.
+- M11.3b archiviazione ed eliminazione sicura nel pannello admin, nuova pagina `/area-admin/figli-duplicati`: richiede la migrazione `20260915120000_m11_3b_archiviazione.sql` prima del push.
 - Il ramo locale include il merge `4fdd4d9` dei commit Lovable fino a `66260e2`; tsc e build verificati dopo il merge.
 
 ## Migrazioni in attesa di applicazione su Lovable
@@ -28,15 +29,16 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 - Nessuna arretrata: M10.1, M10.1b, M10.2 e M10.3 risultano applicate (commit Lovable `eb0b151`, `22acd9c`, `478bc7b`).
 - **Nessuna in attesa.** Le due ultime (firma elettronica `20260907120000_signatures.sql` e registro sede `20260912100000_m11_1_registro_sede.sql`) sono state applicate su Lovable il 2026-09-12 e verificate: il contenuto applicato coincide con i file del repository (commit Lovable `66260e2`, copie in `drizzle/migrations/0005` e `0006`).
 - M11.2, M11.2b e M11.3 non introducono migrazioni.
+- **Nuova con M11.3b:** `supabase/migrations/20260915120000_m11_3b_archiviazione.sql` (colonna `locations.archived_at` con vincolo, blocco slug esteso, trigger di guardia sulle eliminazioni, regole di eliminazione admin su iscrizioni e figli, regola di storage per i file dei documenti delle iscrizioni). **Va applicata su Lovable prima del push**: il codice legge `archived_at` e, senza la colonna, le pagine che caricano le sedi (sito pubblico compreso) rispondono con errore. Verificato in locale contro il database attuale.
 
 ## Task in corso
 
-- M11 (registro sede) in corso: consegnati M11.1 (schema), M11.2 (griglia iscrizioni), M11.2b (editor codici di frequenza) e M11.3 (pagamenti e cassa). M11.4 rimandata a dopo la M13.
+- M11 (registro sede) in corso: consegnati M11.1 (schema), M11.2 (griglia iscrizioni), M11.2b (editor codici di frequenza) e M11.3 (pagamenti e cassa) e M11.3b (archiviazione ed eliminazione sicura). M11.4 rimandata a dopo la M13.
 
 ## Prossimo task
 
-- **M11.3b**, indicato da Romesh come prossimo lavoro: la specifica non è ancora in `docs/MILESTONE_11.md` né nel piano, va fornita prima di iniziare.
-- In alternativa, nella M11 resta eseguibile subito la **M11.5 — Export Excel** col layout dei fogli del cliente.
+- **Applicare su Lovable la migrazione M11.3b, poi il push.** L'ordine conta: vedi sopra.
+- **M11.5 — Export Excel** col layout dei fogli del cliente: è l'ultimo task della M11 eseguibile subito.
 - **M11.4 — Presenze giornaliere estese** è rimandata: dipende dalla M13 (tabella `assignments` per il collegamento staff→sede) e va eseguita dopo.
 
 ## Bloccanti pre-lancio (prima delle famiglie vere)

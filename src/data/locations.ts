@@ -91,6 +91,8 @@ export type Location = {
   slug: string;
   type: LocationType;
   status: LocationStatus;
+  // valorizzata se la sede è archiviata (M11.3b): sparisce dagli elenchi operativi
+  archivedAt: string | null;
   name: string;
   comune: string;
   address: string;
@@ -132,6 +134,7 @@ export type LocationRow = {
   slug: string;
   type: LocationType;
   status: LocationStatus;
+  archived_at: string | null;
   name: string;
   comune: string;
   address: string;
@@ -316,6 +319,7 @@ export function mapLocationRow(row: LocationRow, occupancy: Occupancy): Location
     slug: row.slug,
     type: row.type,
     status: row.status,
+    archivedAt: row.archived_at ?? null,
     name: row.name,
     comune: row.comune,
     address: row.address,

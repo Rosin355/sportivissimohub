@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/registry/registry-server";
+import { canDelete, deletionDbError, type DeletionPreview } from "@/lib/admin/deletion";
 import {
   CUSTOM_FIELD_TYPES,
   MAX_ACTIVE_CUSTOM_FIELDS,
@@ -178,5 +180,91 @@ export const reorderCustomFields = createServerFn({ method: "POST" })
         .eq("location_id", data.locationId);
       if (error) return { ok: false, error: dbError(error.message) };
     }
+    return { ok: true };
+  });
+
+/* ---------------------------------------------------------------------------
+ * Eliminazione definitiva (M11.3b): solo se nessuna iscrizione della sede ha
+ * una risposta con il codice del campo. Altrimenti il campo si disattiva. Il
+ * trigger di guardia nel database ripete lo stesso controllo.
+ * ------------------------------------------------------------------------- */
+
+async function loadFieldForDeletion(
+  supabase: ReturnType<typeof getSupabaseServerClient>,
+  id: string,
+) {
+  const { data: field } = await supabase
+    .from("location_custom_fields")
+    .select("id, code, label, location_id, active, locations ( slug, name )")
+    .eq("id", id)
+    .maybeSingle<{
+      id: string;
+      code: string;
+      label: string;
+      location_id: string;
+      active: boolean;
+      locations: { slug: string; name: string } | null;
+    }>();
+  if (!field?.locations) return null;
+
+  // Le risposte stanno nel jsonb dell'iscrizione: si contano qui, sulle sole
+  // iscrizioni della sede del campo.
+  const { data: enrollments } = await supabase
+    .from("enrollments")
+    .select("custom_answers")
+    .eq("location_slug", field.locations.slug);
+  const answers = (enrollments ?? []).filter((e) => {
+    const map = e.custom_answers as Record<string, unknown> | null;
+    return map !== null && typeof map === "object" && field.code in map;
+  }).length;
+
+  const preview: DeletionPreview = {
+    subject: `il campo "${field.label}" della sede ${field.locations.name}`,
+    blockers: [{ label: "Iscrizioni con una risposta a questo campo", count: answers }],
+    removes: [],
+    alternative: field.active
+      ? "Disattivalo: non verrà più chiesto nel wizard e le risposte già raccolte restano intatte."
+      : "Il campo è già disattivato: non viene più chiesto e le risposte raccolte restano intatte.",
+  };
+  return { field, preview };
+}
+
+export const getCustomFieldDeletionPreview = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).strict().parse(input))
+  .handler(async ({ data }): Promise<Result<{ preview: DeletionPreview }>> => {
+    const supabase = getSupabaseServerClient();
+    const admin = await requireAdmin(supabase);
+    if (!admin.ok) return admin;
+    const loaded = await loadFieldForDeletion(supabase, data.id);
+    if (!loaded) return { ok: false, error: "Campo non trovato." };
+    return { ok: true, preview: loaded.preview };
+  });
+
+export const deleteCustomField = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).strict().parse(input))
+  .handler(async ({ data }): Promise<Result> => {
+    const supabase = getSupabaseServerClient();
+    const admin = await requireAdmin(supabase);
+    if (!admin.ok) return admin;
+    const loaded = await loadFieldForDeletion(supabase, data.id);
+    if (!loaded) return { ok: false, error: "Campo non trovato." };
+    if (!canDelete(loaded.preview)) {
+      return { ok: false, error: "Il campo ha risposte raccolte: si può solo disattivare." };
+    }
+    const { error } = await supabase.from("location_custom_fields").delete().eq("id", data.id);
+    if (error)
+      return { ok: false, error: deletionDbError(error.message) ?? dbError(error.message) };
+    await supabase.from("audit_log").insert({
+      actor_id: admin.userId,
+      action: "delete_custom_field",
+      entity: "location_custom_field",
+      entity_id: data.id,
+      detail: {
+        location_id: loaded.field.location_id,
+        code: loaded.field.code,
+        label: loaded.field.label,
+        active: loaded.field.active,
+      },
+    });
     return { ok: true };
   });

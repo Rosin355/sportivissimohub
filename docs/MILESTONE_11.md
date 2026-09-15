@@ -57,6 +57,34 @@ Il cliente gestisce oggi i centri estivi con file Excel (riferimento: `asigliano
 - Vista cassa per sede: totali per metodo, filtro periodo, elenco movimenti, registrazione spese/uscite e consegne contanti.
 - Gita gestita da `extra_charges`: aggiunta/rimozione dall'admin, visibile nella griglia come colonna distinta.
 
+### M11.3b — CRUD completo nel pannello admin, con archiviazione come default
+
+**Principio.** Dove esiste storico collegato, "elimina" significa **archivia**: l'entità sparisce dagli elenchi operativi ma resta per storico ed export. L'**eliminazione definitiva** è consentita solo se l'entità non ha dipendenze, con un dialogo di conferma che elenca cosa verrà rimosso, e viene tracciata in `audit_log`. Le dipendenze si verificano nell'app **e** nel database (trigger di guardia prima dell'eliminazione), così una richiesta diretta non può aggirarle.
+
+**Stato di partenza verificato nel codice (2026-09-15)**, per limitarsi a ciò che manca davvero:
+
+| Entità | Già presente | Da fare |
+|---|---|---|
+| Sedi | niente | archiviazione e ripristino; eliminazione definitiva solo senza iscrizioni |
+| Documenti di sede | eliminazione con rimozione del file, conferma e audit (M10.2) | nulla: non hanno storico collegato |
+| Campi personalizzati | disattivazione (M10.3) | eliminazione definitiva solo se nessuna iscrizione ha una risposta |
+| Iscrizioni | annullamento come stato, con audit | eliminazione definitiva solo senza pagamenti né presenze |
+| Figli duplicati | niente lato admin | elenco dei possibili duplicati ed eliminazione solo del figlio senza iscrizioni |
+| Codici di frequenza | disattivazione (M11.2b) | eliminazione definitiva solo se nessuna casella li usa |
+
+**Sedi.**
+- Archiviazione sempre disponibile: la sede torna in bozza (quindi sparisce da sito, wizard e area staff) e riceve la data di archiviazione. Una sede archiviata non si può pubblicare e il suo slug resta bloccato. Ripristino dall'elenco: torna una bozza normale, da ripubblicare esplicitamente.
+- Nell'elenco admin le archiviate stanno in una sezione separata; nel filtro sedi dell'area iscrizioni restano, marcate come archiviate, perché le loro iscrizioni sono storico.
+- Eliminazione definitiva solo con zero iscrizioni; per coerenza col principio bloccano anche movimenti di cassa, presenze staff e pasti registrati. Il dialogo elenca settimane, servizi extra, documenti con i relativi file, campi personalizzati, codici di frequenza e logo, che vengono rimossi insieme alla sede.
+
+**Iscrizioni.** L'annullamento resta lo stato da usare. Eliminazione definitiva solo se non ci sono pagamenti né presenze; blocca anche una firma elettronica, perché è un'evidenza da conservare. Il dialogo elenca documenti caricati con i relativi file, delegati al ritiro, caselle del registro e addebiti extra, che vengono rimossi.
+
+**Figli duplicati.** Pagina admin con i possibili duplicati per famiglia: stesso codice fiscale, oppure stesso nome, cognome e data di nascita. Si elimina solo il figlio che non ha iscrizioni; l'unione di due schede con iscrizioni non fa parte di questo task.
+
+**Campi personalizzati e codici di frequenza.** Restano disattivabili come oggi. Il pulsante di eliminazione compare solo quando non ci sono risposte raccolte (campi) o caselle che usano il codice (codici).
+
+**Migrazione** (una): colonna `locations.archived_at` con vincolo "archiviata ⇒ non pubblicata", blocco dello slug esteso alle archiviate, trigger di guardia prima dell'eliminazione su sedi, iscrizioni, figli, campi personalizzati e codici di frequenza, regola di eliminazione admin su iscrizioni e figli, regola di storage per rimuovere i file dei documenti delle iscrizioni (mai quelli della cartella firme).
+
 ### M11.4 — Presenze giornaliere estese
 
 > **Dipende da M13, da eseguire dopo.** L'accesso dello staff limitato alla propria sede richiede il collegamento staff→sede, che sarà la tabella `assignments` della M13 (progetti e sedi, con periodo e gerarchia). Non anticiparlo qui: si rifarebbe e si toccherebbero due volte le RLS delle presenze.

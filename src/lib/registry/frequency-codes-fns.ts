@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { canDelete, deletionDbError, type DeletionPreview } from "@/lib/admin/deletion";
+import { requireAdmin } from "./registry-server";
 import type { FrequencyBand, FrequencyCategory, Json } from "@/lib/supabase/types";
 import {
   FREQUENCY_BANDS,
@@ -303,4 +305,79 @@ export const loadStandardFrequencyCodes = createServerFn({ method: "POST" })
       "location",
     );
     return { ok: true, inserted: STANDARD_FREQUENCY_CODES.length };
+  });
+
+/* ---------------------------------------------------------------------------
+ * Eliminazione definitiva (M11.3b): solo se nessuna casella del registro della
+ * sede usa il codice. Altrimenti si disattiva. Il trigger di guardia nel
+ * database ripete il controllo.
+ * ------------------------------------------------------------------------- */
+
+async function loadCodeForDeletion(
+  supabase: ReturnType<typeof getSupabaseServerClient>,
+  id: string,
+) {
+  const { data: code } = await supabase
+    .from("location_frequency_codes")
+    .select(`location_id, ${CODE_SELECT}, locations ( slug, name )`)
+    .eq("id", id)
+    .maybeSingle<
+      CodeRow & { location_id: string; locations: { slug: string; name: string } | null }
+    >();
+  if (!code?.locations) return null;
+
+  const { count } = await supabase
+    .from("enrollment_week_codes")
+    .select("id, enrollments!inner ( location_slug )", { count: "exact", head: true })
+    .eq("frequency_code", code.code)
+    .eq("enrollments.location_slug", code.locations.slug);
+
+  const preview: DeletionPreview = {
+    subject: `il codice ${code.code} della sede ${code.locations.name}`,
+    blockers: [{ label: "Caselle del registro che usano il codice", count: count ?? 0 }],
+    removes: [],
+    alternative: code.active
+      ? "Disattivalo: sparisce dalle tendine del registro e resta valido nelle caselle già compilate."
+      : "Il codice è già disattivato e resta valido nelle caselle già compilate.",
+  };
+  return { code, preview };
+}
+
+export const getFrequencyCodeDeletionPreview = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).strict().parse(input))
+  .handler(async ({ data }): Promise<Result<{ preview: DeletionPreview }>> => {
+    const supabase = getSupabaseServerClient();
+    const admin = await requireAdmin(supabase);
+    if (!admin.ok) return admin;
+    const loaded = await loadCodeForDeletion(supabase, data.id);
+    if (!loaded) return { ok: false, error: "Codice di frequenza non trovato." };
+    return { ok: true, preview: loaded.preview };
+  });
+
+export const deleteFrequencyCode = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).strict().parse(input))
+  .handler(async ({ data }): Promise<Result> => {
+    const supabase = getSupabaseServerClient();
+    const admin = await requireAdmin(supabase);
+    if (!admin.ok) return admin;
+    const loaded = await loadCodeForDeletion(supabase, data.id);
+    if (!loaded) return { ok: false, error: "Codice di frequenza non trovato." };
+    if (!canDelete(loaded.preview)) {
+      return { ok: false, error: "Il codice è usato nel registro: si può solo disattivare." };
+    }
+    const { error } = await supabase.from("location_frequency_codes").delete().eq("id", data.id);
+    if (error)
+      return { ok: false, error: deletionDbError(error.message) ?? dbError(error.message) };
+    const removed = mapCode(loaded.code);
+    await audit(supabase, admin.userId, "delete_frequency_code", data.id, {
+      location_id: loaded.code.location_id,
+      code: removed.code,
+      label: removed.label,
+      category: removed.category,
+      band: removed.band,
+      convenzione: removed.convenzione,
+      price: removed.price,
+      active: removed.active,
+    });
+    return { ok: true };
   });

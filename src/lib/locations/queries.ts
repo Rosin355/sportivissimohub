@@ -6,7 +6,7 @@ import { mapLocationRow, type Location, type LocationRow, type Occupancy } from 
 // le RLS decidono cosa si vede (pubblicate per tutti, bozze solo admin).
 
 export const LOCATION_SELECT = `
-  id, slug, type, status, name, comune, address, age_label, age_min, age_max,
+  id, slug, type, status, archived_at, name, comune, address, age_label, age_min, age_max,
   tagline, description, theme, contact_phone, contact_email, contact_manager,
   logo_path, pricing, time_slots, activities, included_services, required_documents,
   badges, day_plan, faq, admin_notes, sort_order, created_at, updated_at,

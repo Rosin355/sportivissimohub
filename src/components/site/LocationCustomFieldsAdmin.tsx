@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Pencil, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ConfirmDeletionDialog } from "@/components/site/ConfirmDeletionDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Location, LocationCustomField } from "@/data/locations";
@@ -13,6 +14,8 @@ import {
 } from "@/lib/enrollments/custom-fields";
 import {
   createCustomField,
+  deleteCustomField,
+  getCustomFieldDeletionPreview,
   reorderCustomFields,
   updateCustomField,
 } from "@/lib/locations/custom-fields-fns";
@@ -42,6 +45,7 @@ export function LocationCustomFieldsAdmin({ location }: { location: Location }) 
   const activeCount = fields.filter((f) => f.active).length;
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function run(
     op: () => Promise<{ ok: true } | { ok: false; error: string }>,
@@ -164,12 +168,31 @@ export function LocationCustomFieldsAdmin({ location }: { location: Location }) 
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingId(f.id)}
+                    disabled={busy}
+                    className={btnSmall}
+                    aria-label="Elimina"
+                    title="Elimina definitivamente (solo se non ha risposte raccolte)"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </li>
             ),
           )}
         </ul>
       )}
+
+      <ConfirmDeletionDialog
+        open={deletingId !== null}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+        loadPreview={() => getCustomFieldDeletionPreview({ data: { id: deletingId! } })}
+        onConfirm={() =>
+          run(() => deleteCustomField({ data: { id: deletingId! } }), "Campo eliminato.")
+        }
+      />
 
       <NewFieldForm
         busy={busy}

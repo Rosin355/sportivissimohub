@@ -30,7 +30,13 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-15 · `……` · M11 — Cassa: rate di iscrizioni annullate evidenziate
+### 2026-09-15 · `……` · M11 — Archiviazione ed eliminazione sicura nel pannello
+
+Nel pannello di amministrazione "elimina" ora segue una regola sola: quello che ha uno storico si archivia, e si cancella davvero solo ciò che non ha nulla di collegato. Una sede finita si archivia: sparisce dal sito, dal modulo di iscrizione e dall'area animatori, ma iscrizioni, pagamenti e presenze restano consultabili, e la si può ripristinare. Si può eliminare definitivamente solo una sede senza iscrizioni né movimenti.
+
+Lo stesso vale per le iscrizioni, che si annullano e si eliminano solo se non hanno pagamenti, presenze o firme; per le domande personalizzate e i codici di frequenza, che si eliminano solo se mai usati. Una nuova pagina mostra le schede dei figli inserite due volte dallo stesso genitore e permette di togliere quella doppia senza iscrizioni. Prima di ogni eliminazione una finestra elenca esattamente cosa verrà rimosso, oppure spiega perché non si può e cosa fare invece. Ogni operazione resta nel registro delle azioni.
+
+### 2026-09-15 · `e6a56b1` · M11 — Cassa: rate di iscrizioni annullate evidenziate
 
 Nella cassa di sede le rate di iscrizioni poi annullate restano conteggiate, perché sono soldi davvero incassati o restituiti. Adesso però quelle righe sono evidenziate con la scritta "iscrizione annullata" e una nota spiega perché compaiono. Aggiornato anche il piano: le presenze giornaliere estese si faranno dopo la gestione dei progetti e delle assegnazioni del personale, da cui dipende chi dello staff vede quale sede.
 

@@ -21,7 +21,8 @@ export const Route = createFileRoute("/area-staff")({
     auth: requireRole(context.auth, "staff", location.href),
   }),
   // Sedi pubblicate (RLS): lo staff sceglie la sede del giorno.
-  loader: () => listLocations(),
+  // Le sedi archiviate (M11.3b) non sono operative: fuori dall'elenco del giorno.
+  loader: async () => (await listLocations()).filter((l) => !l.archivedAt),
   head: () => ({ meta: [{ title: "Area Staff — Sportivissimo" }] }),
   component: AreaStaff,
 });

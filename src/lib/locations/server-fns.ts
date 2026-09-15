@@ -128,8 +128,11 @@ function friendlyDbError(message: string): string {
   if (/locations_slug_key|duplicate key.*slug/i.test(message)) {
     return "Esiste già una sede con questo slug.";
   }
-  if (/sede pubblicata non può/i.test(message)) {
-    return "Lo slug di una sede pubblicata non può essere modificato.";
+  if (/sede pubblicata( o archiviata)? non può/i.test(message)) {
+    return "Lo slug di una sede pubblicata o archiviata non può essere modificato.";
+  }
+  if (/locations_archived_not_published/i.test(message)) {
+    return "Una sede archiviata non si può pubblicare: ripristinala prima dall'elenco sedi.";
   }
   if (/row-level security|permission denied/i.test(message)) {
     return "Operazione non consentita: serve il ruolo admin.";

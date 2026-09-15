@@ -21,6 +21,7 @@ import { Route as AggiornaPasswordRouteImport } from './routes/aggiorna-password
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CentriEstiviSlugRouteImport } from './routes/centri-estivi_.$slug'
 import { Route as AreaAdminSediRouteImport } from './routes/area-admin_.sedi'
+import { Route as AreaAdminFigliDuplicatiRouteImport } from './routes/area-admin_.figli-duplicati'
 import { Route as CentriEstiviSlugIscrizioneRouteImport } from './routes/centri-estivi_.$slug_.iscrizione'
 import { Route as AreaAdminSediIdRouteImport } from './routes/area-admin_.sedi_.$id'
 import { Route as AreaAdminSediSlugRegistroRouteImport } from './routes/area-admin_.sedi_.$slug.registro'
@@ -86,6 +87,11 @@ const AreaAdminSediRoute = AreaAdminSediRouteImport.update({
   path: '/area-admin/sedi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaAdminFigliDuplicatiRoute = AreaAdminFigliDuplicatiRouteImport.update({
+  id: '/area-admin_/figli-duplicati',
+  path: '/area-admin/figli-duplicati',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CentriEstiviSlugIscrizioneRoute =
   CentriEstiviSlugIscrizioneRouteImport.update({
     id: '/centri-estivi_/$slug_/iscrizione',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
+  '/area-admin/figli-duplicati': typeof AreaAdminFigliDuplicatiRoute
   '/area-admin/sedi': typeof AreaAdminSediRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
   '/area-admin/sedi/$id': typeof AreaAdminSediIdRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
+  '/area-admin/figli-duplicati': typeof AreaAdminFigliDuplicatiRoute
   '/area-admin/sedi': typeof AreaAdminSediRoute
   '/centri-estivi/$slug': typeof CentriEstiviSlugRoute
   '/area-admin/sedi/$id': typeof AreaAdminSediIdRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/non-autorizzato': typeof NonAutorizzatoRoute
   '/password-dimenticata': typeof PasswordDimenticataRoute
+  '/area-admin_/figli-duplicati': typeof AreaAdminFigliDuplicatiRoute
   '/area-admin_/sedi': typeof AreaAdminSediRoute
   '/centri-estivi_/$slug': typeof CentriEstiviSlugRoute
   '/area-admin_/sedi_/$id': typeof AreaAdminSediIdRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
+    | '/area-admin/figli-duplicati'
     | '/area-admin/sedi'
     | '/centri-estivi/$slug'
     | '/area-admin/sedi/$id'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
+    | '/area-admin/figli-duplicati'
     | '/area-admin/sedi'
     | '/centri-estivi/$slug'
     | '/area-admin/sedi/$id'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/non-autorizzato'
     | '/password-dimenticata'
+    | '/area-admin_/figli-duplicati'
     | '/area-admin_/sedi'
     | '/centri-estivi_/$slug'
     | '/area-admin_/sedi_/$id'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NonAutorizzatoRoute: typeof NonAutorizzatoRoute
   PasswordDimenticataRoute: typeof PasswordDimenticataRoute
+  AreaAdminFigliDuplicatiRoute: typeof AreaAdminFigliDuplicatiRoute
   AreaAdminSediRoute: typeof AreaAdminSediRoute
   CentriEstiviSlugRoute: typeof CentriEstiviSlugRoute
   AreaAdminSediIdRoute: typeof AreaAdminSediIdRoute
@@ -326,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaAdminSediRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-admin_/figli-duplicati': {
+      id: '/area-admin_/figli-duplicati'
+      path: '/area-admin/figli-duplicati'
+      fullPath: '/area-admin/figli-duplicati'
+      preLoaderRoute: typeof AreaAdminFigliDuplicatiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/centri-estivi_/$slug_/iscrizione': {
       id: '/centri-estivi_/$slug_/iscrizione'
       path: '/centri-estivi/$slug/iscrizione'
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NonAutorizzatoRoute: NonAutorizzatoRoute,
   PasswordDimenticataRoute: PasswordDimenticataRoute,
+  AreaAdminFigliDuplicatiRoute: AreaAdminFigliDuplicatiRoute,
   AreaAdminSediRoute: AreaAdminSediRoute,
   CentriEstiviSlugRoute: CentriEstiviSlugRoute,
   AreaAdminSediIdRoute: AreaAdminSediIdRoute,

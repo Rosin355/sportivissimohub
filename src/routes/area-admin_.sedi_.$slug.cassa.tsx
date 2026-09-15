@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, Plus, Table2, Trash2, X } from "lucide-react";
+import { ArrowLeft, Ban, Pencil, Plus, Table2, Trash2, X } from "lucide-react";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   amountText,
   entryLabel,
   formatDay,
+  isCancelledEnrollmentEntry,
   isIsoDate,
   parseAmount,
   todayIso,
@@ -293,6 +294,13 @@ function CassaPage() {
               )}
             </tbody>
           </table>
+          {book.entries.some(isCancelledEnrollmentEntry) && (
+            <p className="mt-3 text-xs text-muted-foreground flex items-center gap-1.5">
+              <Ban className="w-3.5 h-3.5 text-flame" />
+              Le righe marcate "iscrizione annullata" restano in cassa e nei totali: sono soldi
+              realmente incassati o restituiti, anche se l'iscrizione non è più attiva.
+            </p>
+          )}
         </section>
       </main>
       <SiteFooter />
@@ -346,14 +354,29 @@ function EntryRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const cancelled = isCancelledEnrollmentEntry(entry);
   return (
-    <tr className="border-b border-border last:border-0">
+    <tr
+      className={`border-b border-border last:border-0 ${cancelled ? "bg-secondary/60" : ""}`}
+      title={
+        cancelled
+          ? "Iscrizione annullata: la rata resta in cassa perché il denaro è stato davvero incassato o restituito."
+          : undefined
+      }
+    >
       <td className="py-2 pr-3 font-pixel text-xs whitespace-nowrap">{formatDay(entry.date)}</td>
       <td className="py-2 pr-3 whitespace-nowrap">{entryLabel(entry)}</td>
       <td className="py-2 pr-3">
         {entry.source === "payment" ? (
           <>
-            <div className="font-semibold">{entry.childName}</div>
+            <div className="font-semibold">
+              {entry.childName}
+              {cancelled && (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-flame/40 bg-flame/10 px-1.5 py-0.5 font-pixel text-[11px] text-flame align-middle">
+                  <Ban className="w-3 h-3" /> iscrizione annullata
+                </span>
+              )}
+            </div>
             <div className="text-xs text-muted-foreground">
               {entry.enrollmentCode}
               {entry.note ? ` · ${entry.note}` : ""}

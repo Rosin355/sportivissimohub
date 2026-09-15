@@ -30,7 +30,11 @@ Convenzione: l'hash di un commit si conosce solo dopo averlo creato, quindi la v
 
 ## Voci
 
-### 2026-09-15 · `……` · M11 — Registro sede: pagamenti e cassa
+### 2026-09-15 · `……` · M11 — Cassa: rate di iscrizioni annullate evidenziate
+
+Nella cassa di sede le rate di iscrizioni poi annullate restano conteggiate, perché sono soldi davvero incassati o restituiti. Adesso però quelle righe sono evidenziate con la scritta "iscrizione annullata" e una nota spiega perché compaiono. Aggiornato anche il piano: le presenze giornaliere estese si faranno dopo la gestione dei progetti e delle assegnazioni del personale, da cui dipende chi dello staff vede quale sede.
+
+### 2026-09-15 · `2a3d88c` · M11 — Registro sede: pagamenti e cassa
 
 Dal registro di ogni sede si apre la scheda pagamenti di un bambino, cliccando sulle colonne della gita o del versato. Lì si registrano le rate con data, bonifico o contanti, importo e una nota, e si segnano i rimborsi. Le rate sono libere: non c'è più il limite delle quattro colonne per canale del file Excel. Nella stessa scheda si aggiungono o tolgono la gita e gli altri addebiti a parte. In alto si vedono quota, gita, versato e saldo, ricalcolati dal sistema a ogni modifica.
 

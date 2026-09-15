@@ -1,4 +1,9 @@
-import type { CashMovementKind, ExtraChargeType, PaymentMethod } from "@/lib/supabase/types";
+import type {
+  CashMovementKind,
+  EnrollmentStatus,
+  ExtraChargeType,
+  PaymentMethod,
+} from "@/lib/supabase/types";
 import type { RegistryTotals } from "./registry";
 
 // Pagamenti e cassa di sede (M11.3): tipi e calcoli puri, usati da server e
@@ -57,6 +62,9 @@ export type CashEntry =
       amount: number;
       enrollmentId: string;
       enrollmentCode: string;
+      // Le rate di iscrizioni annullate restano in cassa (soldi realmente
+      // entrati o restituiti) ma vengono marcate nell'elenco.
+      enrollmentStatus: EnrollmentStatus | null;
       childName: string;
       note: string;
     }
@@ -112,6 +120,10 @@ export function entryLabel(entry: CashEntry): string {
   return entry.source === "payment"
     ? paymentLabel(entry.amount)
     : CASH_MOVEMENT_KIND_LABELS[entry.kind];
+}
+
+export function isCancelledEnrollmentEntry(entry: CashEntry): boolean {
+  return entry.source === "payment" && entry.enrollmentStatus === "annullata";
 }
 
 /* ---------- importi e date ---------- */

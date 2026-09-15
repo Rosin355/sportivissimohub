@@ -1,7 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import type { CashMovementKind, ExtraChargeType, Json, PaymentMethod } from "@/lib/supabase/types";
+import type {
+  CashMovementKind,
+  EnrollmentStatus,
+  ExtraChargeType,
+  Json,
+  PaymentMethod,
+} from "@/lib/supabase/types";
 import {
   CASH_MOVEMENT_KINDS,
   EXTRA_CHARGE_TYPES,
@@ -435,7 +441,7 @@ export const getCashBook = createServerFn({ method: "GET" })
     let paymentsQuery = supabase
       .from("payments")
       .select(
-        "id, enrollment_id, amount, method, paid_on, note, created_at, enrollments!inner ( code, location_slug, children ( first_name, last_name ) )",
+        "id, enrollment_id, amount, method, paid_on, note, created_at, enrollments!inner ( code, status, location_slug, children ( first_name, last_name ) )",
       )
       .eq("enrollments.location_slug", data.slug);
     if (data.from) paymentsQuery = paymentsQuery.gte("paid_on", data.from);
@@ -453,6 +459,7 @@ export const getCashBook = createServerFn({ method: "GET" })
         (PaymentRow & {
           enrollments: {
             code: string;
+            status: EnrollmentStatus;
             children: { first_name: string; last_name: string } | null;
           } | null;
         })[]
@@ -472,6 +479,7 @@ export const getCashBook = createServerFn({ method: "GET" })
           amount: num(row.amount),
           enrollmentId: row.enrollment_id,
           enrollmentCode: row.enrollments?.code ?? "",
+          enrollmentStatus: row.enrollments?.status ?? null,
           childName:
             `${row.enrollments?.children?.last_name ?? ""} ${row.enrollments?.children?.first_name ?? ""}`.trim() ||
             "—",

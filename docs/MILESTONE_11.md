@@ -59,6 +59,8 @@ Il cliente gestisce oggi i centri estivi con file Excel (riferimento: `asigliano
 
 ### M11.4 — Presenze giornaliere estese
 
+> **Dipende da M13, da eseguire dopo.** L'accesso dello staff limitato alla propria sede richiede il collegamento staff→sede, che sarà la tabella `assignments` della M13 (progetti e sedi, con periodo e gerarchia). Non anticiparlo qui: si rifarebbe e si toccherebbero due volte le RLS delle presenze.
+
 - Griglia giorno per giorno della settimana corrente (evoluzione della vista staff M8): mark per bambino con i codici configurati, righe staff/animatori, riga pasti (bambini "intera" presenti + pasti staff), pulsante "segna ordinato" → stato daily_meals.
 - Accesso staff limitato alla propria sede (RLS esistente), admin ovunque.
 

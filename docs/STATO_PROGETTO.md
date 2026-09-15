@@ -31,11 +31,13 @@ Fotografia sintetica, aggiornata a fine sessione. Fonte di dettaglio: `docs/PIAN
 
 ## Task in corso
 
-- M11 (registro sede) in corso: consegnati M11.1 (schema), M11.2 (griglia iscrizioni), M11.2b (editor codici di frequenza) e M11.3 (pagamenti e cassa).
+- M11 (registro sede) in corso: consegnati M11.1 (schema), M11.2 (griglia iscrizioni), M11.2b (editor codici di frequenza) e M11.3 (pagamenti e cassa). M11.4 rimandata a dopo la M13.
 
 ## Prossimo task
 
-- **M11.4 — Presenze giornaliere estese**: griglia giorno per giorno della settimana con la marcatura per bambino (intera, mattina, pomeriggio, presente, assente), righe degli animatori, riga pasti (bambini a giornata intera presenti più pasti staff) e pulsante "segna ordinato". Staff sulla propria sede, admin ovunque. Nessuna migrazione prevista: `attendance.mark`, `staff_attendance` e `daily_meals` esistono dalla M11.1. Da chiarire prima di iniziare: la RLS attuale delle presenze non limita lo staff alla propria sede (non esiste un'assegnazione staff-sede nel database), quindi "propria sede" richiederebbe una migrazione.
+- **M11.3b**, indicato da Romesh come prossimo lavoro: la specifica non è ancora in `docs/MILESTONE_11.md` né nel piano, va fornita prima di iniziare.
+- In alternativa, nella M11 resta eseguibile subito la **M11.5 — Export Excel** col layout dei fogli del cliente.
+- **M11.4 — Presenze giornaliere estese** è rimandata: dipende dalla M13 (tabella `assignments` per il collegamento staff→sede) e va eseguita dopo.
 
 ## Bloccanti pre-lancio (prima delle famiglie vere)
 

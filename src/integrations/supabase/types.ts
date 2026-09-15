@@ -779,6 +779,7 @@ export type Database = {
           age_label: string
           age_max: number
           age_min: number
+          archived_at: string | null
           badges: Json
           comune: string
           contact_email: string
@@ -810,6 +811,7 @@ export type Database = {
           age_label?: string
           age_max?: number
           age_min?: number
+          archived_at?: string | null
           badges?: Json
           comune?: string
           contact_email?: string
@@ -841,6 +843,7 @@ export type Database = {
           age_label?: string
           age_max?: number
           age_min?: number
+          archived_at?: string | null
           badges?: Json
           comune?: string
           contact_email?: string
